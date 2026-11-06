@@ -23,6 +23,11 @@ const redirects = [
 ] as const;
 
 const config: NextConfig = {
+  // Photos live in our Supabase storage. Next shrinks them to the size each place on the page needs.
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' }],
+  },
   async redirects() {
     return redirects.map(([source, destination]) => ({ source, destination, permanent: true }));
   },
