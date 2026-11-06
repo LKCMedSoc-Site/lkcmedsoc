@@ -64,3 +64,19 @@ td.num, th.num { text-align: right; }
 pre.out { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10px; white-space: pre-wrap; font-size: 13px; max-height: 260px; overflow: auto; }
 .login { max-width: 380px; margin: 40px auto; }
 @media (max-width: 600px) { th, td { padding: 6px 6px; font-size: 13px; } }
+
+/* Group pages editor */
+.two { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; } @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+.imgprev { display: grid; place-items: center; min-height: 120px; background: #fff; border: 1px dashed var(--p300); border-radius: 10px; margin: 8px 0; overflow: hidden; }
+.imgprev img { display: block; max-width: 100%; max-height: 220px; }
+.imgprev.round { width: 140px; height: 140px; border-radius: 50%; } .imgprev.round img { width: 100%; height: 100%; object-fit: cover; max-height: none; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; align-items: center; } .toolbar.dim button:not(:last-child) { opacity: .4; pointer-events: none; }
+.toolbar .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+button.sm { padding: 5px 10px; font-size: 14px; border-radius: 8px; border: 1px solid var(--p700); font: inherit; font-size: 14px; font-weight: 700; background: #fff; color: var(--p700); cursor: pointer; }
+textarea.md { font-family: ui-monospace, Menlo, monospace; font-size: 14px; min-height: 280px; }
+.md-preview { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px; max-width: 68ch; }
+.prose img { max-width: 100%; border-radius: 10px; } .prose a { color: var(--p700); }
+.blk-callout { background: var(--p100); border-radius: 12px; padding: 4px 16px; margin: 14px 0; }
+.blk-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 14px 0; } .blk-photos p { display: contents; } .blk-photos img { width: 100%; height: 180px; object-fit: cover; }
+.blk-quote { margin: 16px 0; font-size: 20px; font-weight: 700; color: var(--p700); } .blk-quote p:last-child { font-size: 14px; font-weight: 400; color: var(--muted); }
+a.blk-button { display: inline-block; background: var(--p700); color: #fff !important; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: 700; }

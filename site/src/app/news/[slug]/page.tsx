@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import SafeImage from '@/components/SafeImage';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPost, getPostAy } from '@/lib/posts';
@@ -28,14 +29,13 @@ export default async function PostPage({ params }: Props) {
       <div className="text-sm font-medium uppercase tracking-wide text-p500"><Link href={`/news?category=${post.category}`} className="no-underline">{post.category}</Link> · {postDate(post.published_at)}</div>
       <h1 className="display mt-1 text-5xl">{post.title}</h1>
       {post.bodyName || post.author ? <p className="mt-2 text-muted">{[post.bodyName, post.author && `by ${post.author}`].filter(Boolean).join(' · ')}</p> : null}
-      {showCover ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={post.cover} alt="" className="mt-6 w-full rounded-xl" /> : null}
+      {showCover ? <SafeImage src={post.cover} alt="" ratio="16/9" sizes="(min-width: 768px) 768px, 100vw" className="mt-6 rounded-2xl" onMissing="hide" /> : null}
       <div className="prose-lkc mt-6" dangerouslySetInnerHTML={{ __html: html }} />
       {galleryPhotos.length ? (
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {galleryPhotos.map((p, i) => (
             <figure key={i}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={p.caption} loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
+              <SafeImage src={p.url} alt={p.caption} ratio="1/1" sizes="(min-width: 640px) 256px, 50vw" className="zoom rounded-xl" onMissing="hide" />
               {p.caption ? <figcaption className="mt-1 text-xs text-muted">{p.caption}</figcaption> : null}
             </figure>
           ))}

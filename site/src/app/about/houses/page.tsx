@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import PageHero from '@/components/blocks/PageHero';
 import { getBodies, getLeaders } from '@/lib/records';
 import Leaders from '@/components/Leaders';
 
@@ -11,12 +11,11 @@ export default async function Houses() {
   const { ay, leaders } = await getLeaders().catch(() => ({ ay: '', leaders: [] }));
   const houses = (bodies ?? []).filter((b) => b.level === 'House' && b.status === 'Active').sort((a, b) => a.name.localeCompare(b.name));
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <p className="text-sm"><Link className="underline" href="/student-life">Student life</Link></p>
-      <h1 className="display mt-1 text-5xl">House system</h1>
-      {ay ? <p className="mt-2 text-muted">{ay}</p> : null}
+    <>
+      <PageHero title="House System" back={{ label: 'About us', href: '/about/meet-the-team' }} intro={ay ? `House representatives, ${ay}` : undefined} />
+      <section className="band band-pale band-last" style={{ zIndex: 20 }}><div className="mx-auto max-w-6xl px-4">
       {!bodies ? <p className="mt-6 rounded-lg bg-red-100 px-3 py-2 text-bad">This list could not be loaded right now. Please try again in a minute.</p> : null}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {houses.map((h) => (
           <div key={h.name} className="rounded-xl border border-line bg-white p-4">
             <h2 className="text-lg font-bold text-p900">{h.name}</h2>
@@ -25,6 +24,7 @@ export default async function Houses() {
           </div>
         ))}
       </div>
-    </div>
+      </div></section>
+    </>
   );
 }

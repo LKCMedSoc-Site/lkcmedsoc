@@ -9,10 +9,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-p700 text-white border-p700 hover:bg-p900',
-        outline: 'bg-white text-p700 border-p700 hover:bg-p100',
+        default: 'bg-p900 text-white border-p900 hover:bg-p900',
+        outline: 'bg-white text-p900 border-p900 hover:bg-mist',
         danger: 'bg-white text-bad border-bad hover:bg-red-50',
-        onDark: 'bg-white text-p900 border-white hover:bg-p100',
+        onDark: 'bg-white text-p900 border-white hover:bg-mist',
       },
       size: { default: 'px-4 py-2.5', sm: 'px-3 py-1.5 text-sm', lg: 'px-6 py-3 text-lg' },
     },

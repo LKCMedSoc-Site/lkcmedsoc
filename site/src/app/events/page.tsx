@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { serverClient } from '@/lib/supabase';
-import EventCard from '@/components/EventCard';
+import { committeeMap, getBodies } from '@/lib/records';
 import type { PublicEvent } from '@/lib/events';
+import PageHero from '@/components/blocks/PageHero';
+import EventsBrowser from '@/components/EventsBrowser';
 
 export const metadata: Metadata = { title: 'Events' };
 export const revalidate = 60;
@@ -13,16 +15,15 @@ export default async function EventsPage() {
     if (error) throw error;
     events = (data ?? []) as PublicEvent[];
   } catch { failed = true; }
-
+  const committees = committeeMap(await getBodies().catch(() => []));
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="display text-5xl">Upcoming events</h1>
-      <p className="mt-2 text-muted">Open to everyone unless marked &ldquo;NTU students&rdquo;. You only sign in when you RSVP.</p>
-      <div className="mt-6 grid gap-3">
-        {failed ? <p className="rounded-lg bg-red-100 px-3 py-2 text-bad">Events could not be loaded right now. Please try again in a minute.</p>
-          : events.length ? events.map((ev) => <EventCard key={ev.id} ev={ev} />)
-          : <p className="text-muted">No upcoming events are open right now. Check back soon.</p>}
-      </div>
-    </div>
+    <>
+      <PageHero title="Events" intro="What is coming up across MedSoc. Open to everyone unless marked “NTU students”; you only sign in when you RSVP." />
+      <section className="band band-pale band-last" style={{ zIndex: 20 }}>
+        <div className="mx-auto max-w-6xl px-4">
+          {failed ? <p className="rounded-lg bg-red-100 px-3 py-2 text-bad">Events could not be loaded right now. Please try again in a minute.</p> : <EventsBrowser events={events} committees={committees} />}
+        </div>
+      </section>
+    </>
   );
 }
