@@ -52,25 +52,27 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .eyebrow-light { color: var(--color-p300); }
 .h-xl { font-family: var(--font-display); text-transform: uppercase; line-height: .92; letter-spacing: .01em; font-size: clamp(2.6rem, 6vw, 5rem); }
 .h-hero { font-family: var(--font-display); text-transform: uppercase; line-height: .88; letter-spacing: .005em; font-size: clamp(3.6rem, 12vw, 9.5rem); }
-.link-arrow { display: inline-flex; align-items: center; gap: .4rem; font-weight: 700; color: var(--color-p700); text-decoration: none; }
-.link-arrow::after { content: '→'; transition: transform .25s ease; }
-.link-arrow:hover::after { transform: translateX(4px); }
+.link-arrow { font-weight: 700; color: var(--color-p700); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .25em; text-decoration-color: var(--color-p300); transition: text-decoration-color .2s cubic-bezier(.23,1,.32,1); }
+.link-arrow:hover { text-decoration-color: var(--color-p700); }
+.press { transition: transform .16s cubic-bezier(.23,1,.32,1), background-color .2s ease, color .2s ease; }
+.press:active { transform: scale(.97); }
 
 /* Motion. Everything below switches itself off for people who ask for reduced motion. */
 @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
-  .reveal { opacity: 0; transform: translateY(28px); transition: opacity .85s cubic-bezier(.2,.7,.2,1), transform .85s cubic-bezier(.2,.7,.2,1); }
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s cubic-bezier(.23,1,.32,1), transform .6s cubic-bezier(.23,1,.32,1); }
   .reveal.in { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .rise { animation: rise .95s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--d, 0ms); }
+  .rise { animation: rise .8s cubic-bezier(.23,1,.32,1) both; animation-delay: var(--d, 0ms); }
   @keyframes rise { from { opacity: 0; transform: translateY(42px); } to { opacity: 1; transform: none; } }
   .kenburns { animation: kenburns 24s ease-out both; }
   @keyframes kenburns { from { transform: scale(1.1); } to { transform: scale(1); } }
   .marquee-track { animation: marquee 45s linear infinite; }
   .marquee:hover .marquee-track { animation-play-state: paused; }
   @keyframes marquee { to { transform: translateX(-50%); } }
-  .zoom img { transition: transform 1s cubic-bezier(.2,.7,.2,1); }
-  .zoom:hover img { transform: scale(1.06); }
-  .nudge { animation: nudge 2.2s ease-in-out infinite; }
-  @keyframes nudge { 50% { transform: translateY(6px); } }
+  .zoom img { transition: transform .6s cubic-bezier(.23,1,.32,1); }
+}
+/* Hover effects only where there is a real mouse; on phones a tap would leave them stuck on. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .zoom:hover img { transform: scale(1.04); }
 }

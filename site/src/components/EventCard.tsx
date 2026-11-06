@@ -15,8 +15,8 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export default function EventCard({ ev }: { ev: PublicEvent }) {
   const d = ymd(ev.start_date);
   return (
-    <Link href={`/events/${ev.id}`} className="group flex gap-4 rounded-2xl border border-line bg-white p-4 no-underline transition hover:-translate-y-0.5 hover:border-p500 hover:shadow-lg">
-      <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-p900 text-center text-white">
+    <Link href={`/events/${ev.id}`} className="group flex gap-4 rounded-lg border border-line bg-white p-4 no-underline transition-colors hover:border-p500">
+      <div className="grid h-20 w-20 shrink-0 place-items-center rounded-md bg-p900 text-center text-white">
         {d ? <div><div className="display text-4xl leading-none">{d[2]}</div><div className="mt-1 text-xs font-bold uppercase tracking-widest text-p300">{MONTHS[d[1] - 1]}</div></div> : <div className="text-xs text-p300">TBC</div>}
       </div>
       <div className="min-w-0">

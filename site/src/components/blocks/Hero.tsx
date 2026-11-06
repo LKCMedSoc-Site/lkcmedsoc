@@ -23,11 +23,10 @@ export default function Hero({
         </h1>
         {tagline ? <p className="rise mt-6 max-w-2xl text-lg text-p100 md:text-xl" style={{ ['--d' as string]: '650ms' }}>{tagline}</p> : null}
         <div className="rise mt-9 flex flex-wrap gap-3" style={{ ['--d' as string]: '800ms' }}>
-          {primaryLabel ? <Link href={primaryHref} className="rounded-full bg-white px-7 py-3.5 font-bold text-p900 no-underline transition hover:bg-p100">{primaryLabel}</Link> : null}
-          {secondaryLabel ? <Link href={secondaryHref} className="rounded-full border border-white/60 px-7 py-3.5 font-bold text-white no-underline transition hover:bg-white/10">{secondaryLabel}</Link> : null}
+          {primaryLabel ? <Link href={primaryHref} className="press rounded-full bg-white px-7 py-3.5 font-bold text-p900 no-underline hover:bg-p100">{primaryLabel}</Link> : null}
+          {secondaryLabel ? <Link href={secondaryHref} className="press rounded-full border border-white/60 px-7 py-3.5 font-bold text-white no-underline hover:bg-white/10">{secondaryLabel}</Link> : null}
         </div>
       </div>
-      <div aria-hidden className="nudge absolute bottom-6 right-6 hidden text-2xl text-white/70 md:block">↓</div>
     </section>
   );
 }
