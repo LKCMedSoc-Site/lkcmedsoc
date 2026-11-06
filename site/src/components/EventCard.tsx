@@ -25,7 +25,7 @@ export default function EventCard({ ev }: { ev: PublicEvent }) {
         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
           {ev.body ? <span className="text-muted">{ev.body}</span> : null}
           <SpotsPill ev={ev} />
-          {ev.visibility === 'Members' ? <span className="rounded-full bg-p100 px-2 py-0.5 text-xs text-p700">NTU students</span> : null}
+          {ev.visibility === 'Members' ? <span className="rounded-full bg-mist px-2 py-0.5 text-xs text-p900">NTU students</span> : null}
         </div>
       </div>
     </Link>

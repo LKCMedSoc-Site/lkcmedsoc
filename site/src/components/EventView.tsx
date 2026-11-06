@@ -106,7 +106,7 @@ export default function EventView({ id, initial }: { id: string; initial: Public
           <h1 className="display mt-1 text-5xl text-white">{ev.title}</h1>
           <div className="mt-3 text-lg">{whenText(ev)}</div>
           {ev.venue ? <div className="text-p300">{ev.venue}</div> : null}
-          {ev.visibility === 'Members' ? <span className="mt-3 inline-block rounded-full bg-p100 px-2 py-0.5 text-xs text-p700">For NTU students</span> : null}
+          {ev.visibility === 'Members' ? <span className="mt-3 inline-block rounded-full bg-mist px-2 py-0.5 text-xs text-p900">For NTU students</span> : null}
         </div>
       </div>
       <div className="mx-auto max-w-3xl space-y-5 px-4 py-8">
@@ -124,7 +124,7 @@ export default function EventView({ id, initial }: { id: string; initial: Public
 
         {ticketFor ? (
           <div className="space-y-3 rounded-xl border border-line bg-p50 p-4" data-testid="ticket">
-            <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${ticketFor.status === 'Waitlist' ? 'bg-amber-100 text-amber-800' : 'bg-p700 text-white'}`}>{ticketFor.status === 'Waitlist' ? 'On the waitlist' : 'You are going'}</span>
+            <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${ticketFor.status === 'Waitlist' ? 'bg-amber-100 text-amber-800' : 'bg-p900 text-white'}`}>{ticketFor.status === 'Waitlist' ? 'On the waitlist' : 'You are going'}</span>
             {ticketFor.name ? <div>{ticketFor.name}</div> : null}
             <p className="text-sm text-muted">{ticketFor.status === 'Waitlist' ? 'We will move you up automatically if a place opens, and you can still check in on the day.' : 'Show this code at the door, or scan the event screen when you arrive.'}</p>
             <div className="inline-block rounded-xl border border-line bg-white p-2"><QRCodeSVG value={ticketFor.code} size={200} /></div>
@@ -152,7 +152,7 @@ export default function EventView({ id, initial }: { id: string; initial: Public
                 <h3 className="text-lg font-bold">Not from NTU? Register as a guest</h3>
                 <input className={input} placeholder="Full name" autoComplete="name" value={g.name} onChange={(e) => setG({ ...g, name: e.target.value })} aria-label="Full name" />
                 <input className={input} type="email" placeholder="Email" autoComplete="email" value={g.email} onChange={(e) => setG({ ...g, email: e.target.value })} aria-label="Email" />
-                <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1 size-4 accent-p700" checked={g.consent} onChange={(e) => setG({ ...g, consent: e.target.checked })} /><span>{NOTICE} Questions: lkcmedsoc@gmail.com.</span></label>
+                <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-1 size-4 accent-p900" checked={g.consent} onChange={(e) => setG({ ...g, consent: e.target.checked })} /><span>{NOTICE} Questions: lkcmedsoc@gmail.com.</span></label>
                 <Button type="submit" disabled={busy}>Register as a guest</Button>
               </form>
             ) : null}

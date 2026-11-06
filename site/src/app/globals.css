@@ -8,15 +8,21 @@
 
 /* Brand tokens: change colours and fonts here and the whole site follows. */
 @theme {
-  --color-p900: #3a0a2e;
-  --color-p700: #5b1348;
-  --color-p500: #86306f;
-  --color-p300: #c79bbd;
-  --color-p100: #f1e4ee;
-  --color-p50: #faf5f9;
-  --color-ink: #26121f;
-  --color-muted: #7a6674;
-  --color-line: #e3d3df;
+  --color-p950: #2a0628;   /* the dark purple (footer): main dark */
+  --color-p900: #4d0a49;   /* deep plum */
+  --color-p500: #8e2a88;   /* magenta */
+  --color-p300: #d3a6cf;   /* soft orchid */
+  --color-p50: #f5eff5;    /* pale */
+  --color-lilac: #c3a1f2;
+  --color-mist: #ebe1fa;
+  --color-pink: #ff9fe6;
+  --color-ink: #2a0f28;
+  --color-muted: #6a5a69;
+  --color-line: #ddd2dc;
+  --color-silver: #e8e6eb;
+  /* yellow is reserved for notifications and anything important */
+  --color-acid: #e9ee2e;
+  --color-p50: #f5eff5;
   --color-ok: #1d7a4d;
   --color-bad: #b3261e;
   --font-sans: 'DIN', 'DIN Alternate', 'Barlow', 'Segoe UI', system-ui, sans-serif;
@@ -24,10 +30,14 @@
 }
 
 html { scroll-behavior: smooth; }
-body { font-family: var(--font-sans); color: var(--color-ink); background: #fff; line-height: 1.5; }
+body { font-family: var(--font-sans); color: var(--color-ink); background: #fff; line-height: 1.5; font-variant-numeric: tabular-nums; }
+::selection { background: var(--color-p900); color: #fff; }
+input, textarea { caret-color: var(--color-p500); }
+html { scrollbar-color: var(--color-p300) var(--color-p50); }
+h1, h2, h3 { text-wrap: balance; }
 /* In a layer so Tailwind classes like text-white can override it (unlayered CSS always wins, which hid the home hero title). */
 @layer base { h1, h2, h3 { color: var(--color-p900); } }
-.display { font-family: var(--font-display); letter-spacing: .02em; text-transform: uppercase; line-height: 1; }
+.display { font-family: var(--font-display); letter-spacing: -.01em; word-spacing: -.08em; text-transform: uppercase; line-height: 1; }
 /* DIN Engschrift keeps 0.288em of empty room under capitals (for descenders) and capitals are only 0.712em tall,
    so capital-only text sits high in its box. Dropping the text by (1 - 0.712) / 2 = 0.144em centres it,
    and the negative bottom margin gives the space back so layout stays as it was. */
@@ -39,10 +49,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .prose-lkc > * + * { margin-top: 1em; }
 .prose-lkc h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.6em; }
 .prose-lkc h3 { font-size: 1.2rem; font-weight: 700; margin-top: 1.4em; }
-.prose-lkc a { color: var(--color-p700); text-decoration: underline; }
+.prose-lkc a { color: var(--color-p900); text-decoration: underline; }
 .prose-lkc ul { list-style: disc; padding-left: 1.4em; }
 .prose-lkc ol { list-style: decimal; padding-left: 1.4em; }
-.prose-lkc blockquote { border-left: 4px solid var(--color-p300); padding-left: 1em; color: var(--color-muted); }
+.prose-lkc blockquote { background: var(--color-p50); border-radius: .75rem; padding: 1em 1.25em; color: var(--color-ink); }
+.prose-lkc .blk-callout { background: var(--color-mist); border-radius: 1rem; padding: .25rem 1.25rem; }
+.prose-lkc .blk-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .5rem; }
+.prose-lkc .blk-photos p { display: contents; margin: 0; }
+.prose-lkc .blk-photos img { width: 100%; height: 12rem; object-fit: cover; border-radius: .75rem; }
+.prose-lkc .blk-quote { border: 0; padding: 0; margin: 1.5em 0; font-family: var(--font-display); text-transform: uppercase; font-size: 2.2rem; line-height: .95; color: var(--color-p900); max-width: 24ch; }
+.prose-lkc .blk-quote p:last-child { font-family: var(--font-sans); text-transform: none; font-size: 1rem; line-height: 1.4; color: var(--color-muted); margin-top: .6em; }
+.prose-lkc a.blk-button { display: inline-block; background: var(--color-pink); color: var(--color-p950); padding: .75rem 1.5rem; border-radius: 999px; font-weight: 700; text-decoration: none; transition: background-color .2s ease, transform .16s cubic-bezier(.23,1,.32,1); }
+.prose-lkc a.blk-button:hover { background: var(--color-p900); color: #fff; }
+.prose-lkc a.blk-button:active { transform: scale(.97); }
 .prose-lkc img { border-radius: .75rem; max-width: 100%; height: auto; }
 .prose-lkc table { border-collapse: collapse; width: 100%; font-size: .9rem; }
 .prose-lkc th, .prose-lkc td { border-bottom: 1px solid var(--color-line); padding: .4rem .6rem; text-align: left; }
@@ -50,10 +69,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* ---------- Look and feel (v2) ---------- */
 .eyebrow { font-size: .8rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--color-p500); }
 .eyebrow-light { color: var(--color-p300); }
-.h-xl { font-family: var(--font-display); text-transform: uppercase; line-height: .92; letter-spacing: .01em; font-size: clamp(2.6rem, 6vw, 5rem); }
-.h-hero { font-family: var(--font-display); text-transform: uppercase; line-height: .88; letter-spacing: .005em; font-size: clamp(3.6rem, 12vw, 9.5rem); }
-.link-arrow { font-weight: 700; color: var(--color-p700); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .25em; text-decoration-color: var(--color-p300); transition: text-decoration-color .2s cubic-bezier(.23,1,.32,1); }
-.link-arrow:hover { text-decoration-color: var(--color-p700); }
+.h-xl { font-family: var(--font-display); text-transform: uppercase; line-height: .9; letter-spacing: -.012em; word-spacing: -.08em; font-size: clamp(2.6rem, 6vw, 5rem); }
+.h-hero { font-family: var(--font-display); text-transform: uppercase; line-height: .88; letter-spacing: -.012em; word-spacing: -.08em; font-size: clamp(3.6rem, 12vw, 9.5rem); }
+.link-arrow { font-weight: 700; color: var(--color-p900); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .25em; text-decoration-color: var(--color-p300); transition: text-decoration-color .2s cubic-bezier(.23,1,.32,1); }
+.link-arrow:hover { text-decoration-color: var(--color-p900); }
 .press { transition: transform .16s cubic-bezier(.23,1,.32,1), background-color .2s ease, color .2s ease; }
 .press:active { transform: scale(.97); }
 
@@ -76,3 +95,36 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .zoom:hover img { transform: scale(1.04); }
 }
+
+/* ---------- v3: light chrome, clearer photography ---------- */
+.nav-link { position: relative; padding: .5rem .8rem; color: var(--color-p50); text-decoration: none; font-weight: 500; transition: color .2s ease; }
+.nav-link::after { content: ''; position: absolute; left: .85rem; right: .85rem; bottom: .2rem; height: 2px; background: var(--color-p300); transform: scaleX(0); transform-origin: left; transition: transform .3s cubic-bezier(.23,1,.32,1); }
+.nav-link:hover::after, .nav-link[aria-current='page']::after { transform: scaleX(1); }
+.quote-mark { font-family: var(--font-display); font-size: 7rem; line-height: .6; color: var(--color-p300); }
+
+/* ---------- v4: slanted bands (the stripes of the brand palette) ---------- */
+:root { --s: clamp(22px, 6.5vw, 104px); --gap: clamp(2.5rem, 7vw, 7rem); }
+/* Each band is cut on a slant that rises to the right; the next band tucks up under the cut. */
+.band { position: relative; clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--s)), 0 100%); padding-block: var(--gap); padding-bottom: calc(var(--gap) + var(--s)); }
+.band + .band { margin-top: calc(var(--s) * -1); padding-top: calc(var(--gap) + var(--s)); }
+body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(--s); }
+.band-plum { background: var(--color-p950); color: var(--color-p50); }
+.band-grape { background: var(--color-p900); color: var(--color-mist); }
+.band-magenta { background: var(--color-p500); color: #fff; }
+.band-pale { background: var(--color-p50); color: var(--color-ink); }
+.band-grey { background: var(--color-silver); color: var(--color-ink); }
+.band-mist { background: var(--color-mist); color: var(--color-ink); }
+.band-pink { background: var(--color-pink); color: var(--color-p900); }
+.band-plum h2, .band-grape h2, .band-magenta h2 { color: #fff; }
+
+.band-mist h2, .band-pink h2 { color: var(--color-p900); }
+.slab { position: relative; }
+.slab::before { content: ''; position: absolute; inset: 0; background: var(--color-lilac); clip-path: polygon(0 0, 100% 0, 100% 84%, 0 100%); transform: translate(-18px, 18px); }
+.slab > * { position: relative; }
+/* Photos share the stripe angle */
+.slant { clip-path: polygon(0 0, 100% 0, 100% 84%, 0 100%); }
+.slant-both { clip-path: polygon(0 12%, 100% 0, 100% 88%, 0 100%); }
+.hero-title { font-family: var(--font-display); text-transform: uppercase; line-height: .84; font-size: clamp(3.8rem, 11.5vw, 9rem); letter-spacing: -.014em; word-spacing: -.08em; }
+.row-link .row-title { background: linear-gradient(currentColor, currentColor) 0 100% / 0 .09em no-repeat; transition: background-size .5s cubic-bezier(.23,1,.32,1); }
+@media (hover: hover) { .row-link:hover .row-title { background-size: 100% .09em; } .row-link:hover .row-arrow { transform: translateX(6px); } }
+.row-arrow { transition: transform .3s cubic-bezier(.23,1,.32,1); }

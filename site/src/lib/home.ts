@@ -13,9 +13,9 @@ export const HOME = {
   heroTagline: 'Through academic support, welfare initiatives, and vibrant events, MedSoc holistically empowers doctors whom you and I would like caring for us.',
   intro: 'We are the student organisation representing all medical students at LKCMedicine.',
   whatWeDo: [
-    { title: 'Service', text: 'We act as a bridge between students and the school, while driving meaningful service both locally and overseas.', href: '/student-life/local-cips' },
+    { title: 'Service', text: 'We act as a bridge between students and the school, while driving meaningful service both locally and overseas.', href: '/student-groups/local-community-involvement' },
     { title: 'Events', text: 'We bring the community together through vibrant events that foster connection, celebration, and well-being.', href: '/events' },
-    { title: 'Academic', text: 'We support learning through career talks, senior-junior teaching, and accessible academic resources.', href: '/student-life' },
+    { title: 'Academic', text: 'We support learning through career talks, senior-junior teaching, and accessible academic resources.', href: '/student-groups' },
   ],
   testimonials: [
     { quote: 'My journey at LKCMedicine has been an incredible experience filled with growth and inspiration.', who: 'Xavier Ong Chong An, Class of 2028' },

@@ -183,7 +183,7 @@
     try { me = must(await sb.rpc('whoami')); } catch (e) { toast(friendly(e), true); loginView(); return; }
     $who.replaceChildren(h('span', null, me.name || me.email), h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password'), h('button', { class: 'who-btn', onclick: async function () { await sb.auth.signOut(); me = null; loginView(); } }, 'Sign out'));
     var tabs = [['record', 'My record']];
-    if (me.can_manage || me.is_admin) tabs.push(['bodies', 'My bodies']);
+    if (me.can_manage || me.is_admin) tabs.push(['bodies', 'My bodies'], ['pages', 'Group pages']);
     if (me.is_admin) tabs.push(['admin', 'Admin']);
     if (!tabs.some(function (t) { return t[0] === tab; })) tab = 'record';
     $tabs.hidden = false;
@@ -192,6 +192,7 @@
     }));
     if (tab === 'record') recordView();
     else if (tab === 'bodies') rosterView();
+    else if (tab === 'pages') window.GroupPages.view({ h: h, sb: sb, must: must, run: run, toast: toast, show: show, field: field, friendly: friendly });
     else adminView();
   }
 

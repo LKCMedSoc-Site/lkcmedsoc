@@ -10,3 +10,7 @@ next-env.d.ts
 _to_delete/
 .fuse_hidden*
 fonts/
+
+# Local tooling and editor junk
+.claude/
+.fuse_hidden*

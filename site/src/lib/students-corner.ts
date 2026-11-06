@@ -31,4 +31,12 @@ export const TILE_GROUPS: TileGroup[] = [
       { label: 'My events', note: 'Events you have signed up for.', href: `${PORTAL}/#/mine` },
     ],
   },
+  {
+    title: 'Policies and guides',
+    tiles: [
+      { label: 'MedSoc policy', note: 'How MedSoc and its CCAs operate.', href: '/policy' },
+      { label: 'Work with us', note: 'Join a committee or CCA.', href: '/about/work-with-us' },
+      { label: 'Honour roll', note: 'Past ExCo teams, year by year.', href: '/about/honour-roll' },
+    ],
+  },
 ];

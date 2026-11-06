@@ -17,9 +17,9 @@ export default function SafeImage({
   if (missing && onMissing === 'hide') return null;
   const ours = !!src && /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//.test(src);
   return (
-    <div className={`relative overflow-hidden bg-p100 ${className}`} style={ratio ? { aspectRatio: ratio } : undefined}>
+    <div className={`relative overflow-hidden bg-mist ${className}`} style={ratio ? { aspectRatio: ratio } : undefined}>
       {missing ? (
-        <div aria-hidden className="absolute inset-0 grid place-items-center bg-gradient-to-br from-p700 to-p900">
+        <div aria-hidden className="absolute inset-0 grid place-items-center bg-gradient-to-br from-p900 to-p900">
           <span className="display text-3xl text-p300/40">LKCMedSoc</span>
         </div>
       ) : (

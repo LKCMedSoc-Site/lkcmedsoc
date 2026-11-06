@@ -46,7 +46,7 @@ PLASMIC.registerComponent(Hero, {
     title: { type: 'string', defaultValue: 'We are LKCMedSoc' }, tagline: { type: 'string' },
     image: { type: 'imageUrl', displayName: 'Photo' },
     primaryLabel: { type: 'string', defaultValue: 'See events' }, primaryHref: { type: 'string', defaultValue: '/events' },
-    secondaryLabel: { type: 'string', defaultValue: 'Meet the team' }, secondaryHref: { type: 'string', defaultValue: '/about' },
+    secondaryLabel: { type: 'string', defaultValue: 'Meet the team' }, secondaryHref: { type: 'string', defaultValue: '/about/meet-the-team' },
   },
   importPath: '@/components/blocks/Hero',
 });
