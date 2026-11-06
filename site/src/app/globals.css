@@ -28,6 +28,10 @@ body { font-family: var(--font-sans); color: var(--color-ink); background: #fff;
 /* In a layer so Tailwind classes like text-white can override it (unlayered CSS always wins, which hid the home hero title). */
 @layer base { h1, h2, h3 { color: var(--color-p900); } }
 .display { font-family: var(--font-display); letter-spacing: .02em; text-transform: uppercase; line-height: 1; }
+/* DIN Engschrift keeps 0.288em of empty room under capitals (for descenders) and capitals are only 0.712em tall,
+   so capital-only text sits high in its box. Dropping the text by (1 - 0.712) / 2 = 0.144em centres it,
+   and the negative bottom margin gives the space back so layout stays as it was. */
+.display, .h-xl { padding-top: .144em; margin-bottom: -.144em; }
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--color-p500); outline-offset: 2px; }
 
 /* Rendered markdown (news posts, content pages) */

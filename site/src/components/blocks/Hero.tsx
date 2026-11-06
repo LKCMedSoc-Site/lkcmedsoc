@@ -18,7 +18,7 @@ export default function Hero({
       <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-40 md:pb-24">
         <h1 className="h-hero text-white">
           {words.map((w, i) => (
-            <span key={i} className="mr-[.22em] inline-block overflow-hidden align-bottom"><span className="rise inline-block" style={{ ['--d' as string]: `${150 + i * 110}ms` }}>{w}</span></span>
+            <span key={i} className="mr-[.22em] inline-block overflow-hidden align-bottom"><span className="rise relative top-[.144em] inline-block" style={{ ['--d' as string]: `${150 + i * 110}ms` }}>{w}</span></span>
           ))}
         </h1>
         {tagline ? <p className="rise mt-6 max-w-2xl text-lg text-p100 md:text-xl" style={{ ['--d' as string]: '650ms' }}>{tagline}</p> : null}
