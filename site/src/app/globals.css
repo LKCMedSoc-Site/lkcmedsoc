@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+
+@font-face { font-family: 'DIN'; src: url('https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'DIN'; src: url('https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'DIN'; src: url('https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+/* DIN 1451 LT Pro Engschrift: the condensed face used for big headings on the old site */
+@font-face { font-family: 'DIN Engschrift'; src: url('https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN1451-Engschrift.otf') format('opentype'); font-weight: 400; font-display: swap; }
+
+/* Brand tokens: change colours and fonts here and the whole site follows. */
+@theme {
+  --color-p900: #3a0a2e;
+  --color-p700: #5b1348;
+  --color-p500: #86306f;
+  --color-p300: #c79bbd;
+  --color-p100: #f1e4ee;
+  --color-p50: #faf5f9;
+  --color-ink: #26121f;
+  --color-muted: #7a6674;
+  --color-line: #e3d3df;
+  --color-ok: #1d7a4d;
+  --color-bad: #b3261e;
+  --font-sans: 'DIN', 'DIN Alternate', 'Barlow', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'DIN Engschrift', 'DIN', 'Arial Narrow', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-sans); color: var(--color-ink); background: #fff; line-height: 1.5; }
+h1, h2, h3 { color: var(--color-p900); }
+.display { font-family: var(--font-display); letter-spacing: .02em; text-transform: uppercase; line-height: 1; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--color-p500); outline-offset: 2px; }
+
+/* Rendered markdown (news posts, content pages) */
+.prose-lkc { max-width: 68ch; }
+.prose-lkc > * + * { margin-top: 1em; }
+.prose-lkc h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.6em; }
+.prose-lkc h3 { font-size: 1.2rem; font-weight: 700; margin-top: 1.4em; }
+.prose-lkc a { color: var(--color-p700); text-decoration: underline; }
+.prose-lkc ul { list-style: disc; padding-left: 1.4em; }
+.prose-lkc ol { list-style: decimal; padding-left: 1.4em; }
+.prose-lkc blockquote { border-left: 4px solid var(--color-p300); padding-left: 1em; color: var(--color-muted); }
+.prose-lkc img { border-radius: .75rem; max-width: 100%; height: auto; }
+.prose-lkc table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.prose-lkc th, .prose-lkc td { border-bottom: 1px solid var(--color-line); padding: .4rem .6rem; text-align: left; }

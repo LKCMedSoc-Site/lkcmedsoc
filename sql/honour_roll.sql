@@ -1,0 +1,2 @@
+-- Superseded. The honour roll now reads ExCo teams from the existing records views, so no table is needed.
+-- Run ay_layer.sql instead (it also drops the earlier draft table if it was created and is empty).

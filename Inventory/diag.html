@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>LKCMedSoc Inventory – Connection check</title>
+<style>
+  :root { color-scheme: light dark; --bg:#fff; --fg:#1b1b1f; --mut:#6b6b76; --line:#d9d9e0; --acc:#6b2fa3; --ok:#14804a; --bad:#b3261e; --warn:#a15c00; --card:#f6f5f9; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16121d; --fg:#eceaf2; --mut:#a09cae; --line:#3a3348; --acc:#c79bf0; --ok:#5fd38d; --bad:#ff8a80; --warn:#ffc266; --card:#201a2b; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:20px 16px 60px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  p { margin:6px 0; }
+  .mut { color:var(--mut); font-size:13px; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+  button { font:inherit; padding:11px 16px; border-radius:10px; border:1px solid var(--acc); background:var(--acc); color:#fff; cursor:pointer; }
+  @media (prefers-color-scheme: dark) { button { color:#16121d; } }
+  button.sec { background:transparent; color:var(--acc); }
+  button:disabled { opacity:.5; cursor:default; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:12px 0; }
+  .card h2 { font-size:15px; margin:0 0 6px; }
+  .st { font-weight:600; }
+  .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+  pre { margin:8px 0 0; white-space:pre-wrap; word-break:break-word; font:12px/1.5 ui-monospace,Menlo,Consolas,monospace; }
+  textarea { width:100%; height:240px; font:12px/1.4 ui-monospace,Menlo,Consolas,monospace; background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:10px; padding:10px; }
+  label { display:flex; gap:8px; align-items:center; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Connection check</h1>
+  <p class="mut">Tests how this device reaches the inventory server. Nothing is changed or saved. It takes about 2 minutes (the optional long test takes 3 more). Keep this page open and in front while it runs, then press <b>Copy report</b> and send the text. The "reached script after" figures compare your device's clock with Google's, so treat them as approximate: what matters is how they change from one request to the next.</p>
+
+  <div class="row">
+    <button id="runBtn">Run the checks</button>
+    <button id="soakBtn" class="sec">Long test (3 min)</button>
+    <button id="idleBtn" class="sec">After-idle test (10 min)</button>
+    <button id="copyBtn" class="sec">Copy report</button>
+  </div>
+  <label class="mut" style="display:block;margin-bottom:10px">Optional: link to a Google Sheet tab published as CSV (to compare against the server)
+    <input id="csvUrl" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=0&amp;single=true&amp;output=csv" style="display:block;width:100%;margin-top:4px;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:13px ui-monospace,Menlo,monospace"></label>
+  <label class="mut"><input type="checkbox" id="useToken" checked> Also test as signed in, if this browser is signed in to the inventory site on this address</label>
+
+  <div id="out"></div>
+
+  <h2 style="font-size:15px;margin-top:22px">Report (send this)</h2>
+  <textarea id="report" readonly placeholder="The report appears here as tests finish."></textarea>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var SCRIPT_B_URL = "https://script.google.com/macros/s/AKfycbzptAjI-Fp2zc5Q9Zc9aDAIVcbcUklES3W5cmrONN6GiBBpwLh0cSpSTrNc6O9I0XqggA/exec";
+  var TOKEN_KEY = 'lkc_google_token_v1';
+  var TIMEOUT_MS = 60000;
+  var $ = function (id) { return document.getElementById(id); };
+  var lines = [];
+  var running = false;
+
+  function log(s) { lines.push(s); $('report').value = lines.join('\n'); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function ts() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+  function ms(n) { return n == null ? '-' : (n >= 1000 ? (n / 1000).toFixed(1) + 's' : Math.round(n) + 'ms'); }
+  function sleep(t) { return new Promise(function (r) { setTimeout(r, t); }); }
+
+  function card(title) {
+    var c = document.createElement('div'); c.className = 'card';
+    var h = document.createElement('h2'); h.textContent = title; c.appendChild(h);
+    var st = document.createElement('div'); st.className = 'st mut'; st.textContent = 'waiting…'; c.appendChild(st);
+    var pre = document.createElement('pre'); c.appendChild(pre);
+    $('out').appendChild(c);
+    return {
+      status: function (t, cls) { st.textContent = t; st.className = 'st ' + (cls || 'mut'); },
+      line: function (t) { pre.textContent += (pre.textContent ? '\n' : '') + t; }
+    };
+  }
+
+  function getToken() {
+    if (!$('useToken').checked) return null;
+    try {
+      var s = JSON.parse(localStorage.getItem(TOKEN_KEY) || 'null');
+      if (s && s.token && s.exp > Date.now() / 1000 + 60) return s.token;
+    } catch (e) {}
+    return null;
+  }
+
+  // One timed request. Never throws; returns a plain result object.
+  function timed(url, opts, kind) {
+    var t0 = performance.now();
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
+    opts = opts || {}; opts.signal = ctrl.signal;
+    var res = { ok: false, kind: kind || '', start: ts(), sentAt: Date.now() };
+    return fetch(url, opts).then(function (r) {
+      res.headersMs = performance.now() - t0;
+      res.status = r.status; res.redirected = r.redirected;
+      try { res.host = new URL(r.url).host; } catch (e) {}
+      if (opts.mode === 'no-cors') { res.ok = true; res.totalMs = res.headersMs; return res; }
+      return r.text().then(function (t) {
+        res.totalMs = performance.now() - t0; res.bytes = t.length;
+        if (!r.ok) { res.err = 'HTTP ' + r.status; res.snippet = t.slice(0, 120).replace(/\s+/g, ' '); return res; }
+        if (kind === 'raw') { res.ok = t.length > 0; if (!res.ok) res.err = 'empty reply'; return res; }
+        try { res.json = JSON.parse(t); res.ok = true; }
+        catch (e) { res.err = 'reply was not data'; res.snippet = t.slice(0, 120).replace(/\s+/g, ' '); }
+        return res;
+      });
+    }).catch(function (e) {
+      res.totalMs = performance.now() - t0;
+      res.err = (e && e.name === 'AbortError') ? 'no reply after ' + (TIMEOUT_MS / 1000) + 's (timed out)' : ((e && e.name) || 'Error') + ': ' + ((e && e.message) || 'blocked or no connection');
+      return res;
+    }).then(function (r) { clearTimeout(timer); return r; });
+  }
+
+  function post(action, payload, token) {
+    payload = payload || {};
+    payload.diag = true;               // ask the server to report its own timing
+    payload.clientTs = Date.now();     // when this device sent the request
+    var body = { action: action, payload: payload };
+    if (token) body.idToken = token;
+    return timed(SCRIPT_B_URL, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body), redirect: 'follow', credentials: 'omit'
+    }, action);
+  }
+
+  function describe(r) {
+    var s = r.start + '  ' + (r.ok ? 'ok ' : 'FAIL ') + ms(r.totalMs);
+    if (r.headersMs != null && r.totalMs != null && Math.abs(r.totalMs - r.headersMs) > 300) s += ' (headers ' + ms(r.headersMs) + ')';
+    if (r.status) s += '  HTTP ' + r.status;
+    if (r.redirected) s += '  redirected';
+    if (r.bytes != null) s += '  ' + r.bytes + ' bytes';
+    if (r.err) s += '  – ' + r.err + (r.snippet ? ' [' + r.snippet + ']' : '');
+    var d = r.json && r.json.data && (r.json.data._diag || (r.json.data.pong ? r.json.data : null));
+    if (d && d.scriptStartedAt && d.clientTs) {
+      var before = d.scriptStartedAt - d.clientTs;           // device send -> script started (includes any clock difference)
+      var back = r.totalMs - before - d.execMs;               // everything after the script finished
+      s += '\n      server: reached script after ~' + ms(Math.max(0, before)) + ', ran ' + ms(d.execMs) + (back >= 0 ? ', back to device ~' + ms(back) : '') +
+           (d.idleBeforeMs != null ? ', idle before this request ' + (d.idleBeforeMs >= 60000 ? Math.round(d.idleBeforeMs / 60000) + ' min' : Math.round(d.idleBeforeMs / 1000) + ' s') : ', idle gap unknown');
+    } else if (r.ok && r.json && r.json.data) {
+      s += '\n      (server timing not available: Script B is the older version)';
+    }
+    return s;
+  }
+
+  function summarize(results, treatErrorJsonAsOk) {
+    var okTimes = [], fails = 0;
+    results.forEach(function (r) {
+      var good = r.ok && !(r.json && r.json.error && !treatErrorJsonAsOk);
+      if (good) okTimes.push(r.totalMs); else fails++;
+    });
+    okTimes.sort(function (a, b) { return a - b; });
+    var med = okTimes.length ? okTimes[Math.floor(okTimes.length / 2)] : null;
+    return { n: results.length, ok: okTimes.length, fails: fails, min: okTimes[0], med: med, max: okTimes[okTimes.length - 1] };
+  }
+  function sumText(s) {
+    return s.ok + '/' + s.n + ' ok' + (s.ok ? ' (fastest ' + ms(s.min) + ', typical ' + ms(s.med) + ', slowest ' + ms(s.max) + ')' : '');
+  }
+
+  // Runs a sequence of requests, showing each result. fn() returns a promise of a result.
+  function series(title, count, fn, treatErrorJsonAsOk, gapMs) {
+    var c = card(title);
+    log('\n== ' + title + ' ==');
+    var results = [];
+    c.status('running…');
+    var p = Promise.resolve();
+    for (var i = 0; i < count; i++) {
+      p = p.then(function () { return fn(); }).then(function (r) {
+        results.push(r);
+        var d = describe(r); c.line(d); log(d);
+        c.status('running… ' + results.length + '/' + count);
+        return sleep(gapMs || 400);
+      });
+    }
+    return p.then(function () {
+      var s = summarize(results, treatErrorJsonAsOk);
+      var t = sumText(s);
+      c.status(t, s.fails === 0 ? 'ok' : (s.ok === 0 ? 'bad' : 'warn'));
+      log('RESULT: ' + t);
+      return s;
+    });
+  }
+
+  function environment() {
+    var c = card('This device');
+    log('LKCMedSoc connection check  ' + new Date().toString());
+    log('== This device ==');
+    var nav = navigator, conn = nav.connection || {};
+    var info = [
+      'Page address: ' + location.href.split('#')[0],
+      'Browser: ' + nav.userAgent,
+      'Online flag: ' + nav.onLine,
+      'Connection type: ' + (conn.effectiveType || 'unknown') + (conn.downlink ? ', ~' + conn.downlink + ' Mbps' : '') + (conn.rtt != null ? ', round trip ~' + conn.rtt + ' ms' : '') + (conn.saveData ? ', data saver ON' : ''),
+      'Language / time zone: ' + nav.language + ' / ' + (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return '?'; } })(),
+      'Cookies enabled: ' + nav.cookieEnabled,
+      'Storage works: ' + (function () { try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); return true; } catch (e) { return false; } })(),
+      'Saved sign-in found: ' + (getToken() ? 'yes' : 'no')
+    ];
+    info.forEach(function (l) { c.line(l); log(l); });
+    c.status('recorded', 'ok');
+  }
+
+  function baselines() {
+    // Tests the connection itself, with no inventory server involved.
+    var c = card('Basic internet and Google reachability');
+    log('\n== Basic internet and Google reachability ==');
+    c.status('running…');
+    var targets = [
+      ['Google static file', 'https://www.gstatic.com/generate_204', { mode: 'no-cors', cache: 'no-store' }],
+      ['Google sign-in library', 'https://accounts.google.com/gsi/client', { mode: 'no-cors', cache: 'no-store' }],
+      ['Google token service', 'https://oauth2.googleapis.com/tokeninfo?id_token=test', { cache: 'no-store' }]
+    ];
+    var p = Promise.resolve(), bad = 0;
+    targets.forEach(function (t) {
+      p = p.then(function () { return timed(t[1], t[2], t[0]); }).then(function (r) {
+        // the token service answers HTTP 400 on purpose for a fake token: that still proves we reached it
+        var reached = r.ok || r.status != null;
+        if (!reached) bad++;
+        var d = t[0] + ': ' + (reached ? 'reached' : 'FAILED') + ' in ' + ms(r.totalMs) + (r.err && !reached ? ' – ' + r.err : '');
+        c.line(d); log(d);
+      });
+    });
+    return p.then(function () {
+      c.status(bad === 0 ? 'all reachable' : bad + ' of 3 could not be reached', bad === 0 ? 'ok' : 'bad');
+      log('RESULT: ' + (bad === 0 ? 'all reachable' : bad + ' of 3 could not be reached'));
+    });
+  }
+
+  function burst() {
+    var c = card('4 requests at once (as the app can do)');
+    log('\n== 4 requests at once ==');
+    c.status('running…');
+    var jobs = [];
+    for (var i = 0; i < 4; i++) jobs.push(post('GET_DATA', {}, null));
+    return Promise.all(jobs).then(function (rs) {
+      rs.forEach(function (r) { var d = describe(r); c.line(d); log(d); });
+      var s = summarize(rs);
+      var t = sumText(s);
+      c.status(t, s.fails === 0 ? 'ok' : (s.ok === 0 ? 'bad' : 'warn'));
+      log('RESULT: ' + t);
+    });
+  }
+
+  function runAll() {
+    if (running) return;
+    running = true; lines = []; $('out').innerHTML = ''; $('report').value = '';
+    $('runBtn').disabled = true; $('soakBtn').disabled = true; $('idleBtn').disabled = true;
+    var token = getToken();
+    environment();
+    baselines()
+      .then(function () {
+        return series('Control: a static file from your site host (Netlify)', 5, function () {
+          return timed('https://inventory.lkcmedsoc.com/apple-touch-icon.png?t=' + Date.now(), { cache: 'no-store', mode: 'no-cors' }, 'static');
+        }, true, 300);
+      })
+      .then(function () {
+        var csv = ($('csvUrl').value || '').trim();
+        if (!csv) return;
+        return series('Published sheet (CSV) for comparison', 5, function () {
+          return timed(csv + (csv.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' }, 'raw');
+        }, true, 300);
+      })
+      .then(function () {
+        return series('Server door only (small request, no spreadsheet)', 5, function () { return post('PING', {}, null); }, true);
+      })
+      .then(function () {
+        return series('Load the inventory as a guest', 5, function () { return post('GET_DATA', {}, null); });
+      })
+      .then(function () {
+        if (!token) { var c = card('Load the inventory signed in'); c.status('skipped (no saved sign-in on this address, or unticked)', 'mut'); log('\n== Load the inventory signed in ==\nSKIPPED'); return; }
+        return series('Load the inventory signed in', 5, function () { return post('GET_DATA', {}, token); });
+      })
+      .then(function () {
+        if (!token) return;
+        return series('Open the activity log signed in', 3, function () { return post('GET_AUDIT', { limit: 200 }, token); });
+      })
+      .then(burst)
+      .then(function () {
+        log('\nFinished ' + new Date().toString());
+        var c = card('Done'); c.status('Press Copy report and send it over.', 'ok');
+      })
+      .catch(function (e) { log('\nThe check itself stopped: ' + e); })
+      .then(function () { running = false; $('runBtn').disabled = false; $('soakBtn').disabled = false; $('idleBtn').disabled = false; });
+  }
+
+  // Long test: one small request every 10 s for 3 minutes, plus a real load every 30 s. Shows how often it drops.
+  function soak() {
+    if (running) return;
+    running = true; lines = []; $('out').innerHTML = ''; $('report').value = '';
+    $('runBtn').disabled = true; $('soakBtn').disabled = true;
+    environment();
+    var c = card('Long test (3 minutes)');
+    log('\n== Long test (3 minutes): small request every 10 s, full load every 30 s ==');
+    c.status('running…');
+    var small = [], full = [], p = Promise.resolve();
+    for (var i = 0; i < 18; i++) {
+      (function (i) {
+        p = p.then(function () {
+          var t = performance.now();
+          var jobs = [post('PING', {}, null)];
+          var doFull = (i % 3 === 0);
+          if (doFull) jobs.push(post('GET_DATA', {}, null));
+          return Promise.all(jobs).then(function (rs) {
+            small.push(rs[0]);
+            var d = 'small: ' + describe(rs[0]); c.line(d); log(d);
+            if (doFull) { full.push(rs[1]); var d2 = 'full : ' + describe(rs[1]); c.line(d2); log(d2); }
+            c.status('running… ' + (i + 1) + '/18');
+            return sleep(Math.max(0, 10000 - (performance.now() - t)));
+          });
+        });
+      })(i);
+    }
+    p.then(function () {
+      var s1 = summarize(small, true), s2 = summarize(full);
+      log('RESULT small requests: ' + sumText(s1));
+      log('RESULT full loads: ' + sumText(s2));
+      c.status('small: ' + sumText(s1) + ' | full: ' + sumText(s2), (s1.fails + s2.fails) === 0 ? 'ok' : 'warn');
+      log('\nFinished ' + new Date().toString());
+    }).catch(function (e) { log('\nThe test itself stopped: ' + e); })
+      .then(function () { running = false; $('runBtn').disabled = false; $('soakBtn').disabled = false; $('idleBtn').disabled = false; });
+  }
+
+  // After-idle test: sends nothing for 10 minutes, then times the first requests. This is the case users hit
+  // when they open the site after it has been quiet.
+  function idleTest() {
+    if (running) return;
+    running = true; lines = []; $('out').innerHTML = ''; $('report').value = '';
+    $('runBtn').disabled = true; $('soakBtn').disabled = true; $('idleBtn').disabled = true;
+    environment();
+    var WAIT = 10 * 60;
+    var c = card('After-idle test');
+    log('\n== After-idle test: no requests for 10 minutes, then three in a row ==');
+    c.status('waiting… keep this page open and in front', 'mut');
+    var left = WAIT;
+    var tick = setInterval(function () {
+      left--;
+      c.status('waiting… ' + Math.floor(left / 60) + ':' + pad(left % 60) + ' left. Keep this page open and in front.', 'mut');
+      if (left <= 0) clearInterval(tick);
+    }, 1000);
+    sleep(WAIT * 1000).then(function () {
+      clearInterval(tick);
+      c.status('testing…');
+      return post('PING', {}, null).then(function (r1) {
+        var d = 'first request after idle (small): ' + describe(r1); c.line(d); log(d);
+        return post('GET_DATA', {}, null);
+      }).then(function (r2) {
+        var d = 'second (full load): ' + describe(r2); c.line(d); log(d);
+        return post('GET_DATA', {}, null);
+      }).then(function (r3) {
+        var d = 'third (full load): ' + describe(r3); c.line(d); log(d);
+        c.status('done', 'ok');
+        log('\nFinished ' + new Date().toString());
+      });
+    }).catch(function (e) { log('\nThe test itself stopped: ' + e); })
+      .then(function () { running = false; $('runBtn').disabled = false; $('soakBtn').disabled = false; $('idleBtn').disabled = false; });
+  }
+
+  $('idleBtn').addEventListener('click', idleTest);
+  $('runBtn').addEventListener('click', runAll);
+  $('soakBtn').addEventListener('click', soak);
+  $('copyBtn').addEventListener('click', function () {
+    var ta = $('report'); ta.focus(); ta.select();
+    var done = function () { $('copyBtn').textContent = 'Copied'; setTimeout(function () { $('copyBtn').textContent = 'Copy report'; }, 1500); };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, function () { document.execCommand('copy'); done(); });
+      else { document.execCommand('copy'); done(); }
+    } catch (e) { /* the text is selected: copy by hand */ }
+  });
+})();
+</script>
+</body>
+</html>
