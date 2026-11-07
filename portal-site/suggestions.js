@@ -18,6 +18,12 @@
   var statusPill = function (s) { return P.pill(s, STATUS_KIND[s]); };
   var raised = function (n) { return n + (Number(n) === 1 ? ' person has' : ' people have') + ' raised this'; };
   var asList = function (a) { return a && a.length ? a : []; };
+  // Academic years run August to July: 5 March 2027 is AY26/27. Meetings are grouped by them, like everything else at MedSoc.
+  var ayOf = function (d) { var y = d.getFullYear() - (d.getMonth() >= 7 ? 0 : 1), p2 = function (n) { return String(n % 100).padStart(2, '0'); }; return 'AY' + p2(y) + '/' + p2(y + 1); };
+  async function currentAy() {
+    try { var r = await P.rec.from('academic_years').select('ay,is_open'); var open = asList(r.data).filter(function (a) { return a.is_open; }).map(function (a) { return a.ay; }).sort().pop(); if (open) return open; } catch (e) { /* fall back to the calendar */ }
+    return ayOf(new Date());
+  }
   // People ExCo can assign an issue to: current leaders, shown with their positions.
   async function loadPeople() { try { var r = await P.act.rpc('assignable_people'); return r.error ? [] : asList(r.data); } catch (e) { return []; } }
   var personLabel = function (p) { return p.name + (p.positions ? ' — ' + p.positions : ''); };
@@ -29,7 +35,7 @@
 
   // ---------------------------------------------------------------- the conversation
   // items come from issue_thread() or shared_thread(): { id, happened_at, kind, body, who, mine, meeting_id, meeting_name }
-  async function loadMeetings() { try { var r = await P.act.from('meetings').select('id,name,held_on').order('created_at', { ascending: false }); return r.error ? [] : asList(r.data); } catch (e) { return []; } }
+  async function loadMeetings() { try { var r = await P.act.from('meetings').select('id,name,ay,held_on').order('held_on', { ascending: false, nullsFirst: true }); return r.error ? [] : asList(r.data); } catch (e) { return []; } }
   function threadView(items) {
     var box = h('div', { class: 'thread', id: 'thread' });
     var lastDay = '';
@@ -55,7 +61,20 @@
     var text = h('textarea', { rows: 3, placeholder: mode === 'staff' ? 'Write a reply, or log what happened (e.g. “Emailed the Registrar, reply expected next week”)' : 'Add a follow-up' });
     var kind = P.select([['note', 'Message'], ['email', 'Email sent or received']], 'note');
     var meetings = mode === 'staff' ? await loadMeetings() : [];
-    var tag = P.select([['', 'No meeting tag']].concat(meetings.map(function (m) { return [m.id, 'Tag: ' + m.name]; })), '');
+    var cur = mode === 'staff' ? await currentAy() : '';
+    var years = meetings.map(function (m) { return m.ay; }).filter(function (y, i, a) { return a.indexOf(y) === i; }).sort().reverse();
+    var shownAy = years.indexOf(cur) >= 0 ? cur : (years[0] || cur);
+    var tag = P.select([['', 'No meeting tag']], '');
+    var yearSel = P.select(years, shownAy, { 'aria-label': 'Academic year of the meeting' });
+    var ayNote = h('span', { class: 'sub' }, shownAy);
+    var more = h('button', { class: 'linkbtn', type: 'button', onclick: function () { yearSel.hidden = false; more.hidden = true; ayNote.hidden = true; } }, 'Other year…');
+    yearSel.hidden = shownAy === cur; more.hidden = shownAy !== cur || years.length < 2; ayNote.hidden = shownAy !== cur;
+    function fillTags() {
+      tag.replaceChildren.apply(tag, [h('option', { value: '' }, 'No meeting tag')].concat(meetings.filter(function (m) { return m.ay === shownAy; }).map(function (m) { return h('option', { value: m.id }, m.name); })));
+      ayNote.textContent = shownAy;
+    }
+    yearSel.addEventListener('change', function () { shownAy = yearSel.value; fillTags(); });
+    fillTags();
     var send = h('button', { class: 'btn', onclick: async function () {
       if (!text.value.trim()) { P.toast('Write something first', true); return; }
       send.disabled = true;
@@ -75,9 +94,12 @@
     var composer = h('div', { class: 'composer' }, text,
       h('div', { class: 'row' },
         mode === 'staff' ? kind : null,
+        mode === 'staff' && meetings.length ? yearSel : null,
         mode === 'staff' && meetings.length ? tag : null,
+        mode === 'staff' && meetings.length ? ayNote : null,
+        mode === 'staff' && meetings.length ? more : null,
         send),
-      mode === 'staff' ? h('p', { class: 'sub' }, 'Everything written here can be read by the students who raised this issue, and by every student if the issue is shown to the student body. Tag a reply with a meeting (e.g. SSLG 1) to link it to that meeting\'s minutes.') : null);
+      mode === 'staff' ? h('p', { class: 'sub' }, 'Everything written here can be read by the students who raised this issue, and by every student if the issue is shown to the student body. Tag a reply with a meeting (this academic year\'s are listed first) to link it to that meeting\'s minutes.') : null);
     var el = h('div', null, holder, composer);
     await draw();
     return { el: el, scroll: toBottom };
@@ -383,20 +405,39 @@
   P.route('/meetings', { nav: 'meetings', fn: async function () {
     P.loading();
     var rows = asList(P.must(await P.act.from('meetings').select('*').order('held_on', { ascending: false, nullsFirst: true }).order('created_at', { ascending: false })));
+    var cur = await currentAy();
+    var known = [];
+    try { var yr = await P.rec.from('academic_years').select('ay'); known = asList(yr.data).map(function (a) { return a.ay; }); } catch (e) { /* the form still offers the current year */ }
+    var all = known.concat(rows.map(function (m) { return m.ay; }), [cur]).filter(function (y, i, a) { return a.indexOf(y) === i; }).sort().reverse();
     var name = h('input', { class: 'grow', placeholder: 'e.g. SSLG 1', maxlength: 80 });
     var date = h('input', { type: 'date' });
+    var ay = P.select(all, cur);
+    date.addEventListener('change', function () {
+      if (!date.value) return;
+      var guess = ayOf(new Date(date.value + 'T00:00:00'));
+      if (all.indexOf(guess) < 0) { all.push(guess); all.sort().reverse(); ay.replaceChildren.apply(ay, all.map(function (y) { return h('option', { value: y }, y); })); }
+      ay.value = guess;
+    });
     var add = h('button', { class: 'btn', onclick: async function () {
       if (name.value.trim().length < 2) { P.toast('Give the meeting a name', true); return; }
-      var ok = await P.run(async function () { P.must(await P.act.from('meetings').insert({ name: name.value.trim(), held_on: date.value || null })); }, 'Meeting added');
+      var ok = await P.run(async function () { P.must(await P.act.from('meetings').insert({ name: name.value.trim(), held_on: date.value || null, ay: ay.value })); }, 'Meeting added');
       if (ok) P.dispatch();
     } }, 'Add meeting');
+    var byAy = {};
+    rows.forEach(function (m) { (byAy[m.ay] = byAy[m.ay] || []).push(m); });
+    var yrs = Object.keys(byAy).sort().reverse();
+    var openYear = byAy[cur] ? cur : yrs[0];
     P.show(h('div', null,
       h('h2', null, 'Meetings'),
-      h('p', { class: 'muted' }, 'Tag a reply on an issue with a meeting, and the issue shows up here with that meeting\'s minutes.'),
-      P.exco ? h('div', { class: 'card' }, h('strong', null, 'New meeting'), h('div', { class: 'row' }, name, date, add)) : null,
-      rows.length ? rows.map(function (m) {
-        return h('a', { class: 'card linkcard', href: '#/meeting/' + m.id },
-          h('div', { class: 'row' }, h('strong', null, m.name), m.held_on ? h('span', { class: 'sub' }, day(m.held_on)) : null, m.minutes_path ? P.pill('Minutes uploaded', 'ok') : P.pill('No minutes yet')));
+      h('p', { class: 'muted' }, 'Tag a reply on an issue with a meeting, and the issue shows up here with that meeting\'s minutes. Meetings are grouped by academic year.'),
+      P.exco ? h('div', { class: 'card' }, h('strong', null, 'New meeting'), h('div', { class: 'row' }, name, date, ay, add), h('p', { class: 'sub' }, 'The academic year fills in from the date (August to July). Change it if you need to.')) : null,
+      yrs.length ? yrs.map(function (y) {
+        return h('details', { class: 'ayblock', open: y === openYear },
+          h('summary', null, y + ' · ' + byAy[y].length + (byAy[y].length === 1 ? ' meeting' : ' meetings')),
+          byAy[y].map(function (m) {
+            return h('a', { class: 'card linkcard', href: '#/meeting/' + m.id },
+              h('div', { class: 'row' }, h('strong', null, m.name), m.held_on ? h('span', { class: 'sub' }, day(m.held_on)) : null, m.minutes_path ? P.pill('Minutes uploaded', 'ok') : P.pill('No minutes yet')));
+          }));
       }) : h('p', { class: 'muted' }, 'No meetings yet.')));
   } });
 
@@ -434,7 +475,7 @@
     var link = function (i) { return i.can_edit ? '#/issue/' + i.id : i.shared ? '#/shared/' + i.id : '#/thread/' + i.id; };
     P.show(h('div', null,
       h('p', null, P.link('#/meetings', '← Meetings')),
-      h('div', { class: 'row' }, h('h2', { style: 'margin:0' }, m.name), m.held_on ? h('span', { class: 'sub' }, day(m.held_on)) : null),
+      h('div', { class: 'row' }, h('h2', { style: 'margin:0' }, m.name + ' · ' + m.ay), m.held_on ? h('span', { class: 'sub' }, day(m.held_on)) : null),
       h('div', { class: 'card' }, h('strong', null, 'Minutes'), minutes),
       h('h3', null, 'Issues raised at this meeting'),
       issues.length ? issues.map(function (i) {
