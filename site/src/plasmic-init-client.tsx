@@ -88,6 +88,10 @@ PLASMIC.registerComponent(Reveal, {
   props: { children: 'slot', delay: { type: 'number', defaultValue: 0, displayName: 'Delay (ms)' } },
   importPath: '@/components/blocks/Reveal',
 });
+PLASMIC.registerComponent(HoverLift, {
+  name: 'HoverLift', displayName: 'Hover lift', description: 'Wrap a card or any block so it rises slightly with the brand shadow when hovered. Links that wrap a card already do this without it.',
+  props: { children: 'slot' }, importPath: '@/components/blocks/HoverLift',
+});
 PLASMIC.registerComponent(SafeImage, {
   name: 'SafeImage', displayName: 'Photo', description: 'A photo that resizes itself and never shows a broken box.',
   props: {
@@ -107,6 +111,7 @@ PLASMIC.registerComponent(SafeImage, {
 import Band from '@/components/blocks/Band';
 import SlantPhoto from '@/components/blocks/SlantPhoto';
 import PageHero from '@/components/blocks/PageHero';
+import HoverLift from '@/components/blocks/HoverLift';
 import Counter from '@/components/blocks/Counter';
 import DisplayText from '@/components/blocks/DisplayText';
 import PillButton from '@/components/blocks/PillButton';

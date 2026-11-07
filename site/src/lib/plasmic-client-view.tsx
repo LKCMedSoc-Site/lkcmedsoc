@@ -8,7 +8,7 @@ export default function PlasmicClientView({ data }: { data: NonNullable<Awaited<
   const meta = data.entryCompMetas[0];
   return (
     <ClientPlasmicRootProvider prefetchedData={data} pageRoute={meta.path} pageParams={meta.params}>
-      <PlasmicComponent component={meta.displayName} />
+      <div className="plasmic-page"><PlasmicComponent component={meta.displayName} /></div>
     </ClientPlasmicRootProvider>
   );
 }
