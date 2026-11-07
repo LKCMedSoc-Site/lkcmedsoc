@@ -8,20 +8,27 @@
   var STATUSES = ['Open', 'Pending', 'Resolved'];
   var ROUTES = [['', 'Not decided'], ['Direct', 'Resolve directly'], ['SSLG', 'Table at SSLG']];
   var PRIVACY = [
-    ['named', 'Show my name', 'Staff and ExCo can see who sent this. Best if you want a reply.'],
-    ['hidden_from_staff', 'Hide my name from staff', 'Only ExCo can see it, so we can still reply to you. The staff handling the issue never see it.'],
-    ['anonymous', 'Fully anonymous', 'Nobody can see who sent it, and we cannot reply to you.']
+    ['exco_only', 'Share my identity with ExCo only', 'ExCo can see who you are. Nobody else can, including the staff who handle the issue. You can follow the replies under My feedback.'],
+    ['anonymous', 'Remain completely anonymous', 'Nobody can see who you are, and you will not be able to follow the replies or add follow-ups.']
   ];
-  var PRIVACY_LABEL = { named: 'Name shown', hidden_from_staff: 'Hidden from staff', anonymous: 'Anonymous' };
+  var PRIVACY_LABEL = { exco_only: 'ExCo can see who you are', anonymous: 'Anonymous' };
   var STATUS_KIND = { Resolved: 'ok', Pending: 'warn', Open: 'dark' };
   var day = function (s) { return s ? new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; };
   var clock = function (s) { return new Date(s).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
   var statusPill = function (s) { return P.pill(s, STATUS_KIND[s]); };
   var raised = function (n) { return n + (Number(n) === 1 ? ' person has' : ' people have') + ' raised this'; };
   var asList = function (a) { return a && a.length ? a : []; };
+  // People ExCo can assign an issue to: current leaders, shown with their positions.
+  async function loadPeople() { try { var r = await P.act.rpc('assignable_people'); return r.error ? [] : asList(r.data); } catch (e) { return []; } }
+  var personLabel = function (p) { return p.name + (p.positions ? ' — ' + p.positions : ''); };
+  function peopleSelect(people, value, attrs) {
+    var opts = [['', 'No one yet']].concat(people.map(function (p) { return [p.email, personLabel(p)]; }));
+    if (value && !people.some(function (p) { return p.email === value; })) opts.push([value, value]);
+    return P.select(opts, value || '', attrs);
+  }
 
   // ---------------------------------------------------------------- the conversation
-  // items come from issue_thread(): { id, happened_at, kind, body, who, internal, mine }
+  // items come from issue_thread() or shared_thread(): { id, happened_at, kind, body, who, mine }
   function threadView(items) {
     var box = h('div', { class: 'thread', id: 'thread' });
     var lastDay = '';
@@ -32,8 +39,8 @@
       if (m.kind === 'status' || m.kind === 'assigned') { box.appendChild(h('div', { class: 'sys' }, m.body + ' · ' + clock(m.happened_at))); return; }
       var side = m.kind === 'feedback' ? 'giver' : 'responder';
       var label = m.kind === 'email' ? m.who + ' · email' : m.who;
-      box.appendChild(h('div', { class: 'msg ' + side + (m.internal ? ' internal' : '') },
-        h('div', { class: 'who' }, label + (m.internal ? ' · internal, students cannot see this' : '') + ' · ' + clock(m.happened_at)),
+      box.appendChild(h('div', { class: 'msg ' + side },
+        h('div', { class: 'who' }, label + ' · ' + clock(m.happened_at)),
         h('div', { class: 'body' }, m.body)));
     });
     return box;
@@ -43,14 +50,13 @@
   async function conversation(issueId, mode) {
     // mode: 'staff' (ExCo or the person responsible) or 'student'
     var holder = h('div');
-    var text = h('textarea', { rows: 3, placeholder: mode === 'staff' ? 'Write a reply or log what happened (e.g. “Emailed the Registrar, reply expected next week”)' : 'Add a follow-up' });
+    var text = h('textarea', { rows: 3, placeholder: mode === 'staff' ? 'Write a reply, or log what happened (e.g. “Emailed the Registrar, reply expected next week”)' : 'Add a follow-up' });
     var kind = P.select([['note', 'Message'], ['email', 'Email sent or received']], 'note');
-    var internal = h('input', { type: 'checkbox' });
     var send = h('button', { class: 'btn', onclick: async function () {
       if (!text.value.trim()) { P.toast('Write something first', true); return; }
       send.disabled = true;
       var ok = await P.run(async function () {
-        if (mode === 'staff') P.must(await P.act.rpc('add_issue_note', { p_issue: issueId, p_kind: kind.value, p_body: text.value, p_visible: !internal.checked }));
+        if (mode === 'staff') P.must(await P.act.rpc('add_issue_note', { p_issue: issueId, p_kind: kind.value, p_body: text.value }));
         else P.must(await P.act.rpc('reply_to_issue', { p_issue: issueId, p_message: text.value }));
       });
       send.disabled = false;
@@ -65,8 +71,8 @@
     var composer = h('div', { class: 'composer' }, text,
       h('div', { class: 'row' },
         mode === 'staff' ? kind : null,
-        mode === 'staff' ? h('label', { class: 'choice' }, internal, h('span', null, 'Internal only (students cannot see it)')) : null,
-        send));
+        send),
+      mode === 'staff' ? h('p', { class: 'sub' }, 'Everything written here can be read by the students who raised this issue, and by every student if the issue is shown to the student body.') : null);
     var el = h('div', null, holder, composer);
     await draw();
     return { el: el, scroll: toBottom };
@@ -81,10 +87,10 @@
     var chosen = null, timer;
 
     var privacyRows = PRIVACY.map(function (p, i) {
-      return h('label', { class: 'choice' }, h('input', { type: 'radio', name: 'f-priv', value: p[0], checked: i === 1 }),
+      return h('label', { class: 'choice' }, h('input', { type: 'radio', name: 'f-priv', value: p[0], checked: i === 0 }),
         h('span', null, h('strong', null, p[1]), h('span', { class: 'sub' }, p[2])));
     });
-    function privacy() { var r = document.querySelector('input[name="f-priv"]:checked'); return r ? r.value : 'hidden_from_staff'; }
+    function privacy() { var r = document.querySelector('input[name="f-priv"]:checked'); return r ? r.value : 'exco_only'; }
     msg.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(look, 450); });
 
     function pick(r) {
@@ -102,12 +108,11 @@
         var rows = asList(res.data);
         matches.replaceChildren(rows.length ? h('div', { class: 'card' },
           h('strong', null, 'Is it one of these?'),
-          h('p', { class: 'muted' }, 'These issues are already being looked at. If one is yours, add yourself to it and you will see updates.'),
+          h('p', { class: 'muted' }, 'These are already being looked at. If one is yours, add yourself to it and you will see updates.'),
           rows.map(function (r) {
             return h('div', { class: 'match' },
               h('div', { class: 'row' }, h('strong', null, r.title), statusPill(r.status), h('span', { class: 'sub' }, raised(r.times_raised))),
-              r.public_answer ? h('p', null, r.public_answer) : null,
-              h('button', { class: 'ghost', onclick: function () { pick(r); } }, 'This is my question too'));
+              h('div', { class: 'row' }, P.link('#/shared/' + r.id, 'Read the conversation'), h('button', { class: 'ghost', onclick: function () { pick(r); } }, 'This is my question too')));
           })) : null);
       } catch (e) { matches.replaceChildren(); }
     }
@@ -131,7 +136,7 @@
         h('fieldset', { class: 'choices' }, h('legend', null, 'Who can see that it was you?'), privacyRows),
         P.field('Contact (optional)', contact, 'Only if you want a private reply somewhere else. ExCo will see it.'),
         h('div', { class: 'row' }, btn)),
-      h('p', null, P.link('#/said', 'Issues and answers'), ' · ', P.link('#/feedback/mine', 'My feedback'))));
+      h('p', null, P.link('#/said', 'Issues students have raised'), ' · ', P.link('#/feedback/mine', 'My feedback'))));
   } });
 
   // ---------------------------------------------------------------- my feedback (one card per conversation)
@@ -171,29 +176,53 @@
     convo.scroll();
   } });
 
-  // ---------------------------------------------------------------- public list
-  P.route('/said', { public: true, nav: 'said', fn: async function () {
+  // ---------------------------------------------------------------- issues shared with the student body (signed-in students)
+  P.route('/said', { nav: 'said', fn: async function () {
     P.loading();
-    var rows = P.must(await P.act.from('public_issues').select('*').order('created_at', { ascending: false }));
-    var q = h('input', { class: 'grow', placeholder: 'Search issues and answers' });
+    var rows = P.must(await P.act.from('shared_issues').select('*').order('updated_at', { ascending: false }));
+    var q = h('input', { class: 'grow', placeholder: 'Search issues' });
     var st = P.select([['', 'Any status']].concat(STATUSES.map(function (s) { return [s, s]; })), '');
     var list = h('div');
     function draw() {
       var t = q.value.trim().toLowerCase();
-      var shown = rows.filter(function (r) { return (!st.value || r.status === st.value) && (!t || (r.title + ' ' + (r.public_answer || '')).toLowerCase().indexOf(t) >= 0); });
+      var shown = rows.filter(function (r) { return (!st.value || r.status === st.value) && (!t || r.title.toLowerCase().indexOf(t) >= 0); });
       list.replaceChildren(shown.length ? shown.map(function (r) {
-        return h('div', { class: 'card' },
-          h('div', { class: 'row' }, h('strong', null, r.title), statusPill(r.status), h('span', { class: 'sub' }, raised(r.times_raised) + (r.resolved_at ? ' · resolved ' + day(r.resolved_at) : ''))),
-          r.public_answer ? h('p', null, r.public_answer) : h('p', { class: 'muted' }, 'No answer published yet.'));
-      }) : h('p', { class: 'muted' }, rows.length ? 'Nothing matches.' : 'Nothing here yet.'));
+        return h('a', { class: 'card linkcard', href: '#/shared/' + r.id },
+          h('div', { class: 'row' }, h('strong', null, r.title), statusPill(r.status), h('span', { class: 'sub' }, raised(r.times_raised) + ' · updated ' + day(r.updated_at))));
+      }) : h('p', { class: 'muted' }, rows.length ? 'Nothing matches.' : 'Nothing has been shared yet.'));
     }
     [q, st].forEach(function (el) { el.addEventListener('input', draw); });
     draw();
     P.show(h('div', null,
-      h('h2', null, 'Issues and answers'),
-      h('p', { class: 'muted' }, 'Questions students keep asking, and what MedSoc and the school have said or done about them.'),
+      h('h2', null, 'Issues students have raised'),
+      h('p', { class: 'muted' }, 'Questions that come up again and again, and what MedSoc has said or done. ExCo chooses which issues are shown here. Students are never named.'),
       h('div', { class: 'row' }, q, st), list,
-      P.me ? h('p', null, P.link('#/suggest', 'Send feedback')) : null));
+      h('p', null, P.link('#/suggest', 'Send feedback'))));
+  } });
+
+  // One shared conversation, read-only, with a way to add your own voice
+  P.route('/shared/:id', { nav: 'said', fn: async function (params) {
+    P.loading();
+    var iss = P.must(await P.act.from('shared_issues').select('*').eq('id', params.id).maybeSingle());
+    if (!iss) { P.show(h('p', { class: 'muted' }, 'That issue is not shared with students.')); return; }
+    var items = asList(P.must(await P.act.rpc('shared_thread', { p_issue: iss.id })));
+    var msg = h('textarea', { rows: 3, maxlength: 3000, placeholder: 'Is this your problem too? Add what you would like to say.' });
+    var priv = PRIVACY.map(function (p, i) { return h('label', { class: 'choice' }, h('input', { type: 'radio', name: 's-priv', value: p[0], checked: i === 0 }), h('span', null, h('strong', null, p[1]))); });
+    var add = h('button', { class: 'btn', onclick: async function () {
+      if (msg.value.trim().length < 5) { P.toast('Please write a little more', true); return; }
+      var r = document.querySelector('input[name="s-priv"]:checked');
+      add.disabled = true;
+      var ok = await P.run(async function () { P.must(await P.act.rpc('submit_feedback', { p_message: msg.value.trim(), p_privacy: r ? r.value : 'exco_only', p_contact: '', p_issue: iss.id })); }, 'Added to this issue');
+      add.disabled = false;
+      if (ok) P.dispatch();
+    } }, 'Add my voice');
+    P.show(h('div', null,
+      h('p', null, P.link('#/said', '← All issues')),
+      h('div', { class: 'row' }, h('h2', { style: 'margin:0' }, iss.title), statusPill(iss.status)),
+      h('p', { class: 'sub' }, raised(iss.times_raised)),
+      threadView(items),
+      h('div', { class: 'card' }, msg, h('fieldset', { class: 'choices' }, h('legend', null, 'Who can see that it was you?'), priv), h('div', { class: 'row' }, add))));
+    toBottom();
   } });
 
   // ---------------------------------------------------------------- issues I am responsible for
@@ -215,7 +244,8 @@
     var data = {
       pending: P.must(await P.act.from('feedback').select('*').is('issue_id', null).order('created_at', { ascending: true })),
       issues: P.must(await P.act.from('issues').select('*').is('merged_into', null).order('updated_at', { ascending: false })),
-      links: await P.fetchAll(function () { return P.act.from('feedback').select('issue_id').not('issue_id', 'is', null); })
+      links: await P.fetchAll(function () { return P.act.from('feedback').select('issue_id').not('issue_id', 'is', null); }),
+      people: await loadPeople()
     };
     var counts = {};
     data.links.forEach(function (l) { counts[l.issue_id] = (counts[l.issue_id] || 0) + 1; });
@@ -236,7 +266,7 @@
     return data.pending.map(function (f) {
       var title = h('input', { class: 'grow', value: f.message.replace(/\s+/g, ' ').slice(0, 70), maxlength: 200 });
       var route = P.select(ROUTES, '');
-      var resp = h('input', { class: 'grow', type: 'email', placeholder: 'Person responsible (email, optional)' });
+      var resp = peopleSelect(data.people, '');
       var find = h('input', { class: 'grow', placeholder: 'Find an existing issue…' });
       var found = P.select([['', 'Pick an existing issue']], '');
       var timer;
@@ -283,7 +313,8 @@
           (!t || (i.title + ' ' + (i.responsible_email || '')).toLowerCase().indexOf(t) >= 0);
       });
       list.replaceChildren(shown.length ? P.table(['Issue', 'Status', 'Route', 'Responsible', 'Raised', 'Updated'], shown.map(function (i) {
-        return [P.link('#/issue/' + i.id, i.title), statusPill(i.status), i.route || '', i.responsible_email || '', counts[i.id] || 0, day(i.updated_at)];
+        var who = data.people.filter(function (p) { return p.email === i.responsible_email; })[0];
+        return [P.link('#/issue/' + i.id, i.title), statusPill(i.status), i.route || '', who ? who.name : (i.responsible_email || ''), counts[i.id] || 0, day(i.updated_at)];
       }), [4]) : h('p', { class: 'muted' }, 'No issues match.'));
     }
     [q, st, rt].forEach(function (el) { el.addEventListener('input', draw); });
@@ -298,17 +329,18 @@
     if (!iss) { P.show(h('p', { class: 'muted' }, 'That issue was not found, or you are not responsible for it.')); return; }
     var ex = P.exco;
     var convo = await conversation(iss.id, 'staff');
+    var people = ex ? await loadPeople() : [];
+    var who = asList(P.must(await P.act.rpc('responsible_of', { p_issue: iss.id })))[0];
 
     var title = h('input', { class: 'grow', value: iss.title, maxlength: 200 });
     var status = P.select(STATUSES, iss.status);
     var route = P.select(ROUTES, iss.route || '', { disabled: !ex });
-    var resp = h('input', { class: 'grow', type: 'email', value: iss.responsible_email || '', disabled: !ex, placeholder: 'email' });
-    var answer = h('textarea', { rows: 3, placeholder: 'A plain answer students can read. Shown publicly only if the box below is ticked.' }, iss.public_answer || ''); answer.value = iss.public_answer || '';
-    var pub = h('input', { type: 'checkbox', checked: iss.show_public, disabled: !ex });
+    var resp = peopleSelect(people, iss.responsible_email || '', { disabled: !ex });
+    var pub = h('input', { type: 'checkbox', checked: iss.show_to_students, disabled: !ex });
     var save = h('button', { class: 'btn', onclick: async function () {
       save.disabled = true;
       var ok = await P.run(async function () {
-        P.must(await P.act.rpc('save_issue', { p_id: iss.id, p_title: title.value, p_status: status.value, p_route: route.value, p_responsible: resp.value, p_public_answer: answer.value, p_show_public: pub.checked }));
+        P.must(await P.act.rpc('save_issue', { p_id: iss.id, p_title: title.value, p_status: status.value, p_route: route.value, p_responsible: resp.value, p_show_to_students: pub.checked }));
       }, 'Saved');
       save.disabled = false;
       if (ok) P.dispatch();
@@ -334,13 +366,12 @@
     P.show(h('div', null,
       h('p', null, ex ? P.link('#/inbox', '← Inbox') : P.link('#/assigned', '← Assigned to me')),
       h('div', { class: 'row' }, h('h2', { style: 'margin:0' }, iss.title), statusPill(iss.status), iss.route ? P.pill(iss.route === 'SSLG' ? 'SSLG' : 'Direct') : null),
-      h('p', { class: 'sub' }, 'Opened ' + day(iss.created_at) + (iss.responsible_email ? ' · Responsible: ' + iss.responsible_email : '')),
+      h('p', { class: 'sub' }, 'Opened ' + day(iss.created_at) + (who ? ' · Responsible: ' + who.name + (who.positions ? ', ' + who.positions : '') : (iss.responsible_email ? ' · Responsible: ' + iss.responsible_email : ''))),
       convo.el,
       h('details', { class: 'card settings' }, h('summary', null, 'Issue settings'),
         P.field('Title', title),
         h('div', { class: 'row' }, P.field('Status', status), P.field('What to do', route), P.field('Person responsible', resp)),
-        P.field('Public answer', answer),
-        h('div', { class: 'row' }, h('label', { class: 'choice' }, pub, h('span', null, 'Show on the public "Issues and answers" page' + (ex ? '' : ' (ExCo decides)')))),
+        h('div', { class: 'row' }, h('label', { class: 'choice' }, pub, h('span', null, h('strong', null, 'Show to student body'), h('span', { class: 'sub' }, 'Every signed-in student can read this conversation (students are never named).' + (ex ? '' : ' ExCo decides.'))))),
         h('div', { class: 'row' }, save),
         merge ? h('h3', null, 'Duplicate?') : null, merge)));
     convo.scroll();
