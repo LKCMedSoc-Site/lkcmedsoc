@@ -95,7 +95,8 @@
     if (P.me && (P.me.can_manage || P.exco || P.approver)) tabs.push(['todo', 'To do' + (P.badge ? ' (' + P.badge + ')' : ''), '#/todo']);
     if (P.me) tabs.push(['mine', 'My events', '#/mine']);
     if (P.me) tabs.push(['posts', 'Write-ups', '#/posts']);
-    if (P.me) tabs.push(['suggest', 'Suggestions', '#/suggest']);
+    if (P.me) tabs.push(['suggest', 'Feedback', '#/suggest'], ['myfeedback', 'My feedback', '#/feedback/mine']);
+    if (P.assigned) tabs.push(['assigned', 'Assigned to me', '#/assigned']);
     if (P.approver || P.exco) tabs.push(['review', 'Review', '#/review']);
     if (P.exco) tabs.push(['inbox', 'Inbox', '#/inbox']);
     if (P.exco) tabs.push(['approvers', 'Approvers', '#/approvers']);
@@ -108,13 +109,14 @@
 
   async function boot() {
     var s = await sb.auth.getSession();
-    P.me = null; P.exco = false; P.approver = false; P.filer = false;
+    P.me = null; P.exco = false; P.approver = false; P.filer = false; P.assigned = false;
     if (s.data.session) {
       try {
         P.me = P.must(await P.rec.rpc('whoami'));
         P.exco = !!P.must(await P.act.rpc('is_exco'));
         try { P.approver = !!P.must(await P.act.rpc('is_approver')); } catch (e) { /* write-up functions not installed yet */ }
         try { P.filer = !!P.must(await P.act.rpc('can_file_events')); } catch (e) { /* event team access not installed yet */ }
+        try { P.assigned = P.must(await P.act.rpc('my_issues')).length > 0; } catch (e) { /* feedback and issues not installed yet */ }
       } catch (e) { P.toast(P.friendly(e), true); P.me = null; }
     }
     ready = true;

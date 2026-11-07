@@ -138,3 +138,13 @@ a.btn-link.solid { background: var(--p700); color: #fff; }
 /* An empty new line must keep its height so the caret can move down onto it */
 .ProseMirror p > br:only-child, .ProseMirror br.ProseMirror-trailingBreak { display: inline !important; }
 .ProseMirror p { min-height: 1.5em; }
+
+/* Feedback and issues */
+.choice { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; font-size: 15px; color: var(--ink); cursor: pointer; }
+.choice input { margin-top: 4px; flex: none; }
+.choice .sub { display: block; }
+fieldset.choices { border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; padding: 4px 12px 8px; }
+fieldset.choices legend { font-size: 13px; color: var(--muted); padding: 0 6px; }
+.match { border-top: 1px solid var(--line); padding: 10px 0; }
+.card.ok { border-color: #8fd0a9; background: #eef8f1; }
+.note { border-left: 3px solid var(--p300); padding: 4px 10px; margin: 10px 0; }
