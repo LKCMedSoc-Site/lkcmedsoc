@@ -95,7 +95,7 @@
     if (P.me && (P.me.can_manage || P.exco || P.approver)) tabs.push(['todo', 'To do' + (P.badge ? ' (' + P.badge + ')' : ''), '#/todo']);
     if (P.me) tabs.push(['mine', 'My events', '#/mine']);
     if (P.me) tabs.push(['posts', 'Write-ups', '#/posts']);
-    if (P.me) tabs.push(['suggest', 'Feedback', '#/suggest'], ['myfeedback', 'My feedback', '#/feedback/mine'], ['said', 'Issues', '#/said']);
+    if (P.me) tabs.push(['suggest', 'Feedback', '#/suggest'], ['myfeedback', 'My feedback', '#/feedback/mine'], ['said', 'Issues', '#/said'], ['meetings', 'Meetings', '#/meetings']);
     if (P.assigned) tabs.push(['assigned', 'Assigned to me', '#/assigned']);
     if (P.approver || P.exco) tabs.push(['review', 'Review', '#/review']);
     if (P.exco) tabs.push(['inbox', 'Inbox', '#/inbox']);

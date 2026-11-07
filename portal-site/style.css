@@ -160,3 +160,6 @@ a.linkcard { display: block; text-decoration: none; color: inherit; } a.linkcard
 .composer { margin: 10px 0 16px; } .composer textarea { min-height: 70px; }
 details.settings > summary { cursor: pointer; font-weight: 700; color: var(--p700); }
 @media (max-width: 600px) { .msg { max-width: 92%; } }
+
+.msg .tag { display: inline-block; margin-top: 6px; padding: 1px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.22); color: inherit; border: 1px solid currentColor; }
+.msg.giver .tag { background: var(--p100); color: var(--p700); }

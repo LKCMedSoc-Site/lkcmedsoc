@@ -1,17 +1,17 @@
 // Feedback and issues. Students send feedback (the form suggests answers that already exist), ExCo triages it into
 // issues in the inbox, and every issue is one conversation: the people who raised it on one side, the responders on
-// the other, newest at the bottom. Resolved issues can be shown on a public "Issues and answers" page.
+// the other, newest at the bottom. ExCo can show an issue to the student body. A reply can be tagged with a meeting
+// (e.g. "SSLG 1"); the tag leads to the minutes and every issue raised at that meeting.
 // (File name kept from the old suggestion box.)
 (function () {
   'use strict';
   var P = window.P, h = P.h;
   var STATUSES = ['Open', 'Pending', 'Resolved'];
-  var ROUTES = [['', 'Not decided'], ['Direct', 'Resolve directly'], ['SSLG', 'Table at SSLG']];
   var PRIVACY = [
-    ['exco_only', 'Share my identity with ExCo only', 'ExCo can see who you are. Nobody else can, including the staff who handle the issue. You can follow the replies under My feedback.'],
+    ['exco_and_responsible', 'Share my identity with ExCo and the person handling it', 'Only ExCo and the leader looking after your issue can see who you are. Nobody else can. You can follow the replies under My feedback.'],
     ['anonymous', 'Remain completely anonymous', 'Nobody can see who you are, and you will not be able to follow the replies or add follow-ups.']
   ];
-  var PRIVACY_LABEL = { exco_only: 'ExCo can see who you are', anonymous: 'Anonymous' };
+  var PRIVACY_LABEL = { exco_and_responsible: 'ExCo and the person handling it can see who you are', anonymous: 'Anonymous' };
   var STATUS_KIND = { Resolved: 'ok', Pending: 'warn', Open: 'dark' };
   var day = function (s) { return s ? new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; };
   var clock = function (s) { return new Date(s).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
@@ -28,7 +28,8 @@
   }
 
   // ---------------------------------------------------------------- the conversation
-  // items come from issue_thread() or shared_thread(): { id, happened_at, kind, body, who, mine }
+  // items come from issue_thread() or shared_thread(): { id, happened_at, kind, body, who, mine, meeting_id, meeting_name }
+  async function loadMeetings() { try { var r = await P.act.from('meetings').select('id,name,held_on').order('created_at', { ascending: false }); return r.error ? [] : asList(r.data); } catch (e) { return []; } }
   function threadView(items) {
     var box = h('div', { class: 'thread', id: 'thread' });
     var lastDay = '';
@@ -41,7 +42,8 @@
       var label = m.kind === 'email' ? m.who + ' · email' : m.who;
       box.appendChild(h('div', { class: 'msg ' + side },
         h('div', { class: 'who' }, label + ' · ' + clock(m.happened_at)),
-        h('div', { class: 'body' }, m.body)));
+        h('div', { class: 'body' }, m.body),
+        m.meeting_id ? h('a', { class: 'tag', href: '#/meeting/' + m.meeting_id }, m.meeting_name) : null));
     });
     return box;
   }
@@ -52,15 +54,17 @@
     var holder = h('div');
     var text = h('textarea', { rows: 3, placeholder: mode === 'staff' ? 'Write a reply, or log what happened (e.g. “Emailed the Registrar, reply expected next week”)' : 'Add a follow-up' });
     var kind = P.select([['note', 'Message'], ['email', 'Email sent or received']], 'note');
+    var meetings = mode === 'staff' ? await loadMeetings() : [];
+    var tag = P.select([['', 'No meeting tag']].concat(meetings.map(function (m) { return [m.id, 'Tag: ' + m.name]; })), '');
     var send = h('button', { class: 'btn', onclick: async function () {
       if (!text.value.trim()) { P.toast('Write something first', true); return; }
       send.disabled = true;
       var ok = await P.run(async function () {
-        if (mode === 'staff') P.must(await P.act.rpc('add_issue_note', { p_issue: issueId, p_kind: kind.value, p_body: text.value }));
+        if (mode === 'staff') P.must(await P.act.rpc('add_issue_note', { p_issue: issueId, p_kind: kind.value, p_body: text.value, p_meeting: tag.value || null }));
         else P.must(await P.act.rpc('reply_to_issue', { p_issue: issueId, p_message: text.value }));
       });
       send.disabled = false;
-      if (ok) { text.value = ''; await draw(); }
+      if (ok) { text.value = ''; tag.value = ''; await draw(); }
     } }, mode === 'staff' ? 'Send' : 'Send follow-up');
     async function draw() {
       var items = P.must(await P.act.rpc('issue_thread', { p_issue: issueId }));
@@ -71,8 +75,9 @@
     var composer = h('div', { class: 'composer' }, text,
       h('div', { class: 'row' },
         mode === 'staff' ? kind : null,
+        mode === 'staff' && meetings.length ? tag : null,
         send),
-      mode === 'staff' ? h('p', { class: 'sub' }, 'Everything written here can be read by the students who raised this issue, and by every student if the issue is shown to the student body.') : null);
+      mode === 'staff' ? h('p', { class: 'sub' }, 'Everything written here can be read by the students who raised this issue, and by every student if the issue is shown to the student body. Tag a reply with a meeting (e.g. SSLG 1) to link it to that meeting\'s minutes.') : null);
     var el = h('div', null, holder, composer);
     await draw();
     return { el: el, scroll: toBottom };
@@ -90,7 +95,7 @@
       return h('label', { class: 'choice' }, h('input', { type: 'radio', name: 'f-priv', value: p[0], checked: i === 0 }),
         h('span', null, h('strong', null, p[1]), h('span', { class: 'sub' }, p[2])));
     });
-    function privacy() { var r = document.querySelector('input[name="f-priv"]:checked'); return r ? r.value : 'exco_only'; }
+    function privacy() { var r = document.querySelector('input[name="f-priv"]:checked'); return r ? r.value : 'exco_and_responsible'; }
     msg.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(look, 450); });
 
     function pick(r) {
@@ -212,7 +217,7 @@
       if (msg.value.trim().length < 5) { P.toast('Please write a little more', true); return; }
       var r = document.querySelector('input[name="s-priv"]:checked');
       add.disabled = true;
-      var ok = await P.run(async function () { P.must(await P.act.rpc('submit_feedback', { p_message: msg.value.trim(), p_privacy: r ? r.value : 'exco_only', p_contact: '', p_issue: iss.id })); }, 'Added to this issue');
+      var ok = await P.run(async function () { P.must(await P.act.rpc('submit_feedback', { p_message: msg.value.trim(), p_privacy: r ? r.value : 'exco_and_responsible', p_contact: '', p_issue: iss.id })); }, 'Added to this issue');
       add.disabled = false;
       if (ok) P.dispatch();
     } }, 'Add my voice');
@@ -232,9 +237,9 @@
     P.show(h('div', null,
       h('h2', null, 'Assigned to me'),
       h('p', { class: 'muted' }, 'Issues you are responsible for. Reply, log what happens and update the status.'),
-      rows.length ? P.table(['Issue', 'Status', 'Route', 'Raised', 'Updated'], rows.map(function (r) {
-        return [P.link('#/issue/' + r.id, r.title), statusPill(r.status), r.route || '', r.times_raised, day(r.updated_at)];
-      }), [3]) : h('p', { class: 'muted' }, 'Nothing is assigned to you.')));
+      rows.length ? P.table(['Issue', 'Status', 'Raised', 'Updated'], rows.map(function (r) {
+        return [P.link('#/issue/' + r.id, r.title), statusPill(r.status), r.times_raised, day(r.updated_at)];
+      }), [2]) : h('p', { class: 'muted' }, 'Nothing is assigned to you.')));
   } });
 
   // ---------------------------------------------------------------- ExCo inbox
@@ -265,7 +270,6 @@
     if (!data.pending.length) return h('p', { class: 'muted' }, 'Nothing waiting. Every piece of feedback has been sorted into an issue.');
     return data.pending.map(function (f) {
       var title = h('input', { class: 'grow', value: f.message.replace(/\s+/g, ' ').slice(0, 70), maxlength: 200 });
-      var route = P.select(ROUTES, '');
       var resp = peopleSelect(data.people, '');
       var find = h('input', { class: 'grow', placeholder: 'Find an existing issue…' });
       var found = P.select([['', 'Pick an existing issue']], '');
@@ -280,12 +284,12 @@
       });
       var link = h('button', { class: 'ghost', onclick: async function () {
         if (!found.value) { P.toast('Find and pick an issue first', true); return; }
-        var ok = await P.run(async function () { P.must(await P.act.rpc('triage_feedback', { p_feedback: f.id, p_issue: found.value, p_new_title: null, p_route: null, p_responsible: null })); }, 'Added to the issue');
+        var ok = await P.run(async function () { P.must(await P.act.rpc('triage_feedback', { p_feedback: f.id, p_issue: found.value, p_new_title: null, p_responsible: null })); }, 'Added to the issue');
         if (ok) P.dispatch();
       } }, 'Add to this issue');
       var create = h('button', { class: 'btn', onclick: async function () {
         var ok = await P.run(async function () {
-          P.must(await P.act.rpc('triage_feedback', { p_feedback: f.id, p_issue: null, p_new_title: title.value, p_route: route.value, p_responsible: resp.value }));
+          P.must(await P.act.rpc('triage_feedback', { p_feedback: f.id, p_issue: null, p_new_title: title.value, p_responsible: resp.value }));
         }, 'Issue created');
         if (ok) P.dispatch();
       } }, 'Create issue');
@@ -296,7 +300,7 @@
         h('div', { class: 'row' }, find, found, link),
         h('h3', null, 'Or start a new issue'),
         P.field('Short title (write it so it could be public)', title),
-        h('div', { class: 'row' }, P.field('What to do', route), P.field('Person responsible', resp)),
+        h('div', { class: 'row' }, P.field('Person responsible (ExCo, committee head or year rep)', resp)),
         h('div', { class: 'row' }, create));
     });
   }
@@ -304,22 +308,21 @@
   function issuesList(data, counts) {
     var q = h('input', { class: 'grow', placeholder: 'Search issues' });
     var st = P.select([['', 'Any status']].concat(STATUSES.map(function (s) { return [s, s]; })), '');
-    var rt = P.select([['', 'Any route']].concat(ROUTES.slice(1)).concat([['none', 'No route yet']]), '');
     var list = h('div');
     function draw() {
       var t = q.value.trim().toLowerCase();
       var shown = data.issues.filter(function (i) {
-        return (!st.value || i.status === st.value) && (!rt.value || (rt.value === 'none' ? !i.route : i.route === rt.value)) &&
+        return (!st.value || i.status === st.value) &&
           (!t || (i.title + ' ' + (i.responsible_email || '')).toLowerCase().indexOf(t) >= 0);
       });
-      list.replaceChildren(shown.length ? P.table(['Issue', 'Status', 'Route', 'Responsible', 'Raised', 'Updated'], shown.map(function (i) {
+      list.replaceChildren(shown.length ? P.table(['Issue', 'Status', 'Responsible', 'Raised', 'Updated'], shown.map(function (i) {
         var who = data.people.filter(function (p) { return p.email === i.responsible_email; })[0];
-        return [P.link('#/issue/' + i.id, i.title), statusPill(i.status), i.route || '', who ? who.name : (i.responsible_email || ''), counts[i.id] || 0, day(i.updated_at)];
-      }), [4]) : h('p', { class: 'muted' }, 'No issues match.'));
+        return [P.link('#/issue/' + i.id, i.title), statusPill(i.status), who ? who.name : (i.responsible_email || ''), counts[i.id] || 0, day(i.updated_at)];
+      }), [3]) : h('p', { class: 'muted' }, 'No issues match.'));
     }
-    [q, st, rt].forEach(function (el) { el.addEventListener('input', draw); });
+    [q, st].forEach(function (el) { el.addEventListener('input', draw); });
     draw();
-    return h('div', null, h('div', { class: 'row' }, q, st, rt), list);
+    return h('div', null, h('div', { class: 'row' }, q, st), list);
   }
 
   // ---------------------------------------------------------------- one issue (ExCo or the person responsible)
@@ -334,13 +337,12 @@
 
     var title = h('input', { class: 'grow', value: iss.title, maxlength: 200 });
     var status = P.select(STATUSES, iss.status);
-    var route = P.select(ROUTES, iss.route || '', { disabled: !ex });
     var resp = peopleSelect(people, iss.responsible_email || '', { disabled: !ex });
     var pub = h('input', { type: 'checkbox', checked: iss.show_to_students, disabled: !ex });
     var save = h('button', { class: 'btn', onclick: async function () {
       save.disabled = true;
       var ok = await P.run(async function () {
-        P.must(await P.act.rpc('save_issue', { p_id: iss.id, p_title: title.value, p_status: status.value, p_route: route.value, p_responsible: resp.value, p_show_to_students: pub.checked }));
+        P.must(await P.act.rpc('save_issue', { p_id: iss.id, p_title: title.value, p_status: status.value, p_responsible: resp.value, p_show_to_students: pub.checked }));
       }, 'Saved');
       save.disabled = false;
       if (ok) P.dispatch();
@@ -365,15 +367,79 @@
 
     P.show(h('div', null,
       h('p', null, ex ? P.link('#/inbox', '← Inbox') : P.link('#/assigned', '← Assigned to me')),
-      h('div', { class: 'row' }, h('h2', { style: 'margin:0' }, iss.title), statusPill(iss.status), iss.route ? P.pill(iss.route === 'SSLG' ? 'SSLG' : 'Direct') : null),
+      h('div', { class: 'row' }, h('h2', { style: 'margin:0' }, iss.title), statusPill(iss.status)),
       h('p', { class: 'sub' }, 'Opened ' + day(iss.created_at) + (who ? ' · Responsible: ' + who.name + (who.positions ? ', ' + who.positions : '') : (iss.responsible_email ? ' · Responsible: ' + iss.responsible_email : ''))),
       convo.el,
       h('details', { class: 'card settings' }, h('summary', null, 'Issue settings'),
         P.field('Title', title),
-        h('div', { class: 'row' }, P.field('Status', status), P.field('What to do', route), P.field('Person responsible', resp)),
+        h('div', { class: 'row' }, P.field('Status', status), P.field('Person responsible (ExCo, committee head or year rep)', resp)),
         h('div', { class: 'row' }, h('label', { class: 'choice' }, pub, h('span', null, h('strong', null, 'Show to student body'), h('span', { class: 'sub' }, 'Every signed-in student can read this conversation (students are never named).' + (ex ? '' : ' ExCo decides.'))))),
         h('div', { class: 'row' }, save),
         merge ? h('h3', null, 'Duplicate?') : null, merge)));
     convo.scroll();
+  } });
+
+  // ---------------------------------------------------------------- meetings: a tag on replies, with minutes and the issues raised there
+  P.route('/meetings', { nav: 'meetings', fn: async function () {
+    P.loading();
+    var rows = asList(P.must(await P.act.from('meetings').select('*').order('held_on', { ascending: false, nullsFirst: true }).order('created_at', { ascending: false })));
+    var name = h('input', { class: 'grow', placeholder: 'e.g. SSLG 1', maxlength: 80 });
+    var date = h('input', { type: 'date' });
+    var add = h('button', { class: 'btn', onclick: async function () {
+      if (name.value.trim().length < 2) { P.toast('Give the meeting a name', true); return; }
+      var ok = await P.run(async function () { P.must(await P.act.from('meetings').insert({ name: name.value.trim(), held_on: date.value || null })); }, 'Meeting added');
+      if (ok) P.dispatch();
+    } }, 'Add meeting');
+    P.show(h('div', null,
+      h('h2', null, 'Meetings'),
+      h('p', { class: 'muted' }, 'Tag a reply on an issue with a meeting, and the issue shows up here with that meeting\'s minutes.'),
+      P.exco ? h('div', { class: 'card' }, h('strong', null, 'New meeting'), h('div', { class: 'row' }, name, date, add)) : null,
+      rows.length ? rows.map(function (m) {
+        return h('a', { class: 'card linkcard', href: '#/meeting/' + m.id },
+          h('div', { class: 'row' }, h('strong', null, m.name), m.held_on ? h('span', { class: 'sub' }, day(m.held_on)) : null, m.minutes_path ? P.pill('Minutes uploaded', 'ok') : P.pill('No minutes yet')));
+      }) : h('p', { class: 'muted' }, 'No meetings yet.')));
+  } });
+
+  P.route('/meeting/:id', { nav: 'meetings', fn: async function (params) {
+    P.loading();
+    var m = P.must(await P.act.from('meetings').select('*').eq('id', params.id).maybeSingle());
+    if (!m) { P.show(h('p', { class: 'muted' }, 'That meeting was not found.')); return; }
+    var issues = asList(P.must(await P.act.rpc('meeting_issues', { p_meeting: m.id })));
+    var minutes = h('div');
+    function drawMinutes() {
+      var open = h('button', { class: 'btn', onclick: async function () {
+        var r = await P.sb.storage.from('meeting-minutes').createSignedUrl(m.minutes_path, 600);
+        if (r.error) { P.toast(P.friendly(r.error), true); return; }
+        window.open(r.data.signedUrl, '_blank', 'noopener');
+      } }, 'Open the minutes (PDF)');
+      var file = h('input', { type: 'file', accept: 'application/pdf', hidden: true });
+      var up = h('button', { class: 'ghost', onclick: function () { file.click(); } }, m.minutes_path ? 'Replace the PDF' : 'Upload the minutes (PDF)');
+      file.addEventListener('change', async function () {
+        var f = file.files[0]; if (!f) return;
+        if (f.type !== 'application/pdf') { P.toast('Please choose a PDF file', true); file.value = ''; return; }
+        up.disabled = true;
+        var path = m.id + '/' + Date.now().toString(36) + '.pdf';
+        var ok = await P.run(async function () {
+          var u = await P.sb.storage.from('meeting-minutes').upload(path, f, { contentType: 'application/pdf' });
+          if (u.error) throw u.error;
+          P.must(await P.act.from('meetings').update({ minutes_path: path }).eq('id', m.id));
+          if (m.minutes_path) await P.sb.storage.from('meeting-minutes').remove([m.minutes_path]);
+        }, 'Minutes saved');
+        up.disabled = false; file.value = '';
+        if (ok) P.dispatch();
+      });
+      minutes.replaceChildren(h('div', { class: 'row' }, m.minutes_path ? open : h('span', { class: 'muted' }, 'Minutes have not been uploaded yet.'), P.exco ? up : null, file));
+    }
+    drawMinutes();
+    var link = function (i) { return i.can_edit ? '#/issue/' + i.id : i.shared ? '#/shared/' + i.id : '#/thread/' + i.id; };
+    P.show(h('div', null,
+      h('p', null, P.link('#/meetings', '← Meetings')),
+      h('div', { class: 'row' }, h('h2', { style: 'margin:0' }, m.name), m.held_on ? h('span', { class: 'sub' }, day(m.held_on)) : null),
+      h('div', { class: 'card' }, h('strong', null, 'Minutes'), minutes),
+      h('h3', null, 'Issues raised at this meeting'),
+      issues.length ? issues.map(function (i) {
+        return h('a', { class: 'card linkcard', href: link(i) },
+          h('div', { class: 'row' }, h('strong', null, i.title), statusPill(i.status), h('span', { class: 'sub' }, raised(i.times_raised) + ' · updated ' + day(i.last_update) + (i.shared ? '' : ' · not shared with students'))));
+      }) : h('p', { class: 'muted' }, 'No issues have been tagged with this meeting yet. Each issue is followed up in its own conversation after the meeting.')));
   } });
 })();
