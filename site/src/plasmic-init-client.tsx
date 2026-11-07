@@ -5,6 +5,7 @@ import { PLASMIC } from './plasmic-init';
 import LiveNews from '@/components/LiveNews';
 import LiveEvents from '@/components/LiveEvents';
 import TeamBlock from '@/components/TeamBlock';
+import PeopleList from '@/components/PeopleList';
 import Avatar from '@/components/Avatar';
 
 export function ClientPlasmicRootProvider(props: Omit<React.ComponentProps<typeof PlasmicRootProvider>, 'loader'>) {
@@ -207,6 +208,28 @@ PLASMIC.registerComponent(TeamBlock, {
     showHeading: { type: 'boolean', defaultValue: true, displayName: 'Show its heading' },
   },
   importPath: '@/components/TeamBlock',
+});
+PLASMIC.registerComponent(PeopleList, {
+  name: 'PeopleList', displayName: 'People list (design your own card)',
+  description: 'Loads real people and repeats the card you design inside it, once per person. Design one card, then connect its text and photo to the "person" fields (name, title, photo, group, link).',
+  props: {
+    part: { type: 'choice', options: ['exco', 'committee-heads', 'year-reps', 'stream-reps'], defaultValue: 'exco', displayName: 'Who' },
+    columns: { type: 'number', defaultValue: 3, displayName: 'Columns' },
+    gap: { type: 'number', defaultValue: 16, displayName: 'Space between cards (px)' },
+    children: {
+      type: 'slot', displayName: 'The card',
+      defaultValue: {
+        type: 'vbox', styles: { gap: '8px', padding: '16px', background: '#ffffff', borderRadius: '12px' },
+        children: [
+          { type: 'component', name: 'SafeImage', props: { alt: 'Photo' } },
+          { type: 'text', value: 'Name' },
+          { type: 'text', value: 'Title' },
+        ],
+      },
+    },
+  },
+  providesData: true,
+  importPath: '@/components/PeopleList',
 });
 PLASMIC.registerComponent(Avatar, {
   name: 'Avatar', displayName: 'Person photo (round)', description: 'A round photo, or initials when there is no photo. Use it to design your own people cards.',
