@@ -2,12 +2,11 @@
 (function () {
   'use strict';
   var P = window.P, h = P.h, sb = P.sb;
-  var $tabs = document.getElementById('tabs'), $who = document.getElementById('who');
+  var $bar = document.getElementById('appbar');
   var REDIRECT = location.origin + location.pathname;
   var ready = false;
 
   function authBox(title, children) {
-    $tabs.hidden = true;
     P.show(h('div', { class: 'login card' }, h('h2', null, title), children));
   }
 
@@ -77,36 +76,64 @@
     authBox('Set a new password', [h('div', { class: 'row' }, pw), h('div', { class: 'row' }, btn)]);
   }
 
-  // ---------- chrome ----------
+  // ---------- chrome: ONE bar under the shared LKCMedSoc menu ----------
+  // Two spaces. Student: Issues and My feedback. Workspace (ExCo and the people handling issues): Tickets and Meetings.
+  var STUDENT_NAV = [['board', 'Issues', '#/said'], ['mine', 'My feedback', '#/feedback/mine']];
+  var WORK_NAV = [['tickets', 'Tickets', '#/tickets'], ['meetings', 'Meetings', '#/meetings']];
+  var initials = function (s) { return String(s || '?').split(/[\s@.]+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0].toUpperCase(); }).join(''); };
+
   function drawChrome() {
-    var me = P.me;
-    if (me) {
-      $who.replaceChildren(h('span', null, me.name || me.email), h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password'),
-        h('button', { class: 'who-btn', id: 'signout', onclick: async function () { await sb.auth.signOut(); P.prefs.del('return'); location.hash = '#/'; boot(); } }, 'Sign out'));
-    } else {
-      $who.replaceChildren(h('button', { class: 'who-btn', id: 'signin', onclick: P.askSignIn }, 'Sign in'));
+    var me = P.me, nav = P.current && P.current.opts && P.current.opts.nav;
+    var space = P.spaceFor(nav);
+    document.body.classList.toggle('work', space === 'work');
+    if (!me) {
+      $bar.replaceChildren(h('div', { class: 'in' },
+        h('a', { class: 'appname', href: '#/' }, 'Feedback'),
+        h('div', { class: 'appright' }, h('button', { class: 'btn', id: 'signin', onclick: P.askSignIn }, 'Sign in'))));
+      return;
     }
-    drawTabs();
+    var items = space === 'work' ? WORK_NAV : STUDENT_NAV;
+    var links = items.map(function (t) {
+      return h('a', { class: t[0] === nav ? 'on' : '', href: t[2] }, t[1],
+        t[0] === 'tickets' && P.triageCount ? h('span', { class: 'count', title: P.triageCount + ' waiting to be sorted' }, String(P.triageCount)) : null);
+    });
+    var right = [];
+    if (P.canWork()) right.push(h('div', { class: 'switch', role: 'group', 'aria-label': 'Switch view' },
+      h('a', { class: space === 'student' ? 'on' : '', href: '#/said', onclick: function () { P.prefs.set('space', 'student'); } }, 'Student view'),
+      h('a', { class: space === 'work' ? 'on' : '', href: '#/tickets', onclick: function () { P.prefs.set('space', 'work'); } }, 'Workspace')));
+    if (space === 'student') right.push(h('a', { class: 'btn', href: '#/suggest' }, 'Send feedback'));
+    right.push(h('details', { class: 'acct' },
+      h('summary', { 'aria-label': 'Account' }, h('span', { class: 'avatar' }, initials(me.name || me.email))),
+      h('div', { class: 'menu' },
+        h('div', { class: 'who' }, h('b', null, me.name || me.email), me.name && me.email ? me.email : ''),
+        h('button', { onclick: newPasswordView }, 'Change password'),
+        h('button', { id: 'signout', onclick: async function () { await sb.auth.signOut(); P.prefs.del('return'); location.hash = '#/'; boot(); } }, 'Sign out'))));
+    $bar.replaceChildren(h('div', { class: 'in' },
+      h('a', { class: 'appname', href: space === 'work' ? '#/tickets' : '#/said' }, 'Feedback', space === 'work' ? h('span', { class: 'space' }, 'Workspace') : null),
+      h('nav', { class: 'appnav', 'aria-label': 'Feedback' }, links),
+      h('div', { class: 'appright' }, right)));
   }
-  function drawTabs() {
-    var tabs = [];
-    if (P.me) tabs.push(['suggest', 'Send feedback', '#/suggest'], ['myfeedback', 'My feedback', '#/feedback/mine'], ['said', 'Issues', '#/said'], ['meetings', 'Meetings', '#/meetings']);
-    if (P.assigned) tabs.push(['assigned', 'Assigned to me', '#/assigned']);
-    if (P.exco) tabs.push(['inbox', 'Inbox', '#/inbox']);
-    var cur = P.current && P.current.opts && P.current.opts.nav;
-    $tabs.hidden = !P.me;
-    $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); }));
-  }
-  P.onRoute = function () { drawTabs(); };
+  // Which space a screen belongs to. Meetings are in both; they follow the last space used.
+  P.canWork = function () { return !!(P.exco || P.assigned); };
+  P.spaceFor = function (nav) {
+    if (!P.canWork()) return 'student';
+    if (nav === 'tickets') return 'work';
+    if (nav === 'meetings') return P.prefs.get('space') === 'work' ? 'work' : 'student';
+    return 'student';
+  };
+  P.onRoute = function () { drawChrome(); };
+  P.refreshChrome = drawChrome;
+  document.addEventListener('click', function (e) { var d = document.querySelector('.acct[open]'); if (d && !d.contains(e.target)) d.removeAttribute('open'); });
 
   async function boot() {
     var s = await sb.auth.getSession();
-    P.me = null; P.exco = false; P.assigned = false;
+    P.me = null; P.exco = false; P.assigned = false; P.triageCount = 0;
     if (s.data.session) {
       try {
         P.me = P.must(await P.rec.rpc('whoami'));
         P.exco = !!P.must(await P.act.rpc('is_exco'));
         try { P.assigned = P.must(await P.act.rpc('my_issues')).length > 0; } catch (e) { /* not a responsible person, or not installed yet */ }
+        if (P.exco) { try { var c = await P.act.from('feedback').select('id', { count: 'exact', head: true }).is('issue_id', null); P.triageCount = c.count || 0; } catch (e) { /* the badge is optional */ } }
       } catch (e) { P.toast(P.friendly(e), true); P.me = null; }
     }
     ready = true;
