@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { sharedSession } from './sso';
 
 // The publishable key is meant to be public: the database rules decide what anyone can do.
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://brwdgbitxisadwbuwbdi.supabase.co';
@@ -13,9 +14,9 @@ export function serverClient(revalidate = 60): SupabaseClient {
 }
 
 let browser: SupabaseClient | null = null;
-/** For client components: keeps the student's session in this browser, on this site's address. */
+/** For client components: the student's session is shared with the other LKCMedSoc sites (see sso.ts). */
 export function browserClient(): SupabaseClient {
-  if (!browser) browser = createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (!browser) browser = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storage: sharedSession } });
   return browser;
 }
 

@@ -91,7 +91,7 @@
   function eventICS(ev, url, now) {
     if (!ev.start_date) return '';
     var sp = eventSpan(ev), stamp = (now || new Date()).toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-    var lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LKCMedSoc//Portal//EN', 'CALSCALE:GREGORIAN',
+    var lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LKCMedSoc//Activities//EN', 'CALSCALE:GREGORIAN',
       'BEGIN:VTIMEZONE', 'TZID:Asia/Singapore', 'BEGIN:STANDARD', 'DTSTART:19700101T000000', 'TZOFFSETFROM:+0800',
       'TZOFFSETTO:+0800', 'TZNAME:SGT', 'END:STANDARD', 'END:VTIMEZONE',
       'BEGIN:VEVENT', 'UID:' + ev.id + '@lkcmedsoc', 'DTSTAMP:' + stamp];

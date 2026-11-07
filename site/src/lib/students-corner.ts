@@ -4,7 +4,8 @@
 export type Tile = { label: string; note: string; href: string };
 export type TileGroup = { title: string; tiles: Tile[] };
 
-const PORTAL = 'https://portal.lkcmedsoc.com';
+const PORTAL = 'https://activities.lkcmedsoc.com';    // LKCMedSoc Activities
+const FEEDBACK = 'https://feedback.lkcmedsoc.com';    // LKCMedSoc Feedback
 
 export const TILE_GROUPS: TileGroup[] = [
   {
@@ -26,8 +27,9 @@ export const TILE_GROUPS: TileGroup[] = [
   {
     title: 'Have your say',
     tiles: [
-      { label: 'Suggestion box', note: 'Tell ExCo what to improve. You can stay anonymous.', href: `${PORTAL}/#/suggest` },
-      { label: 'You said, we did', note: 'What ExCo has changed because of your suggestions.', href: `${PORTAL}/#/said` },
+      { label: 'Send feedback', note: 'Tell ExCo what to improve. Anonymous if you like, and you can follow the replies.', href: `${FEEDBACK}/#/suggest` },
+      { label: 'Issues students have raised', note: 'What students keep asking, and what MedSoc has done about it.', href: `${FEEDBACK}/#/said` },
+      { label: 'SSLG meetings', note: 'Minutes and the issues raised at each Student-Staff Liaison Group meeting.', href: `${FEEDBACK}/#/meetings` },
       { label: 'My events', note: 'Events you have signed up for.', href: `${PORTAL}/#/mine` },
     ],
   },

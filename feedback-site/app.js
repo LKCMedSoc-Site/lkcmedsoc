@@ -1,4 +1,4 @@
-// Sign-in, the page chrome and start-up.
+// LKCMedSoc Feedback: sign-in, the page chrome and start-up.
 (function () {
   'use strict';
   var P = window.P, h = P.h, sb = P.sb;
@@ -61,7 +61,7 @@
         mode !== 'signin' ? link('Back to sign in', 'signin') : null,
         mode === 'signin' ? link('Create account', 'signup') : null,
         mode === 'signin' ? link('Forgot password', 'forgot') : null),
-      h('div', { class: 'row' }, P.link('#/events', 'Just browsing? See events'))]);
+      null]);
   }
 
   function newPasswordView() {
@@ -82,7 +82,7 @@
     var me = P.me;
     if (me) {
       $who.replaceChildren(h('span', null, me.name || me.email), h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password'),
-        h('button', { class: 'who-btn', id: 'signout', onclick: async function () { await sb.auth.signOut(); P.prefs.del('return'); location.hash = '#/events'; boot(); } }, 'Sign out'));
+        h('button', { class: 'who-btn', id: 'signout', onclick: async function () { await sb.auth.signOut(); P.prefs.del('return'); location.hash = '#/'; boot(); } }, 'Sign out'));
     } else {
       $who.replaceChildren(h('button', { class: 'who-btn', id: 'signin', onclick: P.askSignIn }, 'Sign in'));
     }
@@ -90,40 +90,28 @@
   }
   function drawTabs() {
     var tabs = [];
-    if (P.me && (P.me.can_manage || P.me.is_admin || P.exco || P.filer)) tabs.push(['activities', 'Activities', '#/']);
-    tabs.push(['events', 'Events', '#/events']);
-    if (P.me && (P.me.can_manage || P.exco || P.approver)) tabs.push(['todo', 'To do' + (P.badge ? ' (' + P.badge + ')' : ''), '#/todo']);
-    if (P.me) tabs.push(['mine', 'My events', '#/mine']);
-    if (P.me) tabs.push(['posts', 'Write-ups', '#/posts']);
-    if (P.me) tabs.push(['suggest', 'Feedback', '#/suggest'], ['myfeedback', 'My feedback', '#/feedback/mine'], ['said', 'Issues', '#/said'], ['meetings', 'Meetings', '#/meetings']);
+    if (P.me) tabs.push(['suggest', 'Send feedback', '#/suggest'], ['myfeedback', 'My feedback', '#/feedback/mine'], ['said', 'Issues', '#/said'], ['meetings', 'Meetings', '#/meetings']);
     if (P.assigned) tabs.push(['assigned', 'Assigned to me', '#/assigned']);
-    if (P.approver || P.exco) tabs.push(['review', 'Review', '#/review']);
     if (P.exco) tabs.push(['inbox', 'Inbox', '#/inbox']);
-    if (P.exco) tabs.push(['approvers', 'Approvers', '#/approvers']);
-    if (P.exco) tabs.push(['finance', 'Finance', '#/finance']);
     var cur = P.current && P.current.opts && P.current.opts.nav;
     $tabs.hidden = !P.me;
-    $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); }));
+    $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); })
+      .concat(P.me && P.cfg.ACTIVITIES_URL ? [h('a', { class: 'ext', href: P.cfg.ACTIVITIES_URL, target: '_blank', rel: 'noopener' }, 'Activities ↗')] : []));
   }
   P.onRoute = function () { drawTabs(); };
 
   async function boot() {
     var s = await sb.auth.getSession();
-    P.me = null; P.exco = false; P.approver = false; P.filer = false; P.assigned = false;
+    P.me = null; P.exco = false; P.assigned = false;
     if (s.data.session) {
       try {
         P.me = P.must(await P.rec.rpc('whoami'));
         P.exco = !!P.must(await P.act.rpc('is_exco'));
-        try { P.approver = !!P.must(await P.act.rpc('is_approver')); } catch (e) { /* write-up functions not installed yet */ }
-        try { P.filer = !!P.must(await P.act.rpc('can_file_events')); } catch (e) { /* event team access not installed yet */ }
-        try { P.assigned = P.must(await P.act.rpc('my_issues')).length > 0; } catch (e) { /* feedback and issues not installed yet */ }
+        try { P.assigned = P.must(await P.act.rpc('my_issues')).length > 0; } catch (e) { /* not a responsible person, or not installed yet */ }
       } catch (e) { P.toast(P.friendly(e), true); P.me = null; }
     }
     ready = true;
     drawChrome();
-    if (P.me && P.loadWaiting && (P.me.can_manage || P.exco || P.approver)) {
-      P.loadWaiting().then(function (w) { P.badge = w.acts.length + w.posts; drawTabs(); }).catch(function () { /* the tab still works without a count */ });
-    }
     var ret = P.prefs.get('return');
     if (P.me && ret) { P.prefs.del('return'); P.nav(ret); return; }
     P.dispatch();

@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   var cfg = window.RECORDS_CONFIG, L = window.RecordsLib;
-  var sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { db: { schema: 'records' } });
+  var sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { db: { schema: 'records' }, auth: { storage: window.LKCSession.storage } });
 
   // replaceChildren does not flatten arrays (it prints them as text), so flatten here.
   // Nested arrays and empty values (null, false) are skipped, like the h() helper below.

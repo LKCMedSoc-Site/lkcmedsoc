@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var cfg = window.PORTAL_CONFIG, L = window.PortalLib;
-  var sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+  var sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { storage: window.LKCSession.storage } });
   var P = window.P = {
     cfg: cfg, L: L, sb: sb, act: sb.schema('activities'), rec: sb.schema('records'),
     me: null,          // whoami() result when signed in

@@ -28,7 +28,7 @@ export const NAV: NavItem[] = [
   },
   {
     label: 'Resources', href: '/resources', note: 'Tools and documents for students and CCAs.', children: [
-      tile('Plan an event'), tile('Book a venue'), tile('Check the inventory'), tile('Suggestion box'), tile('My events'), tile('MedSoc policy'),
+      tile('Plan an event'), tile('Book a venue'), tile('Check the inventory'), tile('Send feedback'), tile('My events'), tile('MedSoc policy'),
     ],
   },
   { label: 'News', href: '/news' },
@@ -38,4 +38,4 @@ export const RESOURCES = { label: 'Resources', href: '/resources' };
 export const APPLY = { label: 'Apply', href: 'https://www.ntu.edu.sg/medicine/education/bachelor-of-medicine-and-bachelor-of-surgery-%28mbbs%29', external: true };
 
 /** Shortcuts shown in the mobile menu. */
-export const QUICK = [tile('Plan an event'), tile('Book a venue'), tile('Suggestion box'), tile('My events')];
+export const QUICK = [tile('Plan an event'), tile('Book a venue'), tile('Send feedback'), tile('My events')];

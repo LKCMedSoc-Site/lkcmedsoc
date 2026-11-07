@@ -2,7 +2,6 @@
 // issues in the inbox, and every issue is one conversation: the people who raised it on one side, the responders on
 // the other, newest at the bottom. ExCo can show an issue to the student body. A reply can be tagged with a meeting
 // (e.g. "SSLG 1"); the tag leads to the minutes and every issue raised at that meeting.
-// (File name kept from the old suggestion box.)
 (function () {
   'use strict';
   var P = window.P, h = P.h;
@@ -104,6 +103,15 @@
     await draw();
     return { el: el, scroll: toBottom };
   }
+
+  // ---------------------------------------------------------------- home
+  P.route('/', { public: true, nav: 'home', fn: function () {
+    if (P.me) { P.nav('#/suggest'); return; }
+    P.show(h('div', null,
+      h('h2', null, 'Tell MedSoc what to improve'),
+      h('p', { class: 'muted' }, 'Send feedback, follow what happens to it, and see the issues other students have raised. Sign in with your NTU email. You can stay anonymous.'),
+      h('div', { class: 'row' }, h('button', { class: 'btn', onclick: P.askSignIn }, 'Sign in'))));
+  } });
 
   // ---------------------------------------------------------------- send feedback
   P.route('/suggest', { nav: 'suggest', fn: async function () {
