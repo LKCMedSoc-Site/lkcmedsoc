@@ -4,6 +4,8 @@ import { PlasmicRootProvider } from '@plasmicapp/loader-nextjs';
 import { PLASMIC } from './plasmic-init';
 import LiveNews from '@/components/LiveNews';
 import LiveEvents from '@/components/LiveEvents';
+import TeamBlock from '@/components/TeamBlock';
+import Avatar from '@/components/Avatar';
 
 export function ClientPlasmicRootProvider(props: Omit<React.ComponentProps<typeof PlasmicRootProvider>, 'loader'>) {
   return <PlasmicRootProvider loader={PLASMIC} {...props} />;
@@ -197,6 +199,24 @@ PLASMIC.registerComponent(NewsBlock, {
     showFilters: { type: 'boolean', defaultValue: true, displayName: 'Show the filters' },
   },
   importPath: '@/components/NewsBlock',
+});
+PLASMIC.registerComponent(TeamBlock, {
+  name: 'TeamBlock', displayName: 'Meet the team (live)', description: 'One part of Meet the Team, from the live records: ExCo, the committees with their heads, or year and stream representatives. Add one per part, each in its own section.',
+  props: {
+    part: { type: 'choice', options: ['exco', 'committees', 'years'], defaultValue: 'exco', displayName: 'Which part' },
+    showHeading: { type: 'boolean', defaultValue: true, displayName: 'Show its heading' },
+  },
+  importPath: '@/components/TeamBlock',
+});
+PLASMIC.registerComponent(Avatar, {
+  name: 'Avatar', displayName: 'Person photo (round)', description: 'A round photo, or initials when there is no photo. Use it to design your own people cards.',
+  props: {
+    name: { type: 'string', defaultValue: 'Alex Tan' },
+    photo: { type: 'imageUrl', displayName: 'Photo' },
+    size: { type: 'number', defaultValue: 64, displayName: 'Size (px)' },
+    dark: { type: 'boolean', defaultValue: false, displayName: 'For dark backgrounds' },
+  },
+  importPath: '@/components/Avatar',
 });
 PLASMIC.registerComponent(CcaSpotlightBlock, {
   name: 'CcaSpotlightBlock', displayName: 'CCA spotlight (live)', description: "This week's featured CCA and the list of committees.",
