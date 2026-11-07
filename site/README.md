@@ -28,3 +28,26 @@ Status: written but **not yet built or run** (the build sandbox could not reach 
 - Post field names in `src/lib/posts.ts` (`normalise`) are a best guess. Check them against `activities_posts.sql`.
 - Post text is Markdown, converted then sanitised (`src/lib/markdown.ts`) before display.
 - Sign-in is NTU email + password on the page itself (`AuthBox`). Sessions are per website address, so this is separate from the portal's.
+
+
+## Designing pages in Plasmic
+
+Everything on the site can be designed in Plasmic Studio. Pages and layout pieces fall back to the coded version when there is no Plasmic version, so you can move over one page at a time and nothing breaks in between.
+
+**Replace a page.** In Studio, create a page at the real path and publish it. These paths are checked:
+`/`, `/events`, `/news`, `/student-groups`, `/resources`, `/about/meet-the-team`, `/about/houses`.
+(To check another page, add `const designed = await plasmicData('/path'); if (designed) return <PlasmicView data={designed} />;` at the top of its page; see `src/app/events/page.tsx`.)
+
+**Replace the header or footer.** Create Plasmic components named exactly `Header` and `Footer`, and publish them.
+
+**Build from these blocks** (Studio's Add menu; registered in `src/plasmic-init-client.tsx`):
+- Layout: Page band (slanted), Photo on the slant, Page title band, Counting number, plus the older Photo hero, Scrolling words, Photo card, Section heading, Fade in on scroll, Photo.
+- Header parts: Site header (ready-made), Site footer (ready-made), Menu (desktop), Menu button (phones), Search button.
+- Live data (they load their own data): Events with filters, Student groups cards, News cards with filters, CCA spotlight, News list, Events list.
+- Colours and fonts appear as tokens (Plum darkest, Plum, Magenta, Orchid, Pale, Lilac, Mist, Pink, Yellow, Grey, Text; Display font, Body font). They follow `src/app/globals.css`.
+
+**Good to know**
+- The live blocks fetch in the browser, so on a Plasmic page their content appears just after the page loads. The coded pages fetch on the server. For pages where search ranking matters most (events, student groups, news), compare before switching.
+- The app menu bar on records, activities and feedback does not come from Plasmic; it reads `shared/menu.json` (see the main README). If the Plasmic header's menu items differ from that file, the two will differ.
+- Visitors only download the Plasmic runtime on pages that really use a Plasmic design.
+- Bands: give each band a Stack order one higher than the one above it (0 for the first); tick "Last section" on the final one so the footer tucks under it.

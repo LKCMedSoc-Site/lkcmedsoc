@@ -97,7 +97,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* ---------- v3: light chrome, clearer photography ---------- */
-.nav-link { position: relative; padding: .5rem .8rem; color: var(--color-p50); text-decoration: none; font-weight: 500; transition: color .2s ease; }
+.nav-link { position: relative; white-space: nowrap; padding: .5rem .7rem; color: var(--color-p50); text-decoration: none; font-weight: 500; transition: color .2s ease; }
 .nav-link::after { content: ''; position: absolute; left: .85rem; right: .85rem; bottom: .2rem; height: 2px; background: var(--color-p300); transform: scaleX(0); transform-origin: left; transition: transform .3s cubic-bezier(.23,1,.32,1); }
 .nav-link:hover::after, .nav-link[aria-current='page']::after { transform: scaleX(1); }
 .quote-mark { font-family: var(--font-display); font-size: 7rem; line-height: .6; color: var(--color-p300); }

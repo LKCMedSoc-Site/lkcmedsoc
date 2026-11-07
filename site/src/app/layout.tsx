@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { SITE } from '@/lib/site';
 import { getBodies, groupsOf, slugify } from '@/lib/records';
+import { PlasmicOr } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -20,9 +21,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
-        <Header index={index} groups={groups} />
+        <PlasmicOr lookup="Header"><Header index={index} groups={groups} /></PlasmicOr>
         <main className="flex-1">{children}</main>
-        <Footer />
+        <PlasmicOr lookup="Footer"><Footer /></PlasmicOr>
       </body>
     </html>
   );

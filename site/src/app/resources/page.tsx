@@ -4,12 +4,16 @@ import { getPageRendered } from '@/lib/content';
 import { TILE_GROUPS } from '@/lib/students-corner';
 import PageHero from '@/components/blocks/PageHero';
 import { ArrowUpRight } from 'lucide-react';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = { title: 'Resources' };
 export const revalidate = 60;
 
 // Intro text comes from the CMS page "students-corner"; the tiles come from src/lib/students-corner.ts.
 export default async function Resources() {
+  // A page designed in Plasmic at this path replaces the coded one below.
+  const designed = await plasmicData('/resources');
+  if (designed) return <PlasmicView data={designed} />;
   const page = await getPageRendered('students-corner');
   return (
     <>

@@ -2,11 +2,15 @@ import type { Metadata } from 'next';
 import PageHero from '@/components/blocks/PageHero';
 import { getBodies, getLeaders } from '@/lib/records';
 import Leaders from '@/components/Leaders';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = { title: 'House System' };
 export const revalidate = 300;
 
 export default async function Houses() {
+  // A page designed in Plasmic at this path replaces the coded one below.
+  const designed = await plasmicData('/about/houses');
+  if (designed) return <PlasmicView data={designed} />;
   const bodies = await getBodies().catch(() => null);
   const { ay, leaders } = await getLeaders().catch(() => ({ ay: '', leaders: [] }));
   const houses = (bodies ?? []).filter((b) => b.level === 'House' && b.status === 'Active').sort((a, b) => a.name.localeCompare(b.name));

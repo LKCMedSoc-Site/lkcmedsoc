@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { committeesOf, getBodies, getLeaders, sortLeaders, type Leader } from '@/lib/records';
 import Leaders from '@/components/Leaders';
 import PageHero from '@/components/blocks/PageHero';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = { title: 'Meet the Team' };
 export const revalidate = 300;
@@ -10,6 +11,9 @@ export const revalidate = 300;
 const isStream = (l: Leader) => /stream/i.test(l.title);
 
 export default async function MeetTheTeam() {
+  // A page designed in Plasmic at this path replaces the coded one below.
+  const designed = await plasmicData('/about/meet-the-team');
+  if (designed) return <PlasmicView data={designed} />;
   const [bodies, lead] = await Promise.all([getBodies().catch(() => null), getLeaders().catch(() => null)]);
   if (!bodies || !lead) return <><PageHero title="Meet the Team" /><section className="band band-pale band-last" style={{ zIndex: 20 }}><div className="mx-auto max-w-3xl px-4"><p className="rounded-lg bg-red-100 px-3 py-2 text-bad">The team list could not be loaded right now. Please try again in a minute.</p></div></section></>;
   const { ay, leaders } = lead;

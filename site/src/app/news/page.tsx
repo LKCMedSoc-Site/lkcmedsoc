@@ -5,6 +5,7 @@ import { exco, isAy } from '@/lib/ay';
 import { committeeMap, committeesOf, getBodies } from '@/lib/records';
 import PageHero from '@/components/blocks/PageHero';
 import NewsCard from '@/components/NewsCard';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = { title: 'News' };
 export const revalidate = 60;
@@ -14,6 +15,9 @@ type SP = { category?: string; page?: string; ay?: string; committee?: string };
 const select = 'h-10 max-w-full rounded-full border border-p900/25 bg-white px-3 text-sm font-bold text-p900';
 
 export default async function NewsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  // A page designed in Plasmic at this path replaces the coded one below.
+  const designed = await plasmicData('/news');
+  if (designed) return <PlasmicView data={designed} />;
   const sp = await searchParams;
   const category = (CATEGORIES as readonly string[]).includes(sp.category ?? '') ? sp.category! : null;
   const ay = sp.ay && isAy(sp.ay) ? sp.ay : null;

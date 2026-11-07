@@ -12,25 +12,32 @@ export function nameCase(s: string) {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export async function getBodies(): Promise<Body[]> {
-  const { data, error } = await serverClient(300).schema('records').from('public_bodies').select('*');
-  if (error) throw error;
-  return (data as any[]).map((r) => ({
+// The row-to-object conversions are shared with lib/records-client.ts, so blocks inside Plasmic pages can load the same data in the browser.
+export function toBodies(data: any[]): Body[] {
+  return data.map((r) => ({
     name: r.name, level: r.level ?? '', status: r.status ?? 'Active', parent: clean(r.parent_committee) ?? '',
     description: clean(r.description), logo: clean(r.logo_url), instagram: clean(r.instagram), website: clean(r.website), recruitment: clean(r.recruitment_url), header: clean(r.header_url), about: clean(r.about_md),
   })).filter((b) => b.name);
+}
+export function toLeaders(rows: any[]): { ay: string; leaders: Leader[] } {
+  const ay = rows.map((r) => String(r.ay)).sort().pop() ?? '';
+  const leaders = rows.filter((r) => String(r.ay) === ay).map((r) => ({
+    ay, level: r.level ?? '', body: r.body ?? '', parent: clean(r.parent_committee) ?? '', title: r.title ?? '', name: nameCase(String(r.full_name ?? '')),
+  }));
+  return { ay, leaders };
+}
+
+export async function getBodies(): Promise<Body[]> {
+  const { data, error } = await serverClient(300).schema('records').from('public_bodies').select('*');
+  if (error) throw error;
+  return toBodies(data as any[]);
 }
 
 /** Leaders for the latest academic year in the view. */
 export async function getLeaders(): Promise<{ ay: string; leaders: Leader[] }> {
   const { data, error } = await serverClient(300).schema('records').from('public_leadership').select('*');
   if (error) throw error;
-  const rows = data as any[];
-  const ay = rows.map((r) => String(r.ay)).sort().pop() ?? '';
-  const leaders = rows.filter((r) => String(r.ay) === ay).map((r) => ({
-    ay, level: r.level ?? '', body: r.body ?? '', parent: clean(r.parent_committee) ?? '', title: r.title ?? '', name: nameCase(String(r.full_name ?? '')),
-  }));
-  return { ay, leaders };
+  return toLeaders(data as any[]);
 }
 
 const RANK = ['President', 'Vice-President', 'Honorary General Secretary', 'Honorary Treasurer', 'Head', 'Chair', 'Director', 'Deputy'];

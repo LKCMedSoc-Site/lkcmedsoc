@@ -4,11 +4,15 @@ import { committeeMap, getBodies } from '@/lib/records';
 import type { PublicEvent } from '@/lib/events';
 import PageHero from '@/components/blocks/PageHero';
 import EventsBrowser from '@/components/EventsBrowser';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = { title: 'Events' };
 export const revalidate = 60;
 
 export default async function EventsPage() {
+  // A page designed in Plasmic at this path replaces the coded one below.
+  const designed = await plasmicData('/events');
+  if (designed) return <PlasmicView data={designed} />;
   let events: PublicEvent[] = []; let failed = false;
   try {
     const { data, error } = await serverClient().schema('activities').rpc('upcoming_events');

@@ -3,7 +3,9 @@ import { HOME, PHOTOS } from '@/lib/home';
 import { listPosts, type Post } from '@/lib/posts';
 import { serverClient, photoUrl } from '@/lib/supabase';
 import { getPageRendered } from '@/lib/content';
-import { getBodies, getLeaders, groupsOf, slugify, sortLeaders, type Body, type Group, type Leader } from '@/lib/records';
+import { getBodies, getLeaders, type Body, type Leader } from '@/lib/records';
+import { pickSpotlight } from '@/lib/spotlight';
+import CcaSpotlight from '@/components/CcaSpotlight';
 import PostCard from '@/components/PostCard';
 import EventRow from '@/components/EventRow';
 import type { PublicEvent } from '@/lib/events';
@@ -14,10 +16,14 @@ import SectionHead from '@/components/blocks/SectionHead';
 import Reveal from '@/components/blocks/Reveal';
 import Counter from '@/components/blocks/Counter';
 import SafeImage from '@/components/SafeImage';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const revalidate = 60;
 
 export default async function Home() {
+  // A page designed in Plasmic at this path replaces the coded one below.
+  const designed = await plasmicData('/');
+  if (designed) return <PlasmicView data={designed} />;
   let posts: Post[] = []; let events: PublicEvent[] = [];
   try { posts = (await listPosts({ limit: 3 })).items; } catch { /* the rest of the page still shows */ }
   try {
@@ -26,15 +32,10 @@ export default async function Home() {
   } catch { /* same */ }
   const message = await getPageRendered('president-message');
   const messageReady = !!message && !/^\s*<p>\s*\[/.test(message.html); // hide the "[To be written…]" placeholder
-  let ccaCount = 0; let groups: Group[] = []; let leaders: Leader[] = [];
-  try { const bodies = await getBodies(); groups = groupsOf(bodies); ccaCount = groups.reduce((n, g) => n + g.ccas.length, 0); } catch { /* falls back to the written number */ }
+  let bodies: Body[] = []; let leaders: Leader[] = [];
+  try { bodies = await getBodies(); } catch { /* falls back to the written number */ }
   try { leaders = (await getLeaders()).leaders; } catch { /* the spotlight shows without names */ }
-  // One CCA is featured each week, picked from those that already have named leaders.
-  const all = groups.flatMap((g) => g.ccas.map((c) => ({ c, g })));
-  const led = all.filter(({ c }) => leaders.some((l) => l.level === 'CCA/Project' && l.body === c.name));
-  const pool = led.length ? led : all;
-  const spot: { c: Body; g: Group } | undefined = pool.length ? pool[Math.floor(Date.now() / (7 * 864e5)) % pool.length] : undefined;
-  const spotLeaders = spot ? sortLeaders(leaders.filter((l) => l.level === 'CCA/Project' && l.body === spot.c.name)) : [];
+  const { groups, ccaCount, spot, spotLeaders } = pickSpotlight(bodies, leaders);
   // The yellow strip is for something important: an event that opens for RSVP or starts within two weeks.
   const next = events[0];
   const nd = next ? ymd(next.start_date) : null;
@@ -97,41 +98,7 @@ export default async function Home() {
 
       {spot ? (
         <section className="band band-grape" style={z(4)}>
-          <div className={`${wrap} grid gap-10 md:grid-cols-12 md:gap-8`}>
-            <div className="md:col-span-7">
-              <h2 className="h-xl text-mist">CCA spotlight</h2>
-              <p className="display mt-3 text-[clamp(3.2rem,9vw,7rem)] leading-[.88] text-white">{spot.c.name}</p>
-              <p className="mt-4 inline-block rounded-full border border-lilac/50 px-3 py-1 text-sm text-lilac">{spot.g.title}</p>
-              {spotLeaders.length ? (
-                <ul className="mt-5 space-y-1 text-lg text-mist">
-                  {spotLeaders.slice(0, 4).map((l, i) => <li key={i}><span className="text-lilac">{l.title}</span> · <span className="font-medium text-white">{l.name}</span></li>)}
-                </ul>
-              ) : null}
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link href={`/student-groups/${spot.g.slug}/${slugify(spot.c.name)}`} className="press rounded-full bg-pink px-6 py-3 font-bold text-p900 no-underline hover:bg-white">See {spot.c.name}</Link>
-                <Link href="/student-groups" className="press rounded-full border border-lilac/60 px-6 py-3 font-bold text-white no-underline hover:bg-white/10">All {ccaCount} CCAs</Link>
-              </div>
-            </div>
-            <div className="md:col-span-5">
-              <p className="text-sm font-bold text-lilac">Find yours</p>
-              <ul className="mt-2 border-b border-p300">
-                {groups.map((g) => (
-                  <li key={g.slug} className="border-t border-p300">
-                    <Link href={`/student-groups/${g.slug}`} className="row-link group flex items-center justify-between gap-4 py-4 no-underline">
-                      <span><span className="display row-title text-3xl text-white md:text-4xl">{g.title}</span><span className="block text-sm text-lilac">{g.ccas.length} CCA{g.ccas.length === 1 ? '' : 's'}</span></span>
-                      <ArrowRight aria-hidden className="row-arrow h-6 w-6 text-pink" />
-                    </Link>
-                  </li>
-                ))}
-                <li className="border-t border-p300">
-                  <Link href="/about/houses" className="row-link group flex items-center justify-between gap-4 py-4 no-underline">
-                    <span><span className="display row-title text-3xl text-white md:text-4xl">House system</span><span className="block text-sm text-lilac">Your house and its reps</span></span>
-                    <ArrowRight aria-hidden className="row-arrow h-6 w-6 text-pink" />
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
+          <div className={wrap}><CcaSpotlight spot={spot} spotLeaders={spotLeaders} groups={groups} ccaCount={ccaCount} /></div>
         </section>
       ) : null}
 

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { ArrowUpRight, CornerDownLeft, Search, X } from 'lucide-react';
 
 export type SearchItem = { label: string; href: string; kind: string; hint?: string; external?: boolean };
@@ -42,7 +43,8 @@ export default function SearchOverlay({ open, onClose, items }: { open: boolean;
   }
 
   if (!open) return null;
-  return (
+  // Rendered on the page itself, not inside the header, so a header that has slid out of view cannot carry the overlay away with it.
+  return createPortal(
     <div className="fixed inset-0 z-[70] flex items-start justify-center bg-p950/80 px-3 pt-[8svh] backdrop-blur-sm md:pt-[12svh]" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} role="dialog" aria-modal="true" aria-label="Search the site">
       <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center gap-3 border-b border-line px-4">
@@ -72,6 +74,7 @@ export default function SearchOverlay({ open, onClose, items }: { open: boolean;
         </ul>
         <div className="hidden items-center gap-4 border-t border-line bg-p50 px-4 py-2 text-xs text-muted md:flex"><span><kbd className="font-bold">↑↓</kbd> to move</span><span><kbd className="font-bold">Enter</kbd> to open</span><span><kbd className="font-bold">Esc</kbd> to close</span></div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
