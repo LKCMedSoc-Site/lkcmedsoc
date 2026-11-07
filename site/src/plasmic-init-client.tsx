@@ -6,6 +6,10 @@ import LiveNews from '@/components/LiveNews';
 import LiveEvents from '@/components/LiveEvents';
 import TeamBlock from '@/components/TeamBlock';
 import PeopleList from '@/components/PeopleList';
+import GroupsHub from '@/components/groups/GroupsHub';
+import GroupsList from '@/components/groups/GroupsList';
+import { GroupsSearch, GroupsCommitteeChips, GroupsRecruitingToggle, GroupsClear, GroupsCount } from '@/components/groups/GroupsFilters';
+import { GroupText, GroupImage, GroupBadge, GroupRecruiting, GroupLink } from '@/components/groups/GroupParts';
 import { PersonText, PersonPhoto, PersonLink } from '@/components/PersonParts';
 import Avatar from '@/components/Avatar';
 
@@ -191,7 +195,7 @@ PLASMIC.registerComponent(EventsBlock, {
   props: {}, importPath: '@/components/EventsBlock',
 });
 PLASMIC.registerComponent(GroupsBlock, {
-  name: 'GroupsBlock', displayName: 'Student groups cards (live)', description: 'Every CCA as a card, with search and committee filters.',
+  name: 'GroupsBlock', displayName: 'Student groups cards (fixed layout)', description: 'Every CCA as a card, with search and committee filters, in a fixed design. For one you can redesign use "Student groups hub".',
   props: {}, importPath: '@/components/GroupsBlock',
 });
 PLASMIC.registerComponent(NewsBlock, {
@@ -210,6 +214,104 @@ PLASMIC.registerComponent(TeamBlock, {
   },
   importPath: '@/components/TeamBlock',
 });
+// Student groups, in pieces: the hub loads the data and holds the filters; the filters, the list and the card parts go inside it in any layout.
+PLASMIC.registerComponent(GroupsHub, {
+  name: 'GroupsHub', displayName: 'Student groups hub (start here)',
+  description: 'Loads every student group and keeps the filters. It starts with a search box, committee chips and a list of ready cards; rearrange, restyle, delete or add pieces freely.',
+  props: {
+    children: {
+      type: 'slot', displayName: 'Contents',
+      defaultValue: {
+        type: 'vbox', styles: { gap: '16px' },
+        children: [
+          { type: 'hbox', styles: { gap: '8px', alignItems: 'center', flexWrap: 'wrap' }, children: [
+            { type: 'component', name: 'GroupsSearch' }, { type: 'component', name: 'GroupsRecruitingToggle' }, { type: 'component', name: 'GroupsClear' },
+          ] },
+          { type: 'component', name: 'GroupsCommitteeChips' },
+          { type: 'component', name: 'GroupsCount' },
+          { type: 'component', name: 'GroupsList', props: { columns: 3, byCommittee: true, children: {
+            type: 'component', name: 'GroupLink', props: { children: {
+              type: 'vbox', styles: { gap: '10px', padding: '12px', background: '#ffffff', borderRadius: '12px' },
+              children: [
+                { type: 'component', name: 'GroupImage', props: { source: 'header', shape: 'rounded', ratio: '16/9' } },
+                { type: 'hbox', styles: { gap: '8px', alignItems: 'center', justifyContent: 'space-between' }, children: [
+                  { type: 'component', name: 'GroupBadge', props: { look: 'pill' } }, { type: 'component', name: 'GroupRecruiting' },
+                ] },
+                { type: 'component', name: 'GroupText', props: { field: 'name' } },
+                { type: 'component', name: 'GroupText', props: { field: 'description', clamp: 2 } },
+                { type: 'component', name: 'GroupText', props: { field: 'chair', prefix: 'Chairperson · ' } },
+              ],
+            } },
+          } } },
+        ],
+      },
+    },
+  },
+  providesData: true,
+  importPath: '@/components/groups/GroupsHub',
+});
+PLASMIC.registerComponent(GroupsList, {
+  name: 'GroupsList', displayName: 'Groups list (repeats your card)',
+  description: 'Repeats the card you design inside it once per group that matches the filters. Goes inside a Student groups hub.',
+  props: {
+    columns: { type: 'number', defaultValue: 3, displayName: 'Columns' },
+    gap: { type: 'number', defaultValue: 16, displayName: 'Space between cards (px)' },
+    byCommittee: { type: 'boolean', defaultValue: true, displayName: 'A heading for each committee' },
+    children: { type: 'slot', displayName: 'The card' },
+  },
+  providesData: true, importPath: '@/components/groups/GroupsList',
+});
+PLASMIC.registerComponent(GroupsSearch, {
+  name: 'GroupsSearch', displayName: 'Groups: search box', description: 'Search the groups by name or description. Goes inside a Student groups hub.',
+  props: { placeholder: { type: 'string', defaultValue: 'Search groups' } }, importPath: '@/components/groups/GroupsFilters',
+});
+PLASMIC.registerComponent(GroupsCommitteeChips, {
+  name: 'GroupsCommitteeChips', displayName: 'Groups: committee filter chips', description: 'One chip per committee; pick several. Goes inside a Student groups hub.',
+  props: { showDots: { type: 'boolean', defaultValue: true, displayName: 'Show the colour dots' } }, importPath: '@/components/groups/GroupsFilters',
+});
+PLASMIC.registerComponent(GroupsRecruitingToggle, {
+  name: 'GroupsRecruitingToggle', displayName: 'Groups: recruiting filter', description: 'A button to show only groups that are recruiting. Appears only when some are.',
+  props: { label: { type: 'string', defaultValue: 'Recruiting' } }, importPath: '@/components/groups/GroupsFilters',
+});
+PLASMIC.registerComponent(GroupsClear, {
+  name: 'GroupsClear', displayName: 'Groups: clear filters', description: 'A link that resets the filters. Appears only when a filter is on.',
+  props: { label: { type: 'string', defaultValue: 'Clear' } }, importPath: '@/components/groups/GroupsFilters',
+});
+PLASMIC.registerComponent(GroupsCount, {
+  name: 'GroupsCount', displayName: 'Groups: result count', description: 'Says how many groups are showing.', props: {}, importPath: '@/components/groups/GroupsFilters',
+});
+PLASMIC.registerComponent(GroupText, {
+  name: 'GroupText', displayName: 'Group: text', description: "A piece of the group's details, already connected. Style it like any text.",
+  props: {
+    field: { type: 'choice', options: ['name', 'committeeShort', 'committee', 'description', 'chair'], defaultValue: 'name', displayName: 'Show' },
+    prefix: { type: 'string', displayName: 'Words before it' },
+    clamp: { type: 'number', defaultValue: 0, displayName: 'Cut off after this many lines (0 = never)' },
+  },
+  importPath: '@/components/groups/GroupParts',
+});
+PLASMIC.registerComponent(GroupImage, {
+  name: 'GroupImage', displayName: 'Group: picture', description: "The group's header picture or logo, already connected, in the shape you pick. Shows the committee colour with initials when there is none.",
+  props: {
+    source: { type: 'choice', options: ['header', 'logo'], defaultValue: 'header', displayName: 'Picture' },
+    shape: { type: 'choice', options: ['rounded', 'square', 'round'], defaultValue: 'rounded', displayName: 'Shape' },
+    ratio: { type: 'choice', options: ['16/9', '4/3', '1/1', '4/5'], defaultValue: '16/9', displayName: 'Proportions (not for round)' },
+    hideIfMissing: { type: 'boolean', defaultValue: false, displayName: 'Hide when there is no picture' },
+  },
+  importPath: '@/components/groups/GroupParts',
+});
+PLASMIC.registerComponent(GroupBadge, {
+  name: 'GroupBadge', displayName: 'Group: committee tag', description: "The group's committee on its own colour. A pill, a full-width bar, or just a coloured dot.",
+  props: { look: { type: 'choice', options: ['pill', 'bar', 'dot'], defaultValue: 'pill', displayName: 'Look' } }, importPath: '@/components/groups/GroupParts',
+});
+PLASMIC.registerComponent(GroupRecruiting, {
+  name: 'GroupRecruiting', displayName: 'Group: recruiting tag', description: 'A small tag, shown only for groups that are recruiting.',
+  props: { label: { type: 'string', defaultValue: 'Recruiting' } }, importPath: '@/components/groups/GroupParts',
+});
+PLASMIC.registerComponent(GroupLink, {
+  name: 'GroupLink', displayName: 'Group: link wrapper', description: "Wrap the whole card in this to link to the group's page.",
+  props: { children: 'slot' }, importPath: '@/components/groups/GroupParts',
+});
+
 PLASMIC.registerComponent(PersonText, {
   name: 'PersonText', displayName: 'Person: text', description: "A piece of the person's details, already connected. Pick name, title, group or initials. Style it like any text.",
   props: { field: { type: 'choice', options: ['name', 'title', 'group', 'initials'], defaultValue: 'name', displayName: 'Show' } },
