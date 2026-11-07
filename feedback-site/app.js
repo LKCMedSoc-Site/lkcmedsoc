@@ -95,8 +95,7 @@
     if (P.exco) tabs.push(['inbox', 'Inbox', '#/inbox']);
     var cur = P.current && P.current.opts && P.current.opts.nav;
     $tabs.hidden = !P.me;
-    $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); })
-      .concat(P.me && P.cfg.ACTIVITIES_URL ? [h('a', { class: 'ext', href: P.cfg.ACTIVITIES_URL, target: '_blank', rel: 'noopener' }, 'Activities ↗')] : []));
+    $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); }));
   }
   P.onRoute = function () { drawTabs(); };
 

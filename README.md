@@ -13,4 +13,9 @@ Code for the LKCMedSoc website and internal tools. This repository is public: it
 
 Each folder is its own Vercel project: set the project's "Root Directory" to the folder name. DNS for lkcmedsoc.com is on Cloudflare.
 
-**One sign-in:** `records/`, `activities-site/` and `feedback-site/` (and the main site) keep the Supabase session in a cookie shared across `lkcmedsoc.com` and its subdomains (`sso.js` in each folder, `site/src/lib/sso.ts` for the website), so signing in or out on one does it for all. The three `sso.js` files are identical copies. On other addresses (localhost, preview links) each site falls back to its own browser storage. In the Supabase dashboard, Authentication > URL Configuration must list every site address as an allowed redirect.
+**One menu:** the site menu is `shared/menu.json`. The website header reads it, and `records/`, `activities-site/` and `feedback-site/` show it as a bar across the top (`suite-nav.js`, in each folder). Each app carries its own copy, so nothing depends on another site being reachable.
+
+**One sign-in:** `records/`, `activities-site/` and `feedback-site/` (and the main site) keep the Supabase session in a cookie shared across `lkcmedsoc.com` and its subdomains (`sso.js` in each folder, `site/src/lib/sso.ts` for the website), so signing in or out on one does it for all.  On other addresses (localhost, preview links) each site falls back to its own browser storage. In the Supabase dashboard, Authentication > URL Configuration must list every site address as an allowed redirect.
+
+
+**Shared files:** `menu.json`, `suite-nav.js` and `sso.js` exist as identical copies in several folders. The masters are in `shared/`. After changing one, run `node tools/sync-shared.mjs` (or `node tools/sync-shared.mjs --check` to see which copies differ).

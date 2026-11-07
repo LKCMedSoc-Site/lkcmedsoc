@@ -1,0 +1,47 @@
+{
+  "site": "https://lkcmedsoc.com",
+  "items": [
+    { "label": "Events", "href": "/events" },
+    {
+      "label": "Student Groups", "href": "/student-groups", "note": "Every CCA, run by students, grouped by the committee it belongs to.",
+      "children": [
+        { "label": "Local Community Involvement Committee", "href": "/student-groups/local-community-involvement" },
+        { "label": "Overseas Community Involvement Committee", "href": "/student-groups/overseas-community-involvement" },
+        { "label": "Careers Committee", "href": "/student-groups/careers" },
+        { "label": "Arts and Culture Committee", "href": "/student-groups/arts-and-culture" }
+      ]
+    },
+    {
+      "label": "About Us", "href": "/about/meet-the-team", "note": "Who we are and how to join us.",
+      "children": [
+        { "label": "Meet the Team", "href": "/about/meet-the-team", "note": "ExCo, committees, year and stream reps" },
+        { "label": "House System", "href": "/about/houses", "note": "The houses and their representatives" },
+        { "label": "Work With Us", "href": "/about/work-with-us", "note": "Join a committee or CCA" },
+        { "label": "Honour Roll", "href": "/about/honour-roll", "note": "Past leaders, year by year" },
+        { "label": "Alumni Association", "href": "/about/alumni", "note": "Staying connected after graduation" }
+      ]
+    },
+    {
+      "label": "Resources", "href": "/resources", "note": "Tools and documents for students and CCAs.",
+      "children": [
+        { "label": "Plan an event", "href": "https://activities.lkcmedsoc.com/#/new", "note": "Start a new activity and send it for approval.", "external": true },
+        { "label": "Book a venue", "href": "https://booking.lkcmedsoc.com", "note": "Reserve rooms and spaces.", "external": true },
+        { "label": "Check the inventory", "href": "https://inventory.lkcmedsoc.com", "note": "See what equipment is available and reserve it.", "external": true },
+        { "label": "Send feedback", "href": "https://feedback.lkcmedsoc.com/#/suggest", "note": "Tell ExCo what to improve. Anonymous if you like, and you can follow the replies.", "external": true },
+        { "label": "My events", "href": "https://activities.lkcmedsoc.com/#/mine", "note": "Events you have signed up for.", "external": true },
+        { "label": "MedSoc policy", "href": "/policy", "note": "How MedSoc and its CCAs operate." }
+      ]
+    },
+    { "label": "News", "href": "/news" },
+    {
+      "label": "Apps", "href": "/resources", "note": "The tools students and leaders use. One sign-in works on all of them.",
+      "children": [
+        { "label": "Activities", "href": "https://activities.lkcmedsoc.com", "note": "Events, write-ups and approvals", "external": true },
+        { "label": "Feedback", "href": "https://feedback.lkcmedsoc.com", "note": "Suggestions, issues and SSLG meetings", "external": true },
+        { "label": "Records", "href": "https://records.lkcmedsoc.com", "note": "Leadership and participation records", "external": true },
+        { "label": "Inventory", "href": "https://inventory.lkcmedsoc.com", "note": "Equipment and reservations", "external": true },
+        { "label": "Booking", "href": "https://booking.lkcmedsoc.com", "note": "Book a venue", "external": true }
+      ]
+    }
+  ]
+}

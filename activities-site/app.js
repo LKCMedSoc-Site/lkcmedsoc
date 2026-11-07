@@ -102,8 +102,7 @@
     if (P.exco) tabs.push(['finance', 'Finance', '#/finance']);
     var cur = P.current && P.current.opts && P.current.opts.nav;
     $tabs.hidden = !P.me;
-    $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); })
-      .concat(P.me && P.cfg.FEEDBACK_URL ? [h('a', { class: 'ext', href: P.cfg.FEEDBACK_URL, target: '_blank', rel: 'noopener' }, 'Feedback ↗')] : []));
+    $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); }));
   }
   P.onRoute = function () { drawTabs(); };
 

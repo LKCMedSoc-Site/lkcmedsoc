@@ -2,7 +2,7 @@
 // so every site asks you to sign in again. Here the session lives in a cookie shared by lkcmedsoc.com and all its
 // subdomains (records., activities., feedback., and the main site), so signing in or out on one does it for all.
 // On any other address (localhost, preview links) it quietly uses normal browser storage instead.
-// This file is copied into each site's folder: change one, change them all (records, activities-site, feedback-site).
+// The master copy is shared/sso.js; run `node tools/sync-shared.mjs` to copy it into records, activities-site and feedback-site.
 (function () {
   'use strict';
   var SHARED = /(^|\.)lkcmedsoc\.com$/.test(location.hostname);

@@ -1,6 +1,6 @@
 // One sign-in for every LKCMedSoc site: the Supabase session lives in a cookie shared by lkcmedsoc.com and all its
 // subdomains (records., activities., feedback.), so signing in or out on one does it for all.
-// Same logic as sso.js in the records, activities-site and feedback-site folders: change one, change them all.
+// Same logic as shared/sso.js (copied into records, activities-site and feedback-site): change one, change the other.
 // On other addresses (localhost, preview links) it uses normal browser storage instead.
 const CHUNK = 1800;       // characters per cookie, well under the 4 KB cookie limit after URL-encoding
 const MAX_AGE = 180 * 86400;

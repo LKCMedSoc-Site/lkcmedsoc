@@ -167,4 +167,3 @@ details.settings > summary { cursor: pointer; font-weight: 700; color: var(--p70
 button.linkbtn { background: none; border: 0; padding: 0 4px; font: inherit; font-size: 13px; color: var(--p700); text-decoration: underline; cursor: pointer; }
 details.ayblock { margin: 14px 0; } details.ayblock > summary { cursor: pointer; font-weight: 700; color: var(--p700); margin-bottom: 8px; }
 
-.tabs a.ext { margin-left: auto; opacity: .8; }

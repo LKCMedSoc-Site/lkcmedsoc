@@ -138,4 +138,3 @@ a.btn-link.solid { background: var(--p700); color: #fff; }
 /* An empty new line must keep its height so the caret can move down onto it */
 .ProseMirror p > br:only-child, .ProseMirror br.ProseMirror-trailingBreak { display: inline !important; }
 .ProseMirror p { min-height: 1.5em; }
-.tabs a.ext { margin-left: auto; opacity: .8; }

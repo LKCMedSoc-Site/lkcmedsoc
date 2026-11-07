@@ -16,7 +16,7 @@ export default function Footer() {
           <p className="eyebrow eyebrow-light">Explore</p>
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link className="text-mist no-underline hover:text-white" href="/">Home</Link></li>
-            {NAV.map((n) => <li key={n.label}><Link className="text-mist no-underline hover:text-white" href={n.href}>{n.label}</Link></li>)}
+            {NAV.filter((n) => n.label !== 'Apps').map((n) => <li key={n.label}><Link className="text-mist no-underline hover:text-white" href={n.href}>{n.label}</Link></li>)}
             
             <li><Link className="text-mist no-underline hover:text-white" href="/policy">Policy</Link></li>
           </ul>
