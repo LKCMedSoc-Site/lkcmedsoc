@@ -6,6 +6,9 @@ import LiveNews from '@/components/LiveNews';
 import LiveEvents from '@/components/LiveEvents';
 import TeamBlock from '@/components/TeamBlock';
 import PeopleList from '@/components/PeopleList';
+import EventsHub from '@/components/hubs/EventsHub';
+import NewsHub from '@/components/hubs/NewsHub';
+import PeopleHub from '@/components/hubs/PeopleHub';
 import GroupsHub from '@/components/groups/GroupsHub';
 import GroupsList from '@/components/groups/GroupsList';
 import { GroupsSearch, GroupsCommitteeChips, GroupsRecruitingToggle, GroupsClear, GroupsCount } from '@/components/groups/GroupsFilters';
@@ -219,6 +222,10 @@ PLASMIC.registerComponent(GroupsHub, {
   name: 'GroupsHub', displayName: 'Student groups hub (start here)',
   description: 'Loads every student group and keeps the filters. It starts with a search box, committee chips and a list of ready cards. For a fully custom design, use Studio\'s own elements with its data ($ctx.groupsHub) and actions.',
   props: {
+    limit: { type: 'number', defaultValue: 0, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 or 4 on the home page.' },
+    defaultRecruitingOnly: { type: 'boolean', defaultValue: false, displayName: 'Start with recruiting groups only' },
+    defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name or slug, e.g. careers. Leave empty for all.' },
+    order: { type: 'choice', options: ['a-z', 'random'], defaultValue: 'a-z', displayName: 'Order', description: 'Random gives a different mix on each visit.' },
     children: {
       type: 'slot', displayName: 'Contents',
       defaultValue: {
@@ -318,6 +325,67 @@ PLASMIC.registerComponent(GroupRecruiting, {
 PLASMIC.registerComponent(GroupLink, {
   name: 'GroupLink', displayName: 'Group: link wrapper', description: "Wrap the whole card in this to link to the group's page.",
   props: { children: 'slot' }, importPath: '@/components/groups/GroupParts',
+});
+
+// Headless controllers for events, news and the team: they give Studio data and actions, and draw nothing themselves.
+const hubSlot = (what: string) => ({ type: 'slot' as const, displayName: 'Contents', defaultValue: { type: 'text' as const, value: `Design your layout here with Studio's own elements, using ${what}.` } });
+PLASMIC.registerComponent(EventsHub, {
+  name: 'EventsHub', displayName: 'Events hub (data and filters)',
+  description: 'Loads the upcoming events and keeps the filters. Draws nothing: use Studio elements with $ctx.eventsHub and its actions.',
+  props: {
+    children: hubSlot('$ctx.eventsHub'),
+    limit: { type: 'number', defaultValue: 0, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 on the home page.' },
+    defaultRsvpOnly: { type: 'boolean', defaultValue: false, displayName: 'Start with RSVP-open events only' },
+    defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name. Leave empty for all.' },
+  },
+  providesData: true,
+  refActions: {
+    setSearch: { description: 'Set the search words', argTypes: [{ name: 'query', type: 'string' }] },
+    setCommittee: { description: 'Show one committee (empty text = all)', argTypes: [{ name: 'name', type: 'string' }] },
+    toggleCommittee: { description: 'Pick a committee, or unpick it if already picked', argTypes: [{ name: 'name', type: 'string' }] },
+    setMonth: { description: 'Show one month (key like 2026-11; empty text = all)', argTypes: [{ name: 'key', type: 'string' }] },
+    toggleMonth: { description: 'Pick a month, or unpick it if already picked', argTypes: [{ name: 'key', type: 'string' }] },
+    setRsvpOnly: { description: 'Show only events open for RSVP', argTypes: [{ name: 'on', type: 'boolean' }] },
+    toggleRsvpOnly: { description: 'Flip the RSVP-open filter', argTypes: [] },
+    setOpenToEveryone: { description: 'Hide NTU-students-only events', argTypes: [{ name: 'on', type: 'boolean' }] },
+    toggleOpenToEveryone: { description: 'Flip the open-to-everyone filter', argTypes: [] },
+    clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
+  },
+  importPath: '@/components/hubs/EventsHub',
+});
+PLASMIC.registerComponent(NewsHub, {
+  name: 'NewsHub', displayName: 'News hub (data and filters)',
+  description: 'Loads the latest stories and keeps the filters. Draws nothing: use Studio elements with $ctx.newsHub and its actions.',
+  props: {
+    children: hubSlot('$ctx.newsHub'),
+    limit: { type: 'number', defaultValue: 12, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 on the home page.' },
+    defaultCategory: { type: 'choice', options: ['', 'Impact', 'Events', 'Announcements', 'Stories'], defaultValue: '', displayName: 'Start with this category' },
+    defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name. Leave empty for all.' },
+  },
+  providesData: true,
+  refActions: {
+    setSearch: { description: 'Set the search words', argTypes: [{ name: 'query', type: 'string' }] },
+    setCategory: { description: 'Show one category (empty text = all)', argTypes: [{ name: 'name', type: 'string' }] },
+    toggleCategory: { description: 'Pick a category, or unpick it if already picked', argTypes: [{ name: 'name', type: 'string' }] },
+    setCommittee: { description: 'Show one committee (empty text = all)', argTypes: [{ name: 'name', type: 'string' }] },
+    toggleCommittee: { description: 'Pick a committee, or unpick it if already picked', argTypes: [{ name: 'name', type: 'string' }] },
+    clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
+  },
+  importPath: '@/components/hubs/NewsHub',
+});
+PLASMIC.registerComponent(PeopleHub, {
+  name: 'PeopleHub', displayName: 'People hub (data and search)',
+  description: 'Loads the team (ExCo, committee heads, year and stream reps). Draws nothing: use Studio elements with $ctx.peopleHub.',
+  props: {
+    children: hubSlot('$ctx.peopleHub'),
+    limit: { type: 'number', defaultValue: 0, displayName: 'Show at most (0 = all)', description: 'Applies to each flat list (exco, committeeHeads, yearReps, streamReps).' },
+  },
+  providesData: true,
+  refActions: {
+    setSearch: { description: 'Search people by name, title or group', argTypes: [{ name: 'query', type: 'string' }] },
+    clearFilters: { description: 'Clear the search', argTypes: [] },
+  },
+  importPath: '@/components/hubs/PeopleHub',
 });
 
 PLASMIC.registerComponent(PersonText, {
