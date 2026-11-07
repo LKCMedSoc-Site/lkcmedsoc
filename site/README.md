@@ -41,10 +41,14 @@ Everything on the site can be designed in Plasmic Studio. Pages and layout piece
 **Replace the header or footer.** Create Plasmic components named exactly `Header` and `Footer`, and publish them.
 
 **Build from these blocks** (Studio's Add menu; registered in `src/plasmic-init-client.tsx`):
-- Layout: Page band (slanted), Photo on the slant, Page title band, Counting number, plus the older Photo hero, Scrolling words, Photo card, Section heading, Fade in on scroll, Photo.
+- Editable layouts (everything inside is yours to edit and move): **Hero layout (editable)** (a slanted band with a words area and a picture area), **Photo card (editable)** (your own heading and text over a photo), and **Page band (slanted)**.
+- Brand pieces to put inside them: **Display text** (the big condensed face, with size and colour), **Button (pill)**, **Photo on the slant**, Counting number, Page title band.
+- Fixed layouts (only their props can be changed, not what is inside): Photo hero, Photo card, Section heading. Use the editable ones above when you want to move things around. Scrolling words and Fade in on scroll are also available.
 - Header parts: Site header (ready-made), Site footer (ready-made), Menu (desktop), Menu button (phones), Search button.
 - Live data (they load their own data): Events with filters, Student groups cards, News cards with filters, CCA spotlight, News list, Events list.
 - Colours and fonts appear as tokens (Plum darkest, Plum, Magenta, Orchid, Pale, Lilac, Mist, Pink, Yellow, Grey, Text; Display font, Body font). They follow `src/app/globals.css`.
+
+**Why some blocks cannot be edited on the canvas.** A coded block is sealed: Studio only edits the settings the code exposes. The "editable" shells expose slots, which are areas you fill with Plasmic's own boxes, text and buttons. Live-data blocks (events, student groups, news, CCA spotlight) stay sealed on purpose: change them through their settings.
 
 **Good to know**
 - The live blocks fetch in the browser, so on a Plasmic page their content appears just after the page loads. The coded pages fetch on the server. For pages where search ranking matters most (events, student groups, news), compare before switching.

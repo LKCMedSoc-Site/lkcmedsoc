@@ -41,7 +41,7 @@ import Reveal from '@/components/blocks/Reveal';
 import SafeImage from '@/components/SafeImage';
 
 PLASMIC.registerComponent(Hero, {
-  name: 'Hero', displayName: 'Photo hero', description: 'Full-width photo with a big headline and two buttons.',
+  name: 'Hero', displayName: 'Photo hero (fixed layout)', description: 'Ready-made hero. Only its words, photo and button links can be changed. For a hero you can edit freely use "Hero layout (editable)".',
   props: {
     title: { type: 'string', defaultValue: 'We are LKCMedSoc' }, tagline: { type: 'string' },
     image: { type: 'imageUrl', displayName: 'Photo' },
@@ -56,7 +56,7 @@ PLASMIC.registerComponent(Marquee, {
   importPath: '@/components/blocks/Marquee',
 });
 PLASMIC.registerComponent(PhotoTile, {
-  name: 'PhotoTile', displayName: 'Photo card', description: 'Tall photo card with a title and a link.',
+  name: 'PhotoTile', displayName: 'Photo card (fixed layout)', description: 'Ready-made photo card. For one you can edit freely use "Photo card (editable)".',
   props: {
     title: { type: 'string', defaultValue: 'Title' }, text: { type: 'string' },
     image: { type: 'imageUrl', displayName: 'Photo' }, href: { type: 'string', displayName: 'Links to', defaultValue: '/' },
@@ -97,6 +97,10 @@ import Band from '@/components/blocks/Band';
 import SlantPhoto from '@/components/blocks/SlantPhoto';
 import PageHero from '@/components/blocks/PageHero';
 import Counter from '@/components/blocks/Counter';
+import DisplayText from '@/components/blocks/DisplayText';
+import PillButton from '@/components/blocks/PillButton';
+import HeroLayout from '@/components/blocks/HeroLayout';
+import PhotoCardShell from '@/components/blocks/PhotoCardShell';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import NavMenu from '@/components/nav/NavMenu';
@@ -198,4 +202,73 @@ PLASMIC.registerComponent(CcaSpotlightBlock, {
   name: 'CcaSpotlightBlock', displayName: 'CCA spotlight (live)', description: "This week's featured CCA and the list of committees.",
   props: { panel: { type: 'boolean', defaultValue: true, displayName: 'Dark panel behind it' } },
   importPath: '@/components/CcaSpotlightBlock',
+});
+
+// ---------------------------------------------------------------------------------------------------------------------------
+// Editable shells: the coded part keeps the brand shape (slanted band, photo frame); what goes inside is yours to edit and move.
+// ---------------------------------------------------------------------------------------------------------------------------
+PLASMIC.registerComponent(DisplayText, {
+  name: 'DisplayText', displayName: 'Display text', description: 'Words in the big condensed brand face, in capitals. Pick a size and colour.',
+  props: {
+    text: { type: 'string', defaultValue: 'Heading' },
+    size: { type: 'choice', options: ['hero', 'xl', 'lg', 'md', 'sm'], defaultValue: 'xl', displayName: 'Size' },
+    tone: { type: 'choice', options: ['plum', 'dark', 'white', 'pink', 'orchid', 'magenta', 'mist'], defaultValue: 'plum', displayName: 'Colour' },
+    as: { type: 'choice', options: ['h1', 'h2', 'h3', 'p'], defaultValue: 'h2', displayName: 'Page role (h1 is the main title)' },
+  },
+  importPath: '@/components/blocks/DisplayText',
+});
+PLASMIC.registerComponent(PillButton, {
+  name: 'PillButton', displayName: 'Button (pill)', description: 'A rounded button or link in the brand style.',
+  props: {
+    label: { type: 'string', defaultValue: 'Button' },
+    href: { type: 'string', defaultValue: '/', displayName: 'Links to' },
+    look: { type: 'choice', options: ['pink', 'plum', 'white', 'outline-light', 'outline-dark'], defaultValue: 'pink', displayName: 'Look' },
+  },
+  importPath: '@/components/blocks/PillButton',
+});
+PLASMIC.registerComponent(HeroLayout, {
+  name: 'HeroLayout', displayName: 'Hero layout (editable)',
+  description: 'A slanted band with two areas: words on one side, a picture on the other. Fill both with your own boxes, text, buttons and photo.',
+  props: {
+    tone: { type: 'choice', options: ['plum', 'grape', 'magenta', 'pale', 'grey', 'mist', 'pink'], defaultValue: 'plum', displayName: 'Colour' },
+    order: { type: 'number', defaultValue: 0, displayName: 'Stack order (0 = the top band)' },
+    last: { type: 'boolean', displayName: 'Last section (the footer tucks under it)' },
+    mediaSide: { type: 'choice', options: ['right', 'left'], defaultValue: 'right', displayName: 'Picture on the' },
+    children: {
+      type: 'slot', displayName: 'Words',
+      defaultValue: [{
+        type: 'vbox', styles: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '20px' },
+        children: [
+          { type: 'component', name: 'DisplayText', props: { text: 'We are LKCMedSoc', size: 'hero', tone: 'white', as: 'h1' } },
+          { type: 'text', value: 'A short line about this page. Click to edit it, or delete it.' },
+          { type: 'hbox', styles: { display: 'flex', gap: '12px', flexWrap: 'wrap' }, children: [
+            { type: 'component', name: 'PillButton', props: { label: 'See events', href: '/events', look: 'pink' } },
+            { type: 'component', name: 'PillButton', props: { label: 'Meet the team', href: '/about/meet-the-team', look: 'outline-light' } },
+          ] },
+        ],
+      }],
+    },
+    media: { type: 'slot', displayName: 'Picture', defaultValue: [{ type: 'component', name: 'SlantPhoto', props: { ratio: '4/5', slab: true } }] },
+  },
+  importPath: '@/components/blocks/HeroLayout',
+});
+PLASMIC.registerComponent(PhotoCardShell, {
+  name: 'PhotoCardShell', displayName: 'Photo card (editable)',
+  description: 'A tall photo card. Put your own heading and text inside; they sit at the bottom of the photo.',
+  props: {
+    image: { type: 'imageUrl', displayName: 'Photo' },
+    href: { type: 'string', displayName: 'Links to (optional)' },
+    ratio: { type: 'choice', options: ['3/4', '4/5', '1/1', '4/3', '16/9'], defaultValue: '3/4', displayName: 'Shape' },
+    children: {
+      type: 'slot', displayName: 'Words on the photo',
+      defaultValue: [{
+        type: 'vbox', styles: { display: 'flex', flexDirection: 'column', gap: '8px' },
+        children: [
+          { type: 'component', name: 'DisplayText', props: { text: 'Title', size: 'lg', tone: 'white', as: 'h3' } },
+          { type: 'text', value: 'A line about it.' },
+        ],
+      }],
+    },
+  },
+  importPath: '@/components/blocks/PhotoCardShell',
 });
