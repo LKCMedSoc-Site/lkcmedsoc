@@ -217,7 +217,7 @@ PLASMIC.registerComponent(TeamBlock, {
 // Student groups, in pieces: the hub loads the data and holds the filters; the filters, the list and the card parts go inside it in any layout.
 PLASMIC.registerComponent(GroupsHub, {
   name: 'GroupsHub', displayName: 'Student groups hub (start here)',
-  description: 'Loads every student group and keeps the filters. It starts with a search box, committee chips and a list of ready cards; rearrange, restyle, delete or add pieces freely.',
+  description: 'Loads every student group and keeps the filters. It starts with a search box, committee chips and a list of ready cards. For a fully custom design, use Studio\'s own elements with its data ($ctx.groupsHub) and actions.',
   props: {
     children: {
       type: 'slot', displayName: 'Contents',
@@ -248,6 +248,14 @@ PLASMIC.registerComponent(GroupsHub, {
     },
   },
   providesData: true,
+  // Actions Studio elements can run (Interactions > Run component action): a search box calls setSearch, a chip calls toggleCommittee, etc.
+  refActions: {
+    setSearch: { description: 'Set the search words', argTypes: [{ name: 'query', type: 'string' }] },
+    toggleCommittee: { description: 'Turn a committee filter on or off (use the committee slug)', argTypes: [{ name: 'slug', type: 'string' }] },
+    setRecruitingOnly: { description: 'Show only recruiting groups (true) or all (false)', argTypes: [{ name: 'on', type: 'boolean' }] },
+    toggleRecruitingOnly: { description: 'Flip the recruiting-only filter', argTypes: [] },
+    clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
+  },
   importPath: '@/components/groups/GroupsHub',
 });
 PLASMIC.registerComponent(GroupsList, {

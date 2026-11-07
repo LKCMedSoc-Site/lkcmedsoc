@@ -41,5 +41,6 @@ export function GroupsClear({ label = 'Clear', className = '' }: { label?: strin
 
 export function GroupsCount({ className = '' }: { className?: string }) {
   const g = useGroups(); if (!g) return NEED;
+  if (g.loading || g.failed) return null;
   return <p className={`text-sm text-muted ${className}`} aria-live="polite">{g.shown.length} group{g.shown.length === 1 ? '' : 's'}{g.dirty ? ' match' : ''}</p>;
 }

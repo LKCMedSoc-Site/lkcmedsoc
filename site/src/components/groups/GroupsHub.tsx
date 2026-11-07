@@ -1,8 +1,10 @@
 'use client';
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useState, type ReactNode } from 'react';
+import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { fetchBodies, fetchLeaders } from '@/lib/records-client';
 import { groupItems } from '@/lib/groups';
 import type { GroupItem } from '@/components/GroupsBrowser';
+import { toGroupData } from './groupData';
 
 // One colour per committee, used on its badge and its filter chip. Hex values are the brand palette.
 export const TONES = [
@@ -15,12 +17,24 @@ export type GroupsCtx = {
   q: string; setQ: (v: string) => void; picked: string[]; toggle: (c: string) => void;
   recruiting: boolean; setRecruiting: (v: boolean) => void; anyRecruiting: boolean; dirty: boolean; clear: () => void;
   toneOf: (committee: string) => (typeof TONES)[number];
+  loading: boolean; failed: boolean;
 };
 const Ctx = createContext<GroupsCtx | null>(null);
 export const useGroups = () => useContext(Ctx);
 
-// Loads every student group and holds the filters. Put the filter pieces and the list inside it, in any order and layout.
-export default function GroupsHub({ children, className = '' }: { children?: ReactNode; className?: string }) {
+export type GroupsHubRef = {
+  setSearch: (query: string) => void;
+  toggleCommittee: (slug: string) => void;
+  setRecruitingOnly: (on: boolean) => void;
+  toggleRecruitingOnly: () => void;
+  clearFilters: () => void;
+};
+
+const slugOf = (href: string) => href.split('/').filter(Boolean).pop() ?? '';
+
+// Loads every student group and holds the filters. It does not draw anything itself: it gives Studio the data ($ctx.groupsHub) and actions
+// (setSearch, toggleCommittee, setRecruitingOnly, toggleRecruitingOnly, clearFilters), and the ready-made pieces below also work inside it.
+const GroupsHub = forwardRef<GroupsHubRef, { children?: ReactNode; className?: string }>(function GroupsHub({ children, className = '' }, ref) {
   const [data, setData] = useState<ReturnType<typeof groupItems> | 'failed' | null>(null);
   const [q, setQ] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
@@ -42,14 +56,36 @@ export default function GroupsHub({ children, className = '' }: { children?: Rea
     return true;
   }).sort((a, b) => a.name.localeCompare(b.name)), [items, q, picked, recruiting]);
 
-  if (!data) return <p className={`text-muted ${className}`}>Loading student groups…</p>;
-  if (data === 'failed') return <p className={`rounded-lg bg-red-100 px-3 py-2 text-bad ${className}`}>This list could not be loaded right now. Please try again in a minute.</p>;
-  const value: GroupsCtx = {
-    items, committees, shown, q, setQ, picked, recruiting, setRecruiting,
-    toggle: (c) => setPicked((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c])),
-    anyRecruiting: items.some((i) => i.recruiting), dirty: !!(q || picked.length || recruiting),
-    clear: () => { setQ(''); setPicked([]); setRecruiting(false); },
-    toneOf: (c) => TONES[Math.max(0, committees.findIndex((x) => x.name === c)) % TONES.length],
+  const toggle = (name: string) => setPicked((p) => (p.includes(name) ? p.filter((x) => x !== name) : [...p, name]));
+  const clear = () => { setQ(''); setPicked([]); setRecruiting(false); };
+  useImperativeHandle(ref, () => ({
+    setSearch: (query: string) => setQ(query ?? ''),
+    toggleCommittee: (slug: string) => { const c = committees.find((x) => slugOf(x.href) === slug || x.name === slug); if (c) toggle(c.name); },
+    setRecruitingOnly: (on: boolean) => setRecruiting(!!on),
+    toggleRecruitingOnly: () => setRecruiting((r) => !r),
+    clearFilters: clear,
+  }));
+
+  const toneOf = (c: string) => TONES[Math.max(0, committees.findIndex((x) => x.name === c)) % TONES.length];
+  const loading = !data, failed = data === 'failed';
+  const dirty = !!(q || picked.length || recruiting);
+  const value: GroupsCtx = { items, committees, shown, q, setQ, picked, recruiting, setRecruiting, toggle, anyRecruiting: items.some((i) => i.recruiting), dirty, clear, toneOf, loading, failed };
+
+  // What Studio sees as $ctx.groupsHub. Chips can bind their "selected" look straight to committees[i].isSelected or selectedCommitteeMap[slug].
+  const committeeData = committees.map((c) => ({
+    name: c.name, short: c.name.replace(/ Committee$/, ''), slug: slugOf(c.href), href: c.href,
+    color: toneOf(c.name).bg, onColor: toneOf(c.name).fg, isSelected: picked.includes(c.name), count: items.filter((i) => i.committee === c.name).length,
+  }));
+  const hub = {
+    isLoading: loading, hasError: failed,
+    items: shown.map((it) => ({ ...toGroupData(it, toneOf(it.committee)), committeeSlug: slugOf(it.committeeHref) })),
+    totalCount: shown.length, allCount: items.length, hasMatches: shown.length > 0,
+    countText: `${shown.length} group${shown.length === 1 ? '' : 's'}${dirty ? ' match' : ''}`,
+    activeSearch: q, committees: committeeData,
+    selectedCommitteeMap: Object.fromEntries(committeeData.map((c) => [c.slug, c.isSelected])),
+    selectedCommitteeCount: picked.length,
+    isRecruitingOnly: recruiting, anyRecruiting: value.anyRecruiting, isFiltering: dirty,
   };
-  return <Ctx.Provider value={value}><div className={className}>{children}</div></Ctx.Provider>;
-}
+  return <Ctx.Provider value={value}><DataProvider name="groupsHub" data={hub}><div className={className}>{children}</div></DataProvider></Ctx.Provider>;
+});
+export default GroupsHub;

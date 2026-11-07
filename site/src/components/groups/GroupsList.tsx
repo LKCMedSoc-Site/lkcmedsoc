@@ -4,18 +4,16 @@ import type { ReactNode } from 'react';
 import { DataProvider, repeatedElement } from '@plasmicapp/loader-nextjs';
 import type { GroupItem } from '@/components/GroupsBrowser';
 import { useGroups } from './GroupsHub';
+import { toGroupData } from './groupData';
 
-export type GroupData = { name: string; committee: string; committeeShort: string; description: string; chair: string; logo: string; header: string; recruiting: boolean; link: string; committeeLink: string; color: string; onColor: string; initials: string };
-export const toGroupData = (g: GroupItem, tone: { bg: string; fg: string }): GroupData => ({
-  name: g.name, committee: g.committee, committeeShort: g.committee.replace(/ Committee$/, ''), description: g.description ?? '', chair: g.chair,
-  logo: g.logo, header: g.header, recruiting: g.recruiting, link: g.href, committeeLink: g.committeeHref, color: tone.bg, onColor: tone.fg,
-  initials: g.name.split(/[\s(]+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join(''),
-});
+export type { GroupData } from './groupData';
 
 // Repeats the card you design inside it once per group that matches the filters, optionally under a heading for each committee.
 export default function GroupsList({ columns = 3, gap = 16, byCommittee = true, children, className = '' }: { columns?: number; gap?: number; byCommittee?: boolean; children?: ReactNode; className?: string }) {
   const g = useGroups();
   if (!g) return <p className="text-sm text-muted">Place this inside a “Student groups hub”.</p>;
+  if (g.loading) return <p className={`text-muted ${className}`}>Loading student groups…</p>;
+  if (g.failed) return <p className={`rounded-lg bg-red-100 px-3 py-2 text-bad ${className}`}>This list could not be loaded right now. Please try again in a minute.</p>;
   const cols = Math.min(6, Math.max(1, Math.round(columns)));
   const grid = { display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap } as const;
   const cards = (list: GroupItem[], offset: number) => list.map((it, i) => (
