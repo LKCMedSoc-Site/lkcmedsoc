@@ -6,6 +6,7 @@ import LiveNews from '@/components/LiveNews';
 import LiveEvents from '@/components/LiveEvents';
 import TeamBlock from '@/components/TeamBlock';
 import PeopleList from '@/components/PeopleList';
+import { PersonText, PersonPhoto, PersonLink } from '@/components/PersonParts';
 import Avatar from '@/components/Avatar';
 
 export function ClientPlasmicRootProvider(props: Omit<React.ComponentProps<typeof PlasmicRootProvider>, 'loader'>) {
@@ -209,9 +210,26 @@ PLASMIC.registerComponent(TeamBlock, {
   },
   importPath: '@/components/TeamBlock',
 });
+PLASMIC.registerComponent(PersonText, {
+  name: 'PersonText', displayName: 'Person: text', description: "A piece of the person's details, already connected. Pick name, title, group or initials. Style it like any text.",
+  props: { field: { type: 'choice', options: ['name', 'title', 'group', 'initials'], defaultValue: 'name', displayName: 'Show' } },
+  importPath: '@/components/PersonParts',
+});
+PLASMIC.registerComponent(PersonPhoto, {
+  name: 'PersonPhoto', displayName: 'Person: photo', description: "The person's photo, already connected, in the shape you pick. Shows initials if they have not shared one.",
+  props: {
+    shape: { type: 'choice', options: ['square', 'rounded', 'round'], defaultValue: 'square', displayName: 'Shape' },
+    ratio: { type: 'choice', options: ['1/1', '4/5', '3/4', '16/9'], defaultValue: '1/1', displayName: 'Proportions (not for round)' },
+  },
+  importPath: '@/components/PersonParts',
+});
+PLASMIC.registerComponent(PersonLink, {
+  name: 'PersonLink', displayName: 'Person: link wrapper', description: "Wrap the whole card in this to link to the person's committee page.",
+  props: { children: 'slot' }, importPath: '@/components/PersonParts',
+});
 PLASMIC.registerComponent(PeopleList, {
   name: 'PeopleList', displayName: 'People list (design your own card)',
-  description: 'Loads real people and repeats the card you design inside it, once per person. Design one card, then connect its text and photo to the "person" fields (name, title, photo, group, link).',
+  description: 'Loads real people and repeats the card you design inside it, once per person. It starts with a ready card already connected to each person; change its layout, shape and styling freely, or add more Person pieces (text, photo, link).',
   props: {
     part: { type: 'choice', options: ['exco', 'committee-heads', 'year-reps', 'stream-reps'], defaultValue: 'exco', displayName: 'Who' },
     columns: { type: 'number', defaultValue: 3, displayName: 'Columns' },
@@ -219,12 +237,17 @@ PLASMIC.registerComponent(PeopleList, {
     children: {
       type: 'slot', displayName: 'The card',
       defaultValue: {
-        type: 'vbox', styles: { gap: '8px', padding: '16px', background: '#ffffff', borderRadius: '12px' },
-        children: [
-          { type: 'component', name: 'SafeImage', props: { alt: 'Photo' } },
-          { type: 'text', value: 'Name' },
-          { type: 'text', value: 'Title' },
-        ],
+        type: 'component', name: 'PersonLink',
+        props: {
+          children: {
+            type: 'vbox', styles: { gap: '8px', padding: '16px', background: '#ffffff', borderRadius: '12px' },
+            children: [
+              { type: 'component', name: 'PersonPhoto', props: { shape: 'square' } },
+              { type: 'component', name: 'PersonText', props: { field: 'name' } },
+              { type: 'component', name: 'PersonText', props: { field: 'title' } },
+            ],
+          },
+        },
       },
     },
   },
