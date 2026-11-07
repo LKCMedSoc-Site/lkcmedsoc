@@ -196,16 +196,80 @@
     else adminView();
   }
 
+
+  // ---------- my photo (ExCo members and committee heads only) ----------
+  var PHOTO_BUCKET = 'leader-photos';
+  // Crop to a centred square and shrink, so every photo is small and the same shape.
+  async function squarePhoto(file) {
+    var bmp = await createImageBitmap(file);
+    var side = Math.min(bmp.width, bmp.height), size = Math.min(600, side);
+    var c = document.createElement('canvas'); c.width = size; c.height = size;
+    c.getContext('2d').drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size);
+    return await new Promise(function (resolve) { c.toBlob(function (b) { resolve(b); }, 'image/webp', 0.88); });
+  }
+  function photoPath(url) { var i = url ? url.indexOf('/' + PHOTO_BUCKET + '/') : -1; return i < 0 ? null : url.slice(i + PHOTO_BUCKET.length + 2); }
+  async function photoCard() {
+    var res = await sb.rpc('my_photo');
+    var row = !res.error && res.data && res.data[0];
+    if (!row || !row.eligible) return null;
+    var url = row.photo_url || '', pending = false;
+    var prev = h('div', { class: 'imgprev round' });
+    var show = h('input', { type: 'checkbox', checked: !!row.show_photo });
+    var msg = h('span', { class: 'muted' });
+    var file = h('input', { type: 'file', accept: 'image/*', hidden: true });
+    function paint() { prev.replaceChildren(url ? h('img', { src: url, alt: 'Your photo' }) : h('span', { class: 'muted' }, 'No photo yet')); rm.hidden = !url; }
+    var rm = h('button', { class: 'danger', type: 'button', onclick: async function () {
+      if (!confirm('Remove your photo? It will disappear from the website.')) return;
+      var old = photoPath(url);
+      var ok = await run(async function () {
+        must(await sb.rpc('save_my_photo', { p_url: null, p_show: false }));
+        if (old) await sb.storage.from(PHOTO_BUCKET).remove([old]);
+      }, 'Photo removed');
+      if (ok !== undefined) { url = ''; show.checked = false; pending = false; msg.textContent = ''; paint(); }
+    } }, 'Remove my photo');
+    var pick = h('button', { class: 'btn', type: 'button', onclick: function () { file.click(); } }, 'Upload a photo');
+    file.addEventListener('change', async function () {
+      var f = file.files[0]; if (!f) return;
+      if (!/^image\//.test(f.type)) { toast('Please choose an image file', true); file.value = ''; return; }
+      pick.disabled = true; msg.textContent = 'Uploading…';
+      try {
+        var blob = await squarePhoto(f);
+        var path = me.matric + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '.webp';
+        var up = await sb.storage.from(PHOTO_BUCKET).upload(path, blob, { contentType: 'image/webp', cacheControl: '31536000' });
+        if (up.error) throw up.error;
+        url = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl; pending = true;
+        msg.textContent = 'Uploaded. Press Save to keep it.'; paint();
+      } catch (e) { msg.textContent = ''; toast(friendly(e), true); }
+      pick.disabled = false; file.value = '';
+    });
+    var save = h('button', { class: 'btn', type: 'button', onclick: async function () {
+      var old = row.photo_url && row.photo_url !== url ? photoPath(row.photo_url) : null;
+      var ok = await run(async function () {
+        must(await sb.rpc('save_my_photo', { p_url: url || null, p_show: show.checked }));
+        if (old) await sb.storage.from(PHOTO_BUCKET).remove([old]);
+      }, 'Saved');
+      if (ok !== undefined) { row.photo_url = url; pending = false; msg.textContent = ''; }
+    } }, 'Save');
+    paint();
+    return h('div', { class: 'card' }, h('strong', null, 'My photo'),
+      h('p', { class: 'muted' }, 'Photos are for ExCo members and committee heads. Yours appears on the LKCMedSoc website (Meet the Team and your committee page) only if you tick the box below. You can change or remove it any time.'),
+      prev, h('div', { class: 'row' }, pick, rm, msg), file,
+      h('label', { class: 'check' }, show, ' Show my photo on the LKCMedSoc website'),
+      h('div', { class: 'row' }, save));
+  }
+
   // ---------- my record ----------
   async function recordView() {
     show(h('p', { class: 'muted' }, 'Loading…'));
     var rows = await run(async function () { return must(await sb.rpc('my_record')); });
     if (!rows) return;
     var total = rows.reduce(function (a, r) { return a + (r.points || 0); }, 0);
+    var photo = await photoCard();
     show(h('div', null,
       h('h2', null, 'My record'),
       me.matric ? null : h('p', { class: 'muted' }, 'Your email is not linked to a student record yet. If this is wrong, ask an admin to check the roster.'),
       h('div', { class: 'card' }, h('div', { class: 'muted' }, 'Total points'), h('div', { class: 'total' }, total)),
+      photo,
       rows.length ? table(['Year', 'Level', 'Body', 'Position', 'Points'], rows.map(function (r) { return [r.ay, r.level, r.body, r.title, r.points]; }), [4])
                   : h('p', { class: 'muted' }, 'No positions recorded yet.')));
   }

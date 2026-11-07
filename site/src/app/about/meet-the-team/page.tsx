@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { committeesOf, getBodies, getLeaders, sortLeaders, type Leader } from '@/lib/records';
 import Leaders from '@/components/Leaders';
+import Avatar from '@/components/Avatar';
 import PageHero from '@/components/blocks/PageHero';
 import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
@@ -32,7 +33,7 @@ export default async function MeetTheTeam() {
             <div>
               <h2 className="h-xl">{exco.name}</h2>
               <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {sortLeaders(of('ExCo', exco.name)).map((l, i) => <li key={i} className="rounded-xl border border-p900/15 bg-white p-5"><span className="block text-sm text-muted">{l.title}</span><span className="mt-0.5 block text-xl font-bold text-p900">{l.name}</span></li>)}
+                {sortLeaders(of('ExCo', exco.name)).map((l, i) => <li key={i} className="flex items-center gap-4 rounded-xl border border-p900/15 bg-white p-4"><Avatar name={l.name} photo={l.photo} size={64} /><span className="min-w-0"><span className="block text-sm text-muted">{l.title}</span><span className="mt-0.5 block text-xl font-bold text-p900">{l.name}</span></span></li>)}
               </ul>
             </div>
           ) : null}
@@ -43,8 +44,13 @@ export default async function MeetTheTeam() {
               {committees.map((c) => (
                 <li key={c.name}>
                   <Link href={`/student-groups/${c.slug}`} className="row-link press group block h-full rounded-xl bg-p950 p-5 text-mist no-underline transition-colors hover:bg-p900">
-                    <h3 className="display text-3xl leading-[.95] text-white"><span className="row-title">{c.name.replace(/ Committee$/, '')}</span></h3>
-                    <p className="mt-1 text-sm text-p300">Committee{c.ccas.length ? ` · ${c.ccas.length} group${c.ccas.length === 1 ? '' : 's'}` : ''}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="display text-3xl leading-[.95] text-white"><span className="row-title">{c.name.replace(/ Committee$/, '')}</span></h3>
+                        <p className="mt-1 text-sm text-p300">Committee{c.ccas.length ? ` · ${c.ccas.length} group${c.ccas.length === 1 ? '' : 's'}` : ''}</p>
+                      </div>
+                      {(() => { const h = of('Committee', c.name)[0]; return h ? <Avatar name={h.name} photo={h.photo} size={56} dark /> : null; })()}
+                    </div>
                     <Leaders className="mt-3 [&_.text-muted]:text-p300 [&_.font-medium]:text-white" list={of('Committee', c.name)} />
                     <span aria-hidden className="row-arrow mt-3 inline-block text-2xl text-pink">→</span>
                   </Link>

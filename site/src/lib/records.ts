@@ -2,7 +2,7 @@ import { serverClient } from './supabase';
 
 // Reads the public views in the records schema (public_bodies, public_leadership). No emails are used here.
 export type Body = { name: string; level: string; status: string; parent: string; description: string | null; logo: string | null; instagram: string | null; website: string | null; recruitment: string | null; header: string | null; about: string | null };
-export type Leader = { ay: string; level: string; body: string; parent: string; title: string; name: string };
+export type Leader = { ay: string; level: string; body: string; parent: string; title: string; name: string; photo?: string | null };
 
 const clean = (v: unknown): string | null => (v == null || v === '' || v === 'null' || v === 'N/A' ? null : String(v));
 
@@ -22,7 +22,7 @@ export function toBodies(data: any[]): Body[] {
 export function toLeaders(rows: any[]): { ay: string; leaders: Leader[] } {
   const ay = rows.map((r) => String(r.ay)).sort().pop() ?? '';
   const leaders = rows.filter((r) => String(r.ay) === ay).map((r) => ({
-    ay, level: r.level ?? '', body: r.body ?? '', parent: clean(r.parent_committee) ?? '', title: r.title ?? '', name: nameCase(String(r.full_name ?? '')),
+    ay, level: r.level ?? '', body: r.body ?? '', parent: clean(r.parent_committee) ?? '', title: r.title ?? '', name: nameCase(String(r.full_name ?? '')), photo: clean(r.photo_url),
   }));
   return { ay, leaders };
 }

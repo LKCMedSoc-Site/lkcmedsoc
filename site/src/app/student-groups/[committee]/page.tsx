@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { committeesOf, getBodies, getLeaders, slugify, sortLeaders } from '@/lib/records';
 import Leaders from '@/components/Leaders';
+import Avatar from '@/components/Avatar';
 import PageHero from '@/components/blocks/PageHero';
 
 export const revalidate = 300;
@@ -26,7 +27,7 @@ export default async function CommitteePage({ params }: Props) {
       <PageHero title={c.name} back={{ label: 'Student Groups', href: '/student-groups' }} intro={ay ? `Leadership for ${ay}` : undefined} />
       <section className="band band-pale band-last" style={{ zIndex: 20 }}>
         <div className="mx-auto max-w-6xl px-4">
-          {head.length ? <div className="mb-10"><h2 className="h-xl">Committee</h2><Leaders className="mt-4 text-base" list={head} /></div> : null}
+          {head.length ? <div className="mb-10"><h2 className="h-xl">Committee</h2><div className="mt-4 flex items-center gap-4"><Avatar name={head[0].name} photo={head[0].photo} size={80} /><Leaders className="text-base" list={head} /></div></div> : null}
           <h2 className="h-xl">{c.ccas.length ? 'Groups under this committee' : 'About this committee'}</h2>
           {c.ccas.length ? (
             <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
