@@ -90,7 +90,7 @@ PLASMIC.registerComponent(Reveal, {
 });
 // Header building blocks: behaviour from code, everything inside is designed in Studio.
 // The site's own header with its content editable. Student Groups' sub-items come from the database, so they are left empty here.
-const linkFields = { label: { type: 'string' as const }, href: { type: 'string' as const, displayName: 'Link' }, note: { type: 'string' as const, control: 'large' as const, displayName: 'One-line description' } };
+const linkFields = { label: { type: 'string' as const }, href: { type: 'string' as const, displayName: 'Link' }, note: { type: 'string' as const, displayName: 'One-line description' } };
 const defaultItems = NAV.map((n) => ({ label: n.label, href: n.href, note: n.note ?? '', children: n.href === '/student-groups' ? [] : (n.children ?? []).map((c) => ({ label: c.label, href: c.href, note: c.note ?? '' })) }));
 PLASMIC.registerComponent(SiteHeaderBlock, {
   name: 'SiteHeaderBlock', displayName: 'Site header (editable content)',
@@ -111,7 +111,7 @@ PLASMIC.registerComponent(SiteHeaderBlock, {
         type: 'object', nameFunc: (i: { menu?: string; title?: string }) => `${i?.menu ?? ''}: ${i?.title ?? ''}`,
         fields: {
           menu: { type: 'choice', options: ['student-groups', 'about', 'resources', 'apps'], displayName: 'Show on this menu' },
-          eyebrow: { type: 'string', displayName: 'Small label' }, title: { type: 'string' }, body: { type: 'string', control: 'large' as const },
+          eyebrow: { type: 'string', displayName: 'Small label' }, title: { type: 'string' }, body: { type: 'string' },
           linkText: { type: 'string', displayName: 'Link text' }, url: { type: 'string', displayName: 'Link' },
         },
       },
