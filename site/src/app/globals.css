@@ -130,29 +130,35 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
 .row-arrow { transition: transform .3s cubic-bezier(.23,1,.32,1); }
 
 /* ---------- Motion for pages designed in Plasmic ---------- */
-/* Plasmic strips <style> tags and custom classes when HTML is pasted in, so these rules target plain tags. They apply inside .plasmic-page only,
-   which wraps every Plasmic page and layout piece (and the Studio canvas at /plasmic-host). It adds no box. Coded pages keep their own motion. */
+/* Plasmic strips <style> tags and custom classes when HTML is pasted in, so these rules target plain tags. They apply to links and buttons inside
+   .plasmic-page (wraps every Plasmic page and layout piece, and the Studio canvas at /plasmic-host) and to any link or button that carries
+   Plasmic's own generated classes, wherever it ends up in the document (e.g. portaled in Studio). Coded pages keep their own motion.
+   `!important` is used on purpose: Plasmic's reset and pasted inline styles would otherwise win. Add the class .no-lift to opt a link out of the lift.
+   No hover/pointer media query, because it can evaluate false inside Studio's scaled artboard; on a phone a tap can leave a hover state showing. */
 .plasmic-page { display: contents; }
 @media (prefers-reduced-motion: no-preference) {
   /* Smooth changes on every link and button, and a small press when clicked. */
-  .plasmic-page a, .plasmic-page button, .lift {
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]),
+  :is(.plasmic-page button, button[class*="plasmic_default"], button[class*="__wab"]) {
     transition: transform .35s cubic-bezier(.22, 1, .36, 1), translate .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s cubic-bezier(.22, 1, .36, 1),
-                background-color .25s ease, border-color .25s ease, color .25s ease, opacity .25s ease;
+                background-color .25s ease, border-color .25s ease, color .25s ease, opacity .25s ease !important;
   }
-  .plasmic-page a:active, .plasmic-page button:active { transform: scale(.985); transition-duration: .1s; }
-  /* Pictures inside links zoom slowly; their frame (a wrapper holding only the picture) clips the zoom. */
-  .plasmic-page a img { transition: transform .8s cubic-bezier(.22, 1, .36, 1), opacity .4s ease; }
-  .plasmic-page a :has(> img:only-child) { overflow: hidden; }
-  /* A trailing arrow (the last span next to other content) slides on hover. */
-  .plasmic-page a > span:last-child:not(:only-child) { display: inline-block; transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
-}
-/* Hover effects only where there is a real mouse; on phones a tap would leave them stuck on. */
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .plasmic-page a:hover img { transform: scale(1.05); }
-  .plasmic-page a:hover > span:last-child:not(:only-child) { transform: translateX(4px); }
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):active,
+  :is(.plasmic-page button, button[class*="plasmic_default"], button[class*="__wab"]):active { transform: scale(.985) !important; transition-duration: .1s !important; }
+
+  /* Pictures inside links (plain img, or inside a <picture>) zoom slowly; a frame holding only the picture clips the zoom. */
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]) img { transition: transform .8s cubic-bezier(.22, 1, .36, 1), opacity .4s ease !important; }
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]) :is(picture, :has(> img:only-child), :has(> picture:only-child)) { overflow: hidden !important; }
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]) picture { display: block; }
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):hover img { transform: scale(1.05) !important; }
+
+  /* A trailing arrow: the last text or span next to other content slides on hover. (Pasted spans become div.__wab_text in Plasmic.) */
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]) :is(span, .__wab_text):last-child:not(:only-child) { display: inline-block; transition: transform .3s cubic-bezier(.22, 1, .36, 1) !important; }
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):hover :is(span, .__wab_text):last-child:not(:only-child) { transform: translateX(4px) !important; }
+
   /* Links that wrap content (cards, tiles, rows) rise 2px. The `translate` property never clashes with a transform set in Studio.
-     Not affected: text-only links, links in a header/footer/nav, anything with .no-lift. Other cards opt in with .lift or the Hover lift block (adds the brand shadow). */
-  .plasmic-page a:has(> div, > img, > picture, > figure, > article, > section, > ul, > h1, > h2, > h3, > h4):not(.no-lift, header a, footer a, nav a):hover,
-  .lift:hover { translate: 0 -2px; }
-  .lift:hover { box-shadow: 0 12px 24px -16px rgba(42, 6, 40, .55); }
+     Not lifted: text-only links, links in a header/footer/nav, anything with .no-lift. Other cards opt in with .lift or the Hover lift block. */
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div, > img, > picture, > figure, > article, > section, > ul, > h1, > h2, > h3, > h4):not(.no-lift, header a, footer a, nav a):hover { translate: 0 -2px !important; }
+  .lift { transition: translate .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s cubic-bezier(.22, 1, .36, 1); }
+  .lift:hover { translate: 0 -2px; box-shadow: 0 12px 24px -16px rgba(42, 6, 40, .55); }
 }
