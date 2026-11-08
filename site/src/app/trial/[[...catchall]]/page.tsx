@@ -17,9 +17,12 @@ export default async function TrialPage({ params }: Props) {
   if (!data) notFound();
   const meta = data.entryCompMetas[0];
   return (
-    <ClientPlasmicRootProvider prefetchedData={data} pageRoute={meta.path} pageParams={meta.params}>
-      <PlasmicComponent component={meta.displayName} />
-    </ClientPlasmicRootProvider>
+    <>
+      <div hidden data-plasmic-route="" />
+      <ClientPlasmicRootProvider prefetchedData={data} pageRoute={meta.path} pageParams={meta.params}>
+        <div className="plasmic-page"><PlasmicComponent component={meta.displayName} /></div>
+      </ClientPlasmicRootProvider>
+    </>
   );
 }
 

@@ -22,9 +22,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
-        <HideOnHost><PlasmicOr lookup="Header"><HideOnHost prefixes={['/trial']}><Header index={index} groups={groups} /></HideOnHost></PlasmicOr></HideOnHost>
+        <div className="site-chrome"><HideOnHost><PlasmicOr lookup="Header"><Header index={index} groups={groups} /></PlasmicOr></HideOnHost></div>
         <main className="flex-1">{children}</main>
-        <HideOnHost><PlasmicOr lookup="Footer"><HideOnHost prefixes={['/trial']}><Footer /></HideOnHost></PlasmicOr></HideOnHost>
+        <div className="site-chrome"><HideOnHost><PlasmicOr lookup="Footer"><Footer /></PlasmicOr></HideOnHost></div>
       </body>
     </html>
   );
