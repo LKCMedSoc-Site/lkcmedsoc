@@ -185,11 +185,6 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
   .hm-chevron { transition: rotate .3s cubic-bezier(.22, 1, .36, 1); }
   .hm-panel a { transition: background-color .25s ease, padding-left .25s cubic-bezier(.22, 1, .36, 1); }
 }
-/* StickyHeader */
-.sticky-bar { position: sticky; top: 0; z-index: 50; }
-@media (prefers-reduced-motion: no-preference) { .sticky-bar { transition: transform .3s cubic-bezier(.22, 1, .36, 1); } }
-.sticky-bar[data-hidden='true'] { transform: translateY(-100%); }
-
 /* ---------- One header and footer ---------- */
 /* The layout's header and footer sit in .site-chrome. A page designed in Plasmic carries a data-plasmic-route marker; when it is there, the page's own
    header and footer (placed inside the Plasmic design) are the only ones, so the layout's are hidden. Coded pages are unchanged. */

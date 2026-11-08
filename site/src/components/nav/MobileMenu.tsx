@@ -11,7 +11,7 @@ import SearchOverlay, { type SearchItem } from '@/components/SearchOverlay';
 import ChildLink from './ChildLink';
 
 // The phone menu: a round button that opens a full-screen sheet with the whole menu, the quick links, and Resources and Apply pinned at the bottom.
-export default function MobileMenu({ groups = [], index = [], menuItems, ctaText, ctaUrl, logoText, onOpenChange }: { groups?: NavItem[]; index?: SearchItem[]; menuItems?: NavItem[]; ctaText?: string; ctaUrl?: string; logoText?: string; onOpenChange?: (open: boolean) => void }) {
+export default function MobileMenu({ groups = [], index = [], menuItems, ctaText, ctaUrl, logoText, className = '', onOpenChange }: { groups?: NavItem[]; index?: SearchItem[]; menuItems?: NavItem[]; ctaText?: string; ctaUrl?: string; logoText?: string; className?: string; onOpenChange?: (open: boolean) => void }) {
   const { nav, items } = useSiteMenu(groups, index, menuItems);
   const [open, setOpenState] = useState(false);
   const [find, setFind] = useState(false);
@@ -25,7 +25,7 @@ export default function MobileMenu({ groups = [], index = [], menuItems, ctaText
   }, [open]);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open} className="press grid h-10 w-10 place-items-center rounded-full bg-p900 text-white lg:hidden"><Menu className="h-5 w-5" /></button>
+      <button type="button" onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open} className={`press grid h-10 w-10 place-items-center rounded-full bg-p900 text-white lg:hidden ${className}`}><Menu className="h-5 w-5" /></button>
       {open ? createPortal(
         <div className="fixed inset-0 z-[60] flex flex-col bg-p950 text-white lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="flex h-16 shrink-0 items-center justify-between px-4">

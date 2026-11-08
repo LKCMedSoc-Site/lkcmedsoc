@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { NAV } from '@/lib/nav';
 import { SITE } from '@/lib/site';
 
-export default function Footer() {
+export default function Footer({ className = '' }: { className?: string }) {
   return (
-    <footer className="relative mt-24 overflow-hidden bg-p950 text-mist">
+    <footer className={`relative mt-24 w-full overflow-hidden bg-p950 text-mist ${className}`}>
       <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-10 pt-16 md:grid-cols-4">
         <div className="md:col-span-2">
           <p className="display text-4xl text-white">Students&rsquo; Medical Society</p>

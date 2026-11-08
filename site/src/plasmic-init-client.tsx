@@ -119,6 +119,8 @@ PLASMIC.registerComponent(SiteHeaderBlock, {
     },
     ctaText: { type: 'string', defaultValue: 'Apply', displayName: 'Button text' },
     ctaUrl: { type: 'string', defaultValue: 'https://www.ntu.edu.sg/medicine/education/bachelor-of-medicine-and-bachelor-of-surgery-%28mbbs%29', displayName: 'Button link' },
+    hideOnScrollDown: { type: 'boolean', defaultValue: true, displayName: 'Slide away when scrolling down', description: 'Slides off when scrolling down past 80px and comes straight back on any scroll up. Never hides inside Studio.' },
+    pinned: { type: 'choice', options: ['fixed', 'sticky'], defaultValue: 'fixed', displayName: 'Pinned to', description: 'fixed: the window, so it works anywhere on the page. sticky: only works if its parent box is as tall as the page.' },
     previewOpenMenu: { type: 'choice', options: ['none', 'student-groups', 'about', 'resources', 'apps'], defaultValue: 'none', displayName: 'Show this drop-down open (Studio only)', description: 'Holds a drop-down open on the canvas so you can see it. Has no effect on the live site. The desktop menu shows at 1024px wide or more.' },
   },
   importPath: '@/components/SiteHeaderBlock',
@@ -129,6 +131,7 @@ PLASMIC.registerComponent(StickyHeader, {
   props: {
     children: { type: 'slot', displayName: 'Contents' },
     hideOnScrollDown: { type: 'boolean', defaultValue: true, displayName: 'Slide away when scrolling down' },
+    pinned: { type: 'choice', options: ['fixed', 'sticky'], defaultValue: 'fixed', displayName: 'Pinned to', description: 'fixed: the window, so it works anywhere on the page. sticky: only works if its parent box is as tall as the page.' },
   },
   importPath: '@/components/blocks/StickyHeader',
 });
