@@ -89,6 +89,40 @@ PLASMIC.registerComponent(Reveal, {
   importPath: '@/components/blocks/Reveal',
 });
 // Header building blocks: behaviour from code, everything inside is designed in Studio.
+// The site's own header with its content editable. Student Groups' sub-items come from the database, so they are left empty here.
+const linkFields = { label: { type: 'string' as const }, href: { type: 'string' as const, displayName: 'Link' }, note: { type: 'string' as const, control: 'large' as const, displayName: 'One-line description' } };
+const defaultItems = NAV.map((n) => ({ label: n.label, href: n.href, note: n.note ?? '', children: n.href === '/student-groups' ? [] : (n.children ?? []).map((c) => ({ label: c.label, href: c.href, note: c.note ?? '' })) }));
+PLASMIC.registerComponent(SiteHeaderBlock, {
+  name: 'SiteHeaderBlock', displayName: 'Site header (editable content)',
+  description: "The site's own header: same look, sticky slide-away, drop-down curtains, search and phone menu, with its words and links editable. Menu items edited here replace the shared menu for this header only.",
+  props: {
+    logoText: { type: 'string', defaultValue: 'LKCMedSoc', displayName: 'Logo text' },
+    tagline: { type: 'string', defaultValue: 'Students\u2019 Medical Society', displayName: 'Words beside the logo (wide screens)' },
+    menuItems: {
+      type: 'array', displayName: 'Menu items',
+      description: "Top-level items and the links in each drop-down. Student Groups' list is filled from the database when its sub-items are empty. The apps' shared menu (menu.json) is not changed by edits here.",
+      itemType: { type: 'object', nameFunc: (i: { label?: string }) => i?.label, fields: { ...linkFields, children: { type: 'array', displayName: 'Drop-down links', itemType: { type: 'object', nameFunc: (i: { label?: string }) => i?.label, fields: linkFields } } } },
+      defaultValue: defaultItems,
+    },
+    highlights: {
+      type: 'array', displayName: 'Highlight cards',
+      description: 'A card beside a drop-down. Add one per menu you want it on. There are none by default.',
+      itemType: {
+        type: 'object', nameFunc: (i: { menu?: string; title?: string }) => `${i?.menu ?? ''}: ${i?.title ?? ''}`,
+        fields: {
+          menu: { type: 'choice', options: ['student-groups', 'about', 'resources', 'apps'], displayName: 'Show on this menu' },
+          eyebrow: { type: 'string', displayName: 'Small label' }, title: { type: 'string' }, body: { type: 'string', control: 'large' as const },
+          linkText: { type: 'string', displayName: 'Link text' }, url: { type: 'string', displayName: 'Link' },
+        },
+      },
+      defaultValue: [],
+    },
+    ctaText: { type: 'string', defaultValue: 'Apply', displayName: 'Button text' },
+    ctaUrl: { type: 'string', defaultValue: 'https://www.ntu.edu.sg/medicine/education/bachelor-of-medicine-and-bachelor-of-surgery-%28mbbs%29', displayName: 'Button link' },
+    previewOpenMenu: { type: 'choice', options: ['none', 'student-groups', 'about', 'resources', 'apps'], defaultValue: 'none', displayName: 'Show this drop-down open (Studio only)', description: 'Holds a drop-down open on the canvas so you can see it. Has no effect on the live site. The desktop menu shows at 1024px wide or more.' },
+  },
+  importPath: '@/components/SiteHeaderBlock',
+});
 PLASMIC.registerComponent(StickyHeader, {
   name: 'StickyHeader', displayName: 'Sticky header bar',
   description: 'A bar that stays at the top, slides away when scrolling down and returns when scrolling up. Put your logo, menu items and buttons inside, and give it a background colour in Studio.',
@@ -106,6 +140,7 @@ PLASMIC.registerComponent(HoverMenu, {
     panel: { type: 'slot', displayName: 'Panel', defaultValue: { type: 'vbox', styles: { padding: '8px', background: '#2a0628', borderRadius: '12px', gap: '2px' }, children: [{ type: 'text', value: 'First link' }, { type: 'text', value: 'Second link' }] } },
     align: { type: 'choice', options: ['left', 'right', 'center'], defaultValue: 'left', displayName: 'Panel lines up with the label\'s' },
     panelMinWidth: { type: 'number', defaultValue: 260, displayName: 'Panel minimum width (px)' },
+    fullWidth: { type: 'boolean', defaultValue: false, displayName: 'Panel spans the whole header', description: 'Edge to edge across the header bar. Works when the header bar (e.g. the Sticky header bar) is the nearest positioned box.' },
     openInStudio: { type: 'boolean', defaultValue: true, displayName: 'Keep panel open while designing', description: 'Only in Studio, so you can see and edit it. On the live site it opens on hover.' },
   },
   importPath: '@/components/blocks/HoverMenu',
@@ -140,6 +175,8 @@ import PageHero from '@/components/blocks/PageHero';
 import HoverLift from '@/components/blocks/HoverLift';
 import HoverMenu, { MenuChevron } from '@/components/blocks/HoverMenu';
 import StickyHeader from '@/components/blocks/StickyHeader';
+import SiteHeaderBlock from '@/components/SiteHeaderBlock';
+import { NAV } from '@/lib/nav';
 import Counter from '@/components/blocks/Counter';
 import DisplayText from '@/components/blocks/DisplayText';
 import PillButton from '@/components/blocks/PillButton';

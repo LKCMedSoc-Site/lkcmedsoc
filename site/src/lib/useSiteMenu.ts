@@ -10,7 +10,7 @@ import type { SearchItem } from '@/components/SearchOverlay';
  * The layout passes `groups` and `index` from the server, so the header never flashes. When the menu pieces are used inside a
  * page designed in Plasmic nobody passes them, so they are loaded in the browser instead.
  */
-export function useSiteMenu(groups: NavItem[] = [], index: SearchItem[] = []) {
+export function useSiteMenu(groups: NavItem[] = [], index: SearchItem[] = [], override?: NavItem[]) {
   const [data, setData] = useState({ groups, index });
   useEffect(() => {
     if (groups.length) return;
@@ -25,7 +25,9 @@ export function useSiteMenu(groups: NavItem[] = [], index: SearchItem[] = []) {
     }).catch(() => { /* the fallback list in menu.json stays */ });
     return () => { off = true; };
   }, [groups.length]);
-  const nav = NAV.map((n) => (n.label === 'Student Groups' && data.groups.length ? { ...n, children: data.groups } : n));
+  // Items edited in Plasmic replace the shared menu. A Student Groups item with no sub-items of its own still gets the committees from the database.
+  const custom = !!override?.length;
+  const nav = (custom ? override! : NAV).map((n) => ((n.href === '/student-groups' || n.label === 'Student Groups') && data.groups.length && (!custom || !n.children?.length) ? { ...n, children: data.groups } : n));
   const items: SearchItem[] = [
     ...nav.flatMap((n) => [{ label: n.label, href: n.href, kind: 'Page', hint: n.note }, ...(n.children ?? []).map((c) => ({ label: c.label, href: c.href, kind: 'Page', hint: c.note }))]),
     ...data.index,

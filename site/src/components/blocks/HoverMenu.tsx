@@ -4,8 +4,8 @@ import { usePlasmicCanvasContext } from '@plasmicapp/loader-nextjs';
 
 // A menu item with a drop-down panel. What goes in the trigger and in the panel is yours to design in Studio; this block only supplies the
 // behaviour: it opens on hover, on keyboard focus, and on tap, closes on Escape, and animates (see .hm in globals.css).
-export default function HoverMenu({ trigger, panel, align = 'left', panelMinWidth = 260, openInStudio = true, className = '' }: {
-  trigger?: ReactNode; panel?: ReactNode; align?: 'left' | 'right' | 'center'; panelMinWidth?: number; openInStudio?: boolean; className?: string;
+export default function HoverMenu({ trigger, panel, align = 'left', panelMinWidth = 260, fullWidth = false, openInStudio = true, className = '' }: {
+  trigger?: ReactNode; panel?: ReactNode; align?: 'left' | 'right' | 'center'; panelMinWidth?: number; fullWidth?: boolean; openInStudio?: boolean; className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -19,7 +19,7 @@ export default function HoverMenu({ trigger, panel, align = 'left', panelMinWidt
   }, [open]);
   return (
     <div
-      ref={ref} className={`hm ${className}`} data-open={shown} data-align={align}
+      ref={ref} className={`hm ${className}`} data-open={shown} data-align={align} data-full={fullWidth}
       onPointerEnter={(e) => { if (e.pointerType === 'mouse') setOpen(true); }}
       onPointerLeave={(e) => { if (e.pointerType === 'mouse') setOpen(false); }}
       onFocus={() => setOpen(true)}
@@ -27,7 +27,7 @@ export default function HoverMenu({ trigger, panel, align = 'left', panelMinWidt
       onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
     >
       <div className="hm-trigger" onClick={() => setOpen((o) => !o)}>{trigger}</div>
-      <div className="hm-panel" style={{ minWidth: panelMinWidth }}>{panel}</div>
+      <div className="hm-panel" style={fullWidth ? undefined : { minWidth: panelMinWidth }}>{panel}</div>
     </div>
   );
 }

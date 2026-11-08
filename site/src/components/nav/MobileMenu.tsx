@@ -11,8 +11,8 @@ import SearchOverlay, { type SearchItem } from '@/components/SearchOverlay';
 import ChildLink from './ChildLink';
 
 // The phone menu: a round button that opens a full-screen sheet with the whole menu, the quick links, and Resources and Apply pinned at the bottom.
-export default function MobileMenu({ groups = [], index = [], onOpenChange }: { groups?: NavItem[]; index?: SearchItem[]; onOpenChange?: (open: boolean) => void }) {
-  const { nav, items } = useSiteMenu(groups, index);
+export default function MobileMenu({ groups = [], index = [], menuItems, ctaText, ctaUrl, logoText, onOpenChange }: { groups?: NavItem[]; index?: SearchItem[]; menuItems?: NavItem[]; ctaText?: string; ctaUrl?: string; logoText?: string; onOpenChange?: (open: boolean) => void }) {
+  const { nav, items } = useSiteMenu(groups, index, menuItems);
   const [open, setOpenState] = useState(false);
   const [find, setFind] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export default function MobileMenu({ groups = [], index = [], onOpenChange }: { 
       {open ? createPortal(
         <div className="fixed inset-0 z-[60] flex flex-col bg-p950 text-white lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="flex h-16 shrink-0 items-center justify-between px-4">
-            <span className="display text-3xl">{SITE.name}</span>
+            <span className="display text-3xl">{logoText || SITE.name}</span>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="press grid h-10 w-10 place-items-center rounded-full bg-p900"><X className="h-5 w-5" /></button>
           </div>
           <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-4 pb-4">
@@ -59,7 +59,7 @@ export default function MobileMenu({ groups = [], index = [], onOpenChange }: { 
           </nav>
           <div className="grid shrink-0 grid-cols-2 gap-3 border-t border-p900 bg-p950 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Link href={RESOURCES.href} className="press flex h-12 items-center justify-center gap-2 rounded-full border border-p300/60 font-bold text-white no-underline"><BookOpen aria-hidden className="h-4 w-4" />Resources</Link>
-            <a href={APPLY.href} target="_blank" rel="noopener" className="press flex h-12 items-center justify-center gap-1.5 rounded-full bg-pink font-bold text-p900 no-underline">{APPLY.label}<ArrowUpRight aria-hidden className="h-4 w-4" /></a>
+            <a href={ctaUrl || APPLY.href} target="_blank" rel="noopener" className="press flex h-12 items-center justify-center gap-1.5 rounded-full bg-pink font-bold text-p900 no-underline">{ctaText || APPLY.label}<ArrowUpRight aria-hidden className="h-4 w-4" /></a>
           </div>
         </div>,
         document.body,
