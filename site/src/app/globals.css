@@ -162,3 +162,27 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
   .lift { transition: translate .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s cubic-bezier(.22, 1, .36, 1); }
   .lift:hover { translate: 0 -2px; box-shadow: 0 12px 24px -16px rgba(42, 6, 40, .55); }
 }
+
+/* ---------- Header pieces for Plasmic: drop-down menu item and sticky bar ---------- */
+/* HoverMenu: .hm wraps a trigger and a panel. The panel is hidden until the item is hovered, focused or tapped (data-open). */
+.hm { position: relative; display: inline-flex; flex-direction: column; }
+.hm-panel { position: absolute; top: 100%; z-index: 999; opacity: 0; visibility: hidden; pointer-events: none; translate: 0 8px; }
+.hm[data-align='left'] > .hm-panel { left: 0; }
+.hm[data-align='right'] > .hm-panel { right: 0; }
+.hm[data-align='center'] > .hm-panel { left: 50%; translate: -50% 8px; }
+.hm[data-open='true'] > .hm-panel { opacity: 1; visibility: visible; pointer-events: auto; translate: 0 0; }
+.hm[data-align='center'][data-open='true'] > .hm-panel { translate: -50% 0; }
+.hm-chevron { flex: none; }
+.hm[data-open='true'] .hm-chevron { rotate: 180deg; }
+/* links in a panel tint and step in on hover */
+.hm-panel a:hover { background-color: rgba(211, 166, 207, .14); padding-left: 24px !important; }
+@media (prefers-reduced-motion: no-preference) {
+  .hm-panel { transition: opacity .28s cubic-bezier(.22, 1, .36, 1), translate .28s cubic-bezier(.22, 1, .36, 1), visibility .28s; }
+  .hm-chevron { transition: rotate .3s cubic-bezier(.22, 1, .36, 1); }
+  .hm-panel a { transition: background-color .25s ease, padding-left .25s cubic-bezier(.22, 1, .36, 1); }
+}
+/* StickyHeader */
+.sticky-bar { position: sticky; top: 0; z-index: 50; }
+@media (prefers-reduced-motion: no-preference) { .sticky-bar { transition: transform .3s cubic-bezier(.22, 1, .36, 1); } }
+.sticky-bar[data-hidden='true'] { transform: translateY(-100%); }
+

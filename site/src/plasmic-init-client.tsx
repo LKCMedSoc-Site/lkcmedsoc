@@ -88,6 +88,32 @@ PLASMIC.registerComponent(Reveal, {
   props: { children: 'slot', delay: { type: 'number', defaultValue: 0, displayName: 'Delay (ms)' } },
   importPath: '@/components/blocks/Reveal',
 });
+// Header building blocks: behaviour from code, everything inside is designed in Studio.
+PLASMIC.registerComponent(StickyHeader, {
+  name: 'StickyHeader', displayName: 'Sticky header bar',
+  description: 'A bar that stays at the top, slides away when scrolling down and returns when scrolling up. Put your logo, menu items and buttons inside, and give it a background colour in Studio.',
+  props: {
+    children: { type: 'slot', displayName: 'Contents' },
+    hideOnScrollDown: { type: 'boolean', defaultValue: true, displayName: 'Slide away when scrolling down' },
+  },
+  importPath: '@/components/blocks/StickyHeader',
+});
+PLASMIC.registerComponent(HoverMenu, {
+  name: 'HoverMenu', displayName: 'Menu item with drop-down',
+  description: 'Opens its panel on hover, keyboard focus or tap, with a smooth fade. Design the clickable label in "Label" and the panel in "Panel". Add a "Menu chevron" to the label for an arrow that flips while open.',
+  props: {
+    trigger: { type: 'slot', displayName: 'Label', defaultValue: { type: 'hbox', styles: { gap: '6px', alignItems: 'center' }, children: [{ type: 'text', value: 'Menu' }, { type: 'component', name: 'MenuChevron' }] } },
+    panel: { type: 'slot', displayName: 'Panel', defaultValue: { type: 'vbox', styles: { padding: '8px', background: '#2a0628', borderRadius: '12px', gap: '2px' }, children: [{ type: 'text', value: 'First link' }, { type: 'text', value: 'Second link' }] } },
+    align: { type: 'choice', options: ['left', 'right', 'center'], defaultValue: 'left', displayName: 'Panel lines up with the label\'s' },
+    panelMinWidth: { type: 'number', defaultValue: 260, displayName: 'Panel minimum width (px)' },
+    openInStudio: { type: 'boolean', defaultValue: true, displayName: 'Keep panel open while designing', description: 'Only in Studio, so you can see and edit it. On the live site it opens on hover.' },
+  },
+  importPath: '@/components/blocks/HoverMenu',
+});
+PLASMIC.registerComponent(MenuChevron, {
+  name: 'MenuChevron', displayName: 'Menu chevron', description: 'A small down arrow that flips while its menu item is open. Put it in the label of a "Menu item with drop-down". It takes the text colour.',
+  props: { size: { type: 'number', defaultValue: 16, displayName: 'Size (px)' } }, importPath: '@/components/blocks/HoverMenu',
+});
 PLASMIC.registerComponent(HoverLift, {
   name: 'HoverLift', displayName: 'Hover lift', description: 'Wrap a card or any block so it rises slightly with the brand shadow when hovered. Links that wrap a card already do this without it.',
   props: { children: 'slot' }, importPath: '@/components/blocks/HoverLift',
@@ -112,6 +138,8 @@ import Band from '@/components/blocks/Band';
 import SlantPhoto from '@/components/blocks/SlantPhoto';
 import PageHero from '@/components/blocks/PageHero';
 import HoverLift from '@/components/blocks/HoverLift';
+import HoverMenu, { MenuChevron } from '@/components/blocks/HoverMenu';
+import StickyHeader from '@/components/blocks/StickyHeader';
 import Counter from '@/components/blocks/Counter';
 import DisplayText from '@/components/blocks/DisplayText';
 import PillButton from '@/components/blocks/PillButton';
