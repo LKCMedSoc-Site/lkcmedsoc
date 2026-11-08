@@ -129,17 +129,30 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
 @media (hover: hover) { .row-link:hover .row-title { background-size: 100% .09em; } .row-link:hover .row-arrow { transform: translateX(6px); } }
 .row-arrow { transition: transform .3s cubic-bezier(.23,1,.32,1); }
 
-/* ---------- Hover lift for pages designed in Plasmic ---------- */
-/* Pages from Plasmic Studio sit inside .plasmic-page (it adds no box). Links that wrap content (cards, tiles, rows) rise 2px on hover, 300ms,
-   with no per-element hover state to set up. It uses the `translate` property, so it never clashes with a transform set in Studio.
-   Not affected: plain text links, links in a header/footer/nav, and anything with the class .no-lift.
-   Opt in for anything else (a card that is not a link) with the class .lift, or the "Hover lift" block, which also adds the brand shadow. */
+/* ---------- Motion for pages designed in Plasmic ---------- */
+/* Plasmic strips <style> tags and custom classes when HTML is pasted in, so these rules target plain tags. They apply inside .plasmic-page only,
+   which wraps every Plasmic page and layout piece (and the Studio canvas at /plasmic-host). It adds no box. Coded pages keep their own motion. */
 .plasmic-page { display: contents; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Smooth changes on every link and button, and a small press when clicked. */
+  .plasmic-page a, .plasmic-page button, .lift {
+    transition: transform .35s cubic-bezier(.22, 1, .36, 1), translate .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s cubic-bezier(.22, 1, .36, 1),
+                background-color .25s ease, border-color .25s ease, color .25s ease, opacity .25s ease;
+  }
+  .plasmic-page a:active, .plasmic-page button:active { transform: scale(.985); transition-duration: .1s; }
+  /* Pictures inside links zoom slowly; their frame (a wrapper holding only the picture) clips the zoom. */
+  .plasmic-page a img { transition: transform .8s cubic-bezier(.22, 1, .36, 1), opacity .4s ease; }
+  .plasmic-page a :has(> img:only-child) { overflow: hidden; }
+  /* A trailing arrow (the last span next to other content) slides on hover. */
+  .plasmic-page a > span:last-child:not(:only-child) { display: inline-block; transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+}
+/* Hover effects only where there is a real mouse; on phones a tap would leave them stuck on. */
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .plasmic-page a:has(> div, > img, > picture, > figure, > article, > section, > ul, > h1, > h2, > h3, > h4):not(.no-lift, header a, footer a, nav a),
-  .lift { transition: translate .3s cubic-bezier(.23, 1, .32, 1), box-shadow .3s cubic-bezier(.23, 1, .32, 1); }
+  .plasmic-page a:hover img { transform: scale(1.05); }
+  .plasmic-page a:hover > span:last-child:not(:only-child) { transform: translateX(4px); }
+  /* Links that wrap content (cards, tiles, rows) rise 2px. The `translate` property never clashes with a transform set in Studio.
+     Not affected: text-only links, links in a header/footer/nav, anything with .no-lift. Other cards opt in with .lift or the Hover lift block (adds the brand shadow). */
   .plasmic-page a:has(> div, > img, > picture, > figure, > article, > section, > ul, > h1, > h2, > h3, > h4):not(.no-lift, header a, footer a, nav a):hover,
   .lift:hover { translate: 0 -2px; }
   .lift:hover { box-shadow: 0 12px 24px -16px rgba(42, 6, 40, .55); }
 }
-

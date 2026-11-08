@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { SITE } from '@/lib/site';
 import { getBodies, groupsOf, slugify } from '@/lib/records';
 import { PlasmicOr } from '@/lib/plasmic-page';
+import HideOnHost from '@/components/HideOnHost';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -21,9 +22,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
-        <PlasmicOr lookup="Header"><Header index={index} groups={groups} /></PlasmicOr>
+        <HideOnHost><PlasmicOr lookup="Header"><Header index={index} groups={groups} /></PlasmicOr></HideOnHost>
         <main className="flex-1">{children}</main>
-        <PlasmicOr lookup="Footer"><Footer /></PlasmicOr>
+        <HideOnHost><PlasmicOr lookup="Footer"><Footer /></PlasmicOr></HideOnHost>
       </body>
     </html>
   );
