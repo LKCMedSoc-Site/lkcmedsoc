@@ -191,6 +191,27 @@
         }), [1, 2, 3])) : null);
   } };
 
+  // ---------- event cover picture ----------
+  // The cover is a 16:9 banner: crop the middle of any photo to that shape, at most 1600 px wide, as a JPEG.
+  var COVER_BUCKET = 'event-covers';
+  function coverBlob(file) {
+    return new Promise(function (res, rej) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var want = 16 / 9, sw = img.width, sh = img.height, cw, ch;
+        if (sw / sh > want) { ch = sh; cw = Math.round(sh * want); } else { cw = sw; ch = Math.round(sw / want); }
+        var sx = Math.round((sw - cw) / 2), sy = Math.round((sh - ch) / 2);
+        var ow = Math.min(1600, cw), oh = Math.round(ow / want), c = document.createElement('canvas');
+        c.width = ow; c.height = oh;
+        c.getContext('2d').drawImage(img, sx, sy, cw, ch, 0, 0, ow, oh); URL.revokeObjectURL(url);
+        c.toBlob(function (b) { b ? res(b) : rej(new Error('Could not read that image')); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('Could not read that image. Try a JPEG, PNG or WebP photo.')); };
+      img.src = url;
+    });
+  }
+  P.coverBlob = coverBlob; // exposed so it can be tested on its own
+
   // ---------- event page settings ----------
   P.tabs.page = { label: 'Event page', show: async function (ctx) {
     var id = ctx.id, a = ctx.a;
@@ -206,6 +227,30 @@
     var rsvp = h('input', { id: 'p-rsvp', type: 'checkbox', checked: a.rsvp_open, disabled: !approved && !a.rsvp_open });
     var photos = h('input', { id: 'p-photos', type: 'url', placeholder: 'https://… (SharePoint link)', value: a.photos_url || '', class: 'grow' });
     var guests = h('input', { id: 'p-guests', type: 'checkbox', checked: a.guest_rsvp_open });
+    // Cover picture: uploaded straight away, but only attached to the event when the page is saved. Pictures uploaded and then replaced or
+    // removed are deleted after a successful save so nothing is left behind.
+    var coverWas = a.cover_url || '', coverNow = coverWas, uploaded = [];
+    var coverPath = function (u) { var i = String(u || '').indexOf('/' + COVER_BUCKET + '/'); return i < 0 ? '' : u.slice(i + COVER_BUCKET.length + 2); };
+    var coverImg = h('img', { id: 'p-cover-img', alt: 'Cover picture preview', style: 'display:none;width:100%;max-width:420px;aspect-ratio:16/9;object-fit:cover;border-radius:10px;background:#ebe1fa' });
+    var coverFile = h('input', { id: 'p-cover-file', type: 'file', accept: 'image/jpeg,image/png,image/webp' });
+    var coverRemove = h('button', { class: 'ghost', type: 'button', id: 'p-cover-remove', onclick: function () { coverNow = ''; showCover(); } }, 'Remove cover');
+    function showCover() {
+      coverImg.style.display = coverNow ? 'block' : 'none'; coverImg.src = coverNow || '';
+      coverRemove.style.display = coverNow ? '' : 'none';
+    }
+    showCover();
+    coverFile.addEventListener('change', async function () {
+      var f = coverFile.files && coverFile.files[0]; if (!f) return;
+      await P.run(async function () {
+        var blob = await coverBlob(f);
+        var path = id + '/' + crypto.randomUUID().replace(/-/g, '').slice(0, 16) + '.jpg';
+        var r = await P.sb.storage.from(COVER_BUCKET).upload(path, blob, { contentType: 'image/jpeg' });
+        if (r.error) throw r.error;
+        uploaded.push(path);
+        coverNow = P.cfg.SUPABASE_URL + '/storage/v1/object/public/' + COVER_BUCKET + '/' + path; showCover();
+      }, 'Picture added. Press Save to keep it.');
+      coverFile.value = '';
+    });
     vis.addEventListener('change', function () { if (vis.value !== 'Public') guests.checked = false; });
     guests.addEventListener('change', function () { if (guests.checked) { vis.value = 'Public'; rsvp.checked = true; } });
     var link = a.visibility !== 'Hidden' ? P.eventUrl(id) : null;
@@ -218,6 +263,8 @@
       P.field('SPHERE event ID', sphere, 'Paste it here after you create the event in SPHERE, so the two stay linked.'),
       P.field('Who can see the page', vis),
       P.field('Blurb', summary),
+      P.field('Cover picture', h('div', { class: 'stack' }, coverImg, h('div', { class: 'row' }, coverFile, coverRemove)),
+        'Optional. A banner for the event on the website and the home page. Any photo works: the middle is cropped to a wide 16:9 shape.'),
       P.field('Photo album link', photos, 'Paste the SharePoint link after the event. A "See the photos" button then appears on the event page.'),
       h('div', { class: 'row' }, P.field('Starts at', st), P.field('Ends at', en)),
       h('div', { class: 'row' }, P.field('Places (empty for no limit)', cap), P.field('RSVP closes (empty: end of the event day)', dl)),
@@ -225,8 +272,13 @@
       h('label', { class: 'chk' }, guests, 'Let external guests register (people without an NTU sign-in). Needs a public page.'),
       h('div', { class: 'sticky' }, h('button', { class: 'btn', id: 'p-save', onclick: async function () {
         var s = { sphere_event_id: sphere.value, visibility: vis.value, public_summary: summary.value, start_time: st.value, end_time: en.value,
-                  rsvp_capacity: cap.value, rsvp_deadline: L.fromSgLocalInput(dl.value), rsvp_open: rsvp.checked, guest_rsvp_open: guests.checked, photos_url: photos.value };
-        if (await P.run(async function () { P.must(await P.act.rpc('set_event_page', { aid: id, s: s })); }, 'Saved')) ctx.reload();
+                  rsvp_capacity: cap.value, rsvp_deadline: L.fromSgLocalInput(dl.value), rsvp_open: rsvp.checked, guest_rsvp_open: guests.checked, photos_url: photos.value, cover_url: coverNow };
+        if (await P.run(async function () { P.must(await P.act.rpc('set_event_page', { aid: id, s: s })); }, 'Saved')) {
+          // tidy up: delete pictures that are no longer the cover (replaced ones, removed ones, and the old cover)
+          var keep = coverPath(coverNow), drop = uploaded.concat([coverPath(coverWas)]).filter(function (x, i, all) { return x && x !== keep && all.indexOf(x) === i; });
+          if (drop.length) { try { await P.sb.storage.from(COVER_BUCKET).remove(drop); } catch (e) { /* a leftover file is harmless */ } }
+          ctx.reload();
+        }
       } }, 'Save')),
       link ? h('div', { class: 'card stack' }, h('h3', { style: 'margin-top:0' }, 'Share it'),
         h('div', { class: 'row' }, h('input', { value: link, readonly: true, class: 'grow', id: 'p-link' }), h('button', { class: 'ghost', onclick: function () { P.copy(link); } }, 'Copy')),
