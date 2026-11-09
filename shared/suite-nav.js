@@ -1,12 +1,15 @@
-// The LKCMedSoc menu bar shown on top of every app (records, activities, feedback). It reads menu.json from the same folder
-// as this script: the same menu the main website uses. Master copies live in shared/ at the repo root; after changing
-// them run `node tools/sync-shared.mjs` so every site gets the update. Include it with:
+// The LKCMedSoc menu bar shown on top of every app (records, activities, feedback). Master copies live in shared/ at the repo root;
+// after changing them run `node tools/sync-shared.mjs` so every site gets the update. Include it with:
 //   <script src="suite-nav.js" defer></script>
-// It adds nothing if the menu cannot be loaded, so an app never breaks because of it.
+// Where the menu comes from: the website's /api/navigation (always current, Student Groups included), with the copy of menu.json next to
+// this script as the fallback, and the last good answer kept in the browser so the bar appears at once and still works offline.
+// Set window.LKC_NAV_API before this script to use another address (or '' to skip the API). It adds nothing if no menu can be loaded,
+// so an app never breaks because of it.
 (function () {
   'use strict';
   var script = document.currentScript;
-  if (!script || document.getElementById('lkc-suite')) return;
+  if (!script || window.__lkcSuite) return;
+  window.__lkcSuite = true;
   var base = script.src.replace(/[^/]*$/, '');
 
   var css = [
@@ -49,7 +52,13 @@
   }
   var slug = function (s) { return String(s).toLowerCase().replace(/ committee$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); };
 
-  fetch(base + 'menu.json').then(function (r) { return r.json(); }).then(function (menu) {
+  // Closing menus on a click elsewhere or Escape: set up once, because the bar can be drawn again when a newer menu arrives.
+  var closeAll = function () { var r = document.getElementById('lkc-suite'); if (r) r.querySelectorAll('.lkc-item.lkc-open').forEach(function (o) { o.classList.remove('lkc-open'); }); };
+  document.addEventListener('click', closeAll);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(); });
+
+  function render(menu) {
+    var old = document.getElementById('lkc-suite'); if (old) old.remove();
     var site = menu.site, host = location.hostname;
     var abs = function (href) { return /^https?:/.test(href) ? href : site + href; };
     var here = function (href) { try { return new URL(abs(href)).hostname === host; } catch (e) { return false; } };
@@ -82,13 +91,12 @@
     burger.addEventListener('click', function () { root.classList.toggle('lkc-mobile-open'); });
     bar.insertBefore(burger, bar.querySelector('.lkc-item'));
     root.appendChild(bar);
-    document.addEventListener('click', function () { root.querySelectorAll('.lkc-item.lkc-open').forEach(function (o) { o.classList.remove('lkc-open'); }); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') root.querySelectorAll('.lkc-item.lkc-open').forEach(function (o) { o.classList.remove('lkc-open'); }); });
     document.body.insertBefore(root, document.body.firstChild);
 
-    // Student Groups: replace the fallback list with the committees that really have groups, if this app can reach the database.
+    // Student Groups: the API already sends the committees that really have groups. Only when the menu came from the local copy, ask the
+    // database directly (if this app can reach it) to replace the fallback list.
     var cfg = window.PORTAL_CONFIG || window.RECORDS_CONFIG;
-    if (cfg && groupsItem) {
+    if (cfg && groupsItem && menu.source !== 'live') {
       fetch(cfg.SUPABASE_URL + '/rest/v1/public_bodies?select=name,level,parent_committee', { headers: { apikey: cfg.SUPABASE_ANON_KEY, 'Accept-Profile': 'records' } })
         .then(function (r) { return r.json(); }).then(function (rows) {
           var withGroups = {};
@@ -99,5 +107,28 @@
           names.forEach(function (n) { groupsItem.appendChild(el('a', { href: site + '/student-groups/' + slug(n) }, [el('b', { text: n })])); });
         }).catch(function () { /* the fallback list stays */ });
     }
-  }).catch(function () { /* no menu bar: the app still works */ });
+  }
+
+  var API = window.LKC_NAV_API !== undefined ? window.LKC_NAV_API : 'https://lkcmedsoc.com/api/navigation';
+  var KEY = 'lkc-nav-v1', shown = null, shownFromApi = false;
+  var noop = function () { /* no menu bar, or the one already shown stays: the app still works */ };
+  var valid = function (m) { return !!(m && m.site && Array.isArray(m.items) && m.items.length); };
+  var remembered = function () {
+    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); return c && valid(c.menu) && Date.now() - c.t < 7 * 864e5 ? c.menu : null; } catch (e) { return null; }
+  };
+  var remember = function (m) { try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), menu: m })); } catch (e) { /* private mode */ } };
+  var show = function (m, fromApi) { var key = JSON.stringify(m); if (key === shown) return; shown = key; shownFromApi = shownFromApi || fromApi; render(m); };
+
+  // First paint: the last good answer, or the local menu.json. Then the API, which replaces it if it says something different.
+  var first = remembered();
+  if (first) show(first, false);
+  else fetch(base + 'menu.json').then(function (r) { return r.json(); }).then(function (m) { if (valid(m) && !shownFromApi) show(m, false); }).catch(noop);
+  if (API) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 4000);
+    fetch(API, ctl ? { signal: ctl.signal } : {})
+      .then(function (r) { if (!r.ok) throw new Error('bad status'); return r.json(); })
+      .then(function (m) { clearTimeout(timer); if (!valid(m)) return; remember(m); show(m, true); })
+      .catch(noop);
+  }
 })();
