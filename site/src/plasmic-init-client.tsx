@@ -296,7 +296,7 @@ PLASMIC.registerComponent(GroupsHub, {
   description: 'Loads every student group and keeps the filters. It starts with a search box, committee chips and a list of ready cards. For a fully custom design, use Studio\'s own elements with its data ($ctx.groupsHub) and actions.',
   props: {
     limit: { type: 'number', defaultValue: 0, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 or 4 on the home page.' },
-    defaultRecruitingOnly: { type: 'boolean', defaultValue: false, displayName: 'Start with recruiting groups only' },
+    defaultRecruitingOnly: { type: 'boolean', defaultValue: false, displayName: 'Start with recruiting groups only', hidden: () => true }, // the site no longer uses a recruiting idea; kept so older designs still load
     defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name or slug, e.g. careers. Leave empty for all.' },
     order: { type: 'choice', options: ['a-z', 'random'], defaultValue: 'a-z', displayName: 'Order', description: 'Random gives a different mix on each visit.' },
     children: {
@@ -305,7 +305,7 @@ PLASMIC.registerComponent(GroupsHub, {
         type: 'vbox', styles: { gap: '16px' },
         children: [
           { type: 'hbox', styles: { gap: '8px', alignItems: 'center', flexWrap: 'wrap' }, children: [
-            { type: 'component', name: 'GroupsSearch' }, { type: 'component', name: 'GroupsRecruitingToggle' }, { type: 'component', name: 'GroupsClear' },
+            { type: 'component', name: 'GroupsSearch' }, { type: 'component', name: 'GroupsClear' },
           ] },
           { type: 'component', name: 'GroupsCommitteeChips' },
           { type: 'component', name: 'GroupsCount' },
@@ -314,9 +314,7 @@ PLASMIC.registerComponent(GroupsHub, {
               type: 'vbox', styles: { gap: '10px', padding: '12px', background: '#ffffff', borderRadius: '12px' },
               children: [
                 { type: 'component', name: 'GroupImage', props: { source: 'header', shape: 'rounded', ratio: '16/9' } },
-                { type: 'hbox', styles: { gap: '8px', alignItems: 'center', justifyContent: 'space-between' }, children: [
-                  { type: 'component', name: 'GroupBadge', props: { look: 'pill' } }, { type: 'component', name: 'GroupRecruiting' },
-                ] },
+                { type: 'component', name: 'GroupBadge', props: { look: 'pill' } },
                 { type: 'component', name: 'GroupText', props: { field: 'name' } },
                 { type: 'component', name: 'GroupText', props: { field: 'description', clamp: 2 } },
                 { type: 'component', name: 'GroupText', props: { field: 'chair', prefix: 'Chairperson · ' } },
@@ -358,7 +356,7 @@ PLASMIC.registerComponent(GroupsCommitteeChips, {
   props: { showDots: { type: 'boolean', defaultValue: true, displayName: 'Show the colour dots' } }, importPath: '@/components/groups/GroupsFilters',
 });
 PLASMIC.registerComponent(GroupsRecruitingToggle, {
-  name: 'GroupsRecruitingToggle', displayName: 'Groups: recruiting filter', description: 'A button to show only groups that are recruiting. Appears only when some are.',
+  name: 'GroupsRecruitingToggle', displayName: 'Groups: recruiting filter', description: 'Not used any more: the site has no recruiting idea. Kept so older designs still load.',
   props: { label: { type: 'string', defaultValue: 'Recruiting' } }, importPath: '@/components/groups/GroupsFilters',
 });
 PLASMIC.registerComponent(GroupsClear, {
@@ -392,7 +390,7 @@ PLASMIC.registerComponent(GroupBadge, {
   props: { look: { type: 'choice', options: ['pill', 'bar', 'dot'], defaultValue: 'pill', displayName: 'Look' } }, importPath: '@/components/groups/GroupParts',
 });
 PLASMIC.registerComponent(GroupRecruiting, {
-  name: 'GroupRecruiting', displayName: 'Group: recruiting tag', description: 'A small tag, shown only for groups that are recruiting.',
+  name: 'GroupRecruiting', displayName: 'Group: recruiting tag', description: 'Not used any more: the site has no recruiting idea. Kept so older designs still load.',
   props: { label: { type: 'string', defaultValue: 'Recruiting' } }, importPath: '@/components/groups/GroupParts',
 });
 PLASMIC.registerComponent(GroupLink, {

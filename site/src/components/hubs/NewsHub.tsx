@@ -6,6 +6,7 @@ import { normalise, CATEGORIES, type Post } from '@/lib/posts';
 import { fetchBodies } from '@/lib/records-client';
 import { committeeMap } from '@/lib/records';
 import { postDate } from '@/lib/dates';
+import { useHubSeed } from './HubSeed';
 
 // One colour per category, the same as the coded news cards.
 const TONE: Record<string, { color: string; onColor: string }> = {
@@ -24,11 +25,13 @@ export type NewsHubProps = { children?: ReactNode; className?: string; limit?: n
 
 // Loads the latest stories and keeps the filters. It draws nothing itself: Studio gets the data ($ctx.newsHub) and actions to build any layout.
 const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children, className = '', limit = 12, defaultCategory = '', defaultCommittee = '' }, ref) {
-  const [posts, setPosts] = useState<Post[] | null>(null);
+  const hubSeed = useHubSeed();
+  const [posts, setPosts] = useState<Post[] | null>(() => hubSeed?.posts ?? null);
   const [failed, setFailed] = useState(false);
-  const [cmap, setCmap] = useState<Record<string, string>>({});
-  const [q, setQ] = useState(''); const [cat, setCat] = useState(''); const [committee, setCommittee] = useState('');
+  const [cmap, setCmap] = useState<Record<string, string>>(() => (hubSeed?.bodies ? committeeMap(hubSeed.bodies) : {}));
+  const [q, setQ] = useState(''); const [cat, setCat] = useState(() => defaultCategory.trim()); const [committee, setCommittee] = useState(() => defaultCommittee.trim());
   useEffect(() => {
+    if (hubSeed?.posts) return; // already seeded by the server
     let off = false;
     (async () => {
       const r = await browserClient().schema('activities').rpc('public_posts', { p_limit: Math.max(limit, 60), p_offset: 0, p_category: null, p_activity: null });

@@ -11,7 +11,7 @@ All hubs also give `isLoading` and `hasError`, and take a "Show at most" (`limit
 | People hub (data and search) | `peopleHub` |
 
 ## groupsHub
-Settings: `limit`, `defaultRecruitingOnly`, `defaultCommittee` (name or slug), `order` (a-z / random).
+Settings: `limit`, `defaultCommittee` (name or slug), `order` (a-z / random).
 Fields: `items`, `totalCount` (matches), `shownCount`, `allCount`, `hasMatches`, `countText`, `activeSearch`, `committees`, `selectedCommitteeMap`, `selectedCommitteeCount`, `isRecruitingOnly`, `anyRecruiting`, `isFiltering`, `spotlight` (this week's group, or null), `spotlightLeaders` (`name`, `title`).
 Group: `name, committee, committeeShort, committeeSlug, description, chair, logo, header, recruiting, link, committeeLink, color, onColor, initials`.
 Committee: `name, short, slug, href, color, onColor, isSelected, count`.
@@ -20,7 +20,7 @@ Actions: `setSearch(query)`, `toggleCommittee(slug)`, `setRecruitingOnly(on)`, `
 ## eventsHub
 Settings: `limit`, `defaultRsvpOnly`, `defaultCommittee`.
 Fields: `items`, `monthGroups` (`key`, `label`, `events`), `totalCount`, `shownCount`, `allCount`, `hasMatches`, `countText`, `committees`, `months`, `next` (soonest event or null), `notice` (`show`, `text`, `link`, `daysAway`), `activeSearch`, `selectedCommittee`, `selectedMonth`, `isRsvpOnly`, `isOpenToEveryone`, `isFiltering`.
-Event: `id, title, venue, summary, organiser, committee, committeeShort, startDate, endDate, startTime, endTime, whenText, day, monthShort, monthKey, monthLabel, link, rsvpOpen, guestRsvpOpen, checkinOpen, spotsLeft, spotsText, isFull, ntuOnly`.
+Event: `id, title, venue, summary, organiser, committee, committeeShort, startDate, endDate, startTime, endTime, whenText, day, monthShort, monthKey, monthLabel, cover, hasCover, link, rsvpOpen, guestRsvpOpen, checkinOpen, spotsLeft, spotsText, isFull, ntuOnly`.
 Committee: `name, short, isSelected, count`. Month: `key, label, short, isSelected, count`.
 Actions: `setSearch(query)`, `setCommittee(name)`, `toggleCommittee(name)`, `setMonth(key)`, `toggleMonth(key)`, `setRsvpOnly(on)`, `toggleRsvpOnly()`, `setOpenToEveryone(on)`, `toggleOpenToEveryone()`, `clearFilters()`.
 

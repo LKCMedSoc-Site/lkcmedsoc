@@ -1,11 +1,12 @@
 'use client';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState, type ReactNode } from 'react';
 import { DataProvider } from '@plasmicapp/loader-nextjs';
-import { browserClient } from '@/lib/supabase';
+import { browserClient, photoUrl } from '@/lib/supabase';
 import { fetchBodies } from '@/lib/records-client';
 import { committeeMap } from '@/lib/records';
 import type { PublicEvent } from '@/lib/events';
 import { fmtTime, whenText, ymd } from '@/lib/dates';
+import { useHubSeed } from './HubSeed';
 
 const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -29,6 +30,7 @@ function toEvent(e: PublicEvent, cmap: Record<string, string>) {
     id: e.id, title: e.title, venue: e.venue ?? '', summary: e.summary ?? '', organiser: e.body ?? '', committee, committeeShort: committee.replace(/ Committee$/, ''),
     startDate: e.start_date ?? '', endDate: e.end_date ?? '', startTime: fmtTime(e.start_time), endTime: fmtTime(e.end_time), whenText: whenText(e),
     day: d ? String(d[2]) : '', monthShort: d ? SHORT[d[1] - 1] : 'TBC', monthKey: monthKey(e), monthLabel: monthLabel(monthKey(e)),
+    cover: e.cover_url ? photoUrl(e.cover_url) : '', hasCover: !!e.cover_url,
     link: `/events/${e.id}`, rsvpOpen: !!e.rsvp_open, guestRsvpOpen: !!e.guest_rsvp_open, checkinOpen: !!e.checkin_open,
     spotsLeft: e.spots_left ?? null, spotsText, isFull: e.rsvp_open ? e.spots_left === 0 : false, ntuOnly: e.visibility === 'Members',
   };
@@ -38,10 +40,12 @@ export type EventsHubProps = { children?: ReactNode; className?: string; limit?:
 
 // Loads the upcoming events and keeps the filters. It draws nothing itself: Studio gets the data ($ctx.eventsHub) and actions to build any layout.
 const EventsHub = forwardRef<EventsHubRef, EventsHubProps>(function EventsHub({ children, className = '', limit = 0, defaultRsvpOnly = false, defaultCommittee = '' }, ref) {
-  const [state, setState] = useState<{ events: PublicEvent[]; cmap: Record<string, string>; failed: boolean } | null>(null);
-  const [q, setQ] = useState(''); const [committee, setCommittee] = useState(''); const [month, setMonth] = useState('');
-  const [rsvp, setRsvp] = useState(false); const [open, setOpen] = useState(false);
+  const hubSeed = useHubSeed();
+  const [state, setState] = useState<{ events: PublicEvent[]; cmap: Record<string, string>; failed: boolean } | null>(() => (hubSeed?.events && hubSeed.bodies ? { events: hubSeed.events, cmap: committeeMap(hubSeed.bodies), failed: false } : null));
+  const [q, setQ] = useState(''); const [committee, setCommittee] = useState(() => defaultCommittee.trim()); const [month, setMonth] = useState('');
+  const [rsvp, setRsvp] = useState(() => !!defaultRsvpOnly); const [open, setOpen] = useState(false);
   useEffect(() => {
+    if (state) return; // already seeded by the server
     let off = false;
     (async () => {
       try {

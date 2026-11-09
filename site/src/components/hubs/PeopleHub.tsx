@@ -3,6 +3,7 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useState, type Rea
 import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { fetchBodies, fetchLeaders } from '@/lib/records-client';
 import { committeesOf, slugify, sortLeaders, type Body, type Leader } from '@/lib/records';
+import { useHubSeed } from './HubSeed';
 
 export type PeopleHubRef = { setSearch: (query: string) => void; clearFilters: () => void };
 export type PeopleHubProps = { children?: ReactNode; className?: string; limit?: number };
@@ -18,9 +19,11 @@ const person = (l: Leader, slugs: Map<string, string>) => ({
 
 // Loads the team and keeps a search. It draws nothing itself: Studio gets the data ($ctx.peopleHub) to build any layout.
 const PeopleHub = forwardRef<PeopleHubRef, PeopleHubProps>(function PeopleHub({ children, className = '', limit = 0 }, ref) {
-  const [data, setData] = useState<{ bodies: Body[]; leaders: Leader[]; ay: string } | 'failed' | null>(null);
+  const hubSeed = useHubSeed();
+  const [data, setData] = useState<{ bodies: Body[]; leaders: Leader[]; ay: string } | 'failed' | null>(() => (hubSeed?.bodies && hubSeed.leaders ? { bodies: hubSeed.bodies, leaders: hubSeed.leaders, ay: hubSeed.ay ?? '' } : null));
   const [q, setQ] = useState('');
   useEffect(() => {
+    if (data) return; // already seeded by the server
     let off = false;
     (async () => {
       try { const [bodies, lead] = await Promise.all([fetchBodies(), fetchLeaders()]); if (!off) setData({ bodies, leaders: lead.leaders, ay: lead.ay }); }

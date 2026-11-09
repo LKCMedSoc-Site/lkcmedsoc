@@ -4,6 +4,8 @@ import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { fetchBodies, fetchLeaders } from '@/lib/records-client';
 import { groupItems } from '@/lib/groups';
 import { pickSpotlight } from '@/lib/spotlight';
+import type { Body, Leader } from '@/lib/records';
+import { useHubSeed } from '@/components/hubs/HubSeed';
 import type { GroupItem } from '@/components/GroupsBrowser';
 import { toGroupData } from './groupData';
 
@@ -36,6 +38,10 @@ const slugOf = (href: string) => href.split('/').filter(Boolean).pop() ?? '';
 // Loads every student group and holds the filters. It does not draw anything itself: it gives Studio the data ($ctx.groupsHub) and actions
 // (setSearch, toggleCommittee, setRecruitingOnly, toggleRecruitingOnly, clearFilters), and the ready-made pieces below also work inside it.
 type HubData = ReturnType<typeof groupItems> & { spotName: string; spotLeaders: { name: string; title: string }[] };
+const buildHub = (bodies: Body[], leaders: Leader[]): HubData => {
+  const sp = pickSpotlight(bodies, leaders);
+  return { ...groupItems(bodies, leaders), spotName: sp.spot?.c.name ?? '', spotLeaders: sp.spotLeaders.map((l) => ({ name: l.name, title: l.title })) };
+};
 // A stable shuffle for "random" order: the same order for the whole visit, a different one next time.
 const rankOf = (seed: number, text: string) => { let h = (seed * 1e9) | 0; for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619); return h >>> 0; };
 
@@ -46,15 +52,23 @@ export type GroupsHubProps = {
 };
 
 const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ children, className = '', limit = 0, defaultRecruitingOnly = false, defaultCommittee = '', order = 'a-z' }, ref) {
-  const [data, setData] = useState<HubData | 'failed' | null>(null);
-  const [seed] = useState(() => Math.random());
+  // With a server-fetched seed the hub starts with its data (and its starting filters) already in place, so the first HTML has the groups.
+  const hubSeed = useHubSeed();
+  const [data, setData] = useState<HubData | 'failed' | null>(() => (hubSeed?.bodies && hubSeed.leaders ? buildHub(hubSeed.bodies, hubSeed.leaders) : null));
+  const [seed] = useState(() => hubSeed?.rand ?? Math.random());
   const [q, setQ] = useState('');
-  const [picked, setPicked] = useState<string[]>([]);
-  const [recruiting, setRecruiting] = useState(false);
+  const [picked, setPicked] = useState<string[]>(() => {
+    const want = defaultCommittee.trim().toLowerCase();
+    if (!want || !data || data === 'failed') return [];
+    const c = data.committees.find((x) => x.name.toLowerCase() === want || slugOf(x.href) === want || x.name.toLowerCase().replace(/ committee$/, '') === want);
+    return c ? [c.name] : [];
+  });
+  const [recruiting, setRecruiting] = useState(() => !!defaultRecruitingOnly);
   useEffect(() => {
+    if (data) return; // already seeded
     let off = false;
     (async () => {
-      try { const [bodies, lead] = await Promise.all([fetchBodies(), fetchLeaders().catch(() => ({ ay: '', leaders: [] }))]); if (!off) { const sp = pickSpotlight(bodies, lead.leaders); setData({ ...groupItems(bodies, lead.leaders), spotName: sp.spot?.c.name ?? '', spotLeaders: sp.spotLeaders.map((l) => ({ name: l.name, title: l.title })) }); } }
+      try { const [bodies, lead] = await Promise.all([fetchBodies(), fetchLeaders().catch(() => ({ ay: '', leaders: [] }))]); if (!off) setData(buildHub(bodies, lead.leaders)); }
       catch { if (!off) setData('failed'); }
     })();
     return () => { off = true; };
