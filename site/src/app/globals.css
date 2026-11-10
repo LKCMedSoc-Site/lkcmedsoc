@@ -136,6 +136,9 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
    `!important` is used on purpose: Plasmic's reset and pasted inline styles would otherwise win. Add the class .no-lift to opt a link out of the lift.
    No hover/pointer media query, because it can evaluate false inside Studio's scaled artboard; on a phone a tap can leave a hover state showing. */
 .plasmic-page { display: contents; }
+/* No browser-default blue (or visited purple) on links in Plasmic pages. Zero specificity (:where), so any colour set in Studio still wins. */
+:where(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]) { color: inherit; text-decoration: none; }
+:where(.plasmic-page a:is(:hover, :visited, :active, :focus), a[class*="plasmic_default"]:is(:hover, :visited, :active, :focus), a[class*="__wab"]:is(:hover, :visited, :active, :focus)) { color: inherit; }
 @media (prefers-reduced-motion: no-preference) {
   /* Smooth changes on every link and button, and a small press when clicked. */
   :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]),
@@ -159,6 +162,23 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
   /* Links that wrap content (cards, tiles, rows) rise 2px. The `translate` property never clashes with a transform set in Studio.
      Not lifted: text-only links, links in a header/footer/nav, anything with .no-lift. Other cards opt in with .lift or the Hover lift block. */
   :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div, > img, > picture, > figure, > article, > section, > ul, > h1, > h2, > h3, > h4):not(.no-lift, header a, footer a, nav a):hover { translate: 0 -2px !important; }
+  /* Cards also gain a soft shadow while lifted. */
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div, > img, > picture, > figure, > article, > section):not(.no-lift, header a, footer a, nav a):hover { box-shadow: 0 14px 28px -18px rgba(42, 6, 40, .5) !important; }
+
+  /* Button-like links (pill with text/arrow inside) and real buttons: rise 2px, soft shadow, press back down. */
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> span:first-child, > .__wab_text:first-child):not(:has(> div, > img, > picture), .no-lift, header a, footer a, nav a):hover,
+  :is(.plasmic-page button, button[class*="plasmic_default"], button[class*="__wab"]):hover { translate: 0 -2px !important; box-shadow: 0 10px 20px -12px rgba(42, 6, 40, .6) !important; filter: brightness(1.06); }
+
+  /* Heroes (pasted HTML with a "Hero Background" photo): photo eases out of a slow zoom, the text row rises in, the vector drifts. */
+  .plasmic-page img[alt="Hero Background"] { animation: kenburns 24s ease-out both; }
+  .plasmic-page img[alt="Hero Background"] ~ div { animation: rise .8s cubic-bezier(.23, 1, .32, 1) both; animation-delay: 120ms; }
+  .plasmic-page img[alt="Decorative Graphic"] { animation: hero-drift 14s ease-in-out infinite alternate; }
+  @keyframes hero-drift { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-12px) rotate(3deg); } }
+
+  /* Cards and rows fade up as they appear (page load, new filter results, next page). */
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div > div img, > div img):not(header a, footer a, nav a) { animation: card-in .55s cubic-bezier(.22, 1, .36, 1) both; }
+  @keyframes card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
   .lift { transition: translate .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s cubic-bezier(.22, 1, .36, 1); }
   .lift:hover { translate: 0 -2px; box-shadow: 0 12px 24px -16px rgba(42, 6, 40, .55); }
 }
