@@ -296,6 +296,7 @@ PLASMIC.registerComponent(GroupsHub, {
   description: 'Loads every student group and keeps the filters. It starts with a search box, committee chips and a list of ready cards. For a fully custom design, use Studio\'s own elements with its data ($ctx.groupsHub) and actions.',
   props: {
     limit: { type: 'number', defaultValue: 0, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 or 4 on the home page.' },
+    pageSize: { type: 'number', defaultValue: 0, displayName: 'Items per page (0 = no pages)', description: 'Turns on paging. Use nextPage, prevPage and goToPage with $ctx page, pageCount, hasNextPage, hasPrevPage and pages. Takes over from "Show at most".' },
     defaultRecruitingOnly: { type: 'boolean', defaultValue: false, displayName: 'Start with recruiting groups only', hidden: () => true }, // the site no longer uses a recruiting idea; kept so older designs still load
     defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name or slug, e.g. careers. Leave empty for all.' },
     order: { type: 'choice', options: ['a-z', 'random'], defaultValue: 'a-z', displayName: 'Order', description: 'Random gives a different mix on each visit.' },
@@ -332,6 +333,9 @@ PLASMIC.registerComponent(GroupsHub, {
     toggleCommittee: { description: 'Turn a committee filter on or off (use the committee slug)', argTypes: [{ name: 'slug', type: 'string' }] },
     setRecruitingOnly: { description: 'Show only recruiting groups (true) or all (false)', argTypes: [{ name: 'on', type: 'boolean' }] },
     toggleRecruitingOnly: { description: 'Flip the recruiting-only filter', argTypes: [] },
+    nextPage: { description: 'Go to the next page', argTypes: [] },
+    prevPage: { description: 'Go to the previous page', argTypes: [] },
+    goToPage: { description: 'Go to a page number (1 is the first)', argTypes: [{ name: 'page', type: 'number' }] },
     clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
   },
   importPath: '@/components/groups/GroupsHub',
@@ -406,6 +410,7 @@ PLASMIC.registerComponent(EventsHub, {
   props: {
     children: hubSlot('$ctx.eventsHub'),
     limit: { type: 'number', defaultValue: 0, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 on the home page.' },
+    pageSize: { type: 'number', defaultValue: 0, displayName: 'Items per page (0 = no pages)', description: 'Turns on paging. Use nextPage, prevPage and goToPage with $ctx page, pageCount, hasNextPage, hasPrevPage and pages. Takes over from "Show at most".' },
     defaultRsvpOnly: { type: 'boolean', defaultValue: false, displayName: 'Start with RSVP-open events only' },
     defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name. Leave empty for all.' },
   },
@@ -420,6 +425,9 @@ PLASMIC.registerComponent(EventsHub, {
     toggleRsvpOnly: { description: 'Flip the RSVP-open filter', argTypes: [] },
     setOpenToEveryone: { description: 'Hide NTU-students-only events', argTypes: [{ name: 'on', type: 'boolean' }] },
     toggleOpenToEveryone: { description: 'Flip the open-to-everyone filter', argTypes: [] },
+    nextPage: { description: 'Go to the next page', argTypes: [] },
+    prevPage: { description: 'Go to the previous page', argTypes: [] },
+    goToPage: { description: 'Go to a page number (1 is the first)', argTypes: [{ name: 'page', type: 'number' }] },
     clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
   },
   importPath: '@/components/hubs/EventsHub',
@@ -430,6 +438,7 @@ PLASMIC.registerComponent(NewsHub, {
   props: {
     children: hubSlot('$ctx.newsHub'),
     limit: { type: 'number', defaultValue: 12, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 on the home page.' },
+    pageSize: { type: 'number', defaultValue: 0, displayName: 'Items per page (0 = no pages)', description: 'Turns on paging. Use nextPage, prevPage and goToPage with $ctx page, pageCount, hasNextPage, hasPrevPage and pages. Takes over from "Show at most".' },
     defaultCategory: { type: 'choice', options: ['', 'Impact', 'Events', 'Announcements', 'Stories'], defaultValue: '', displayName: 'Start with this category' },
     defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name. Leave empty for all.' },
   },
@@ -440,6 +449,9 @@ PLASMIC.registerComponent(NewsHub, {
     toggleCategory: { description: 'Pick a category, or unpick it if already picked', argTypes: [{ name: 'name', type: 'string' }] },
     setCommittee: { description: 'Show one committee (empty text = all)', argTypes: [{ name: 'name', type: 'string' }] },
     toggleCommittee: { description: 'Pick a committee, or unpick it if already picked', argTypes: [{ name: 'name', type: 'string' }] },
+    nextPage: { description: 'Go to the next page', argTypes: [] },
+    prevPage: { description: 'Go to the previous page', argTypes: [] },
+    goToPage: { description: 'Go to a page number (1 is the first)', argTypes: [{ name: 'page', type: 'number' }] },
     clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
   },
   importPath: '@/components/hubs/NewsHub',

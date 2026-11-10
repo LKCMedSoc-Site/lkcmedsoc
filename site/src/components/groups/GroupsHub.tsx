@@ -6,6 +6,7 @@ import { groupItems } from '@/lib/groups';
 import { pickSpotlight } from '@/lib/spotlight';
 import type { Body, Leader } from '@/lib/records';
 import { useHubSeed } from '@/components/hubs/HubSeed';
+import { usePaging } from '@/components/hubs/paging';
 import type { GroupItem } from '@/components/GroupsBrowser';
 import { toGroupData } from './groupData';
 
@@ -30,6 +31,7 @@ export type GroupsHubRef = {
   toggleCommittee: (slug: string) => void;
   setRecruitingOnly: (on: boolean) => void;
   toggleRecruitingOnly: () => void;
+  nextPage: () => void; prevPage: () => void; goToPage: (page: number) => void;
   clearFilters: () => void;
 };
 
@@ -48,10 +50,10 @@ const rankOf = (seed: number, text: string) => { let h = (seed * 1e9) | 0; for (
 export type GroupsHubProps = {
   children?: ReactNode; className?: string;
   /** Show at most this many groups (0 = all). Handy for a small preview on the home page. */
-  limit?: number; defaultRecruitingOnly?: boolean; defaultCommittee?: string; order?: 'a-z' | 'random';
+  limit?: number; pageSize?: number; defaultRecruitingOnly?: boolean; defaultCommittee?: string; order?: 'a-z' | 'random';
 };
 
-const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ children, className = '', limit = 0, defaultRecruitingOnly = false, defaultCommittee = '', order = 'a-z' }, ref) {
+const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ children, className = '', limit = 0, pageSize = 0, defaultRecruitingOnly = false, defaultCommittee = '', order = 'a-z' }, ref) {
   // With a server-fetched seed the hub starts with its data (and its starting filters) already in place, so the first HTML has the groups.
   const hubSeed = useHubSeed();
   const [data, setData] = useState<HubData | 'failed' | null>(() => (hubSeed?.bodies && hubSeed.leaders ? buildHub(hubSeed.bodies, hubSeed.leaders) : null));
@@ -89,7 +91,8 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
     if (recruiting && !i.recruiting) return false;
     return true;
   }).sort((a, b) => (order === 'random' ? rankOf(seed, a.name) - rankOf(seed, b.name) : a.name.localeCompare(b.name))), [items, q, picked, recruiting, order, seed]);
-  const shown = limit > 0 ? matches.slice(0, limit) : matches;
+  const paging = usePaging(matches.length, pageSize, [q, picked.join('|'), recruiting].join('~'));
+  const shown = pageSize > 0 ? matches.slice(paging.from, paging.to) : limit > 0 ? matches.slice(0, limit) : matches;
 
   const toggle = (name: string) => setPicked((p) => (p.includes(name) ? p.filter((x) => x !== name) : [...p, name]));
   const clear = () => { setQ(''); setPicked([]); setRecruiting(false); };
@@ -98,6 +101,7 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
     toggleCommittee: (slug: string) => { const c = committees.find((x) => slugOf(x.href) === slug || x.name === slug); if (c) toggle(c.name); },
     setRecruitingOnly: (on: boolean) => setRecruiting(!!on),
     toggleRecruitingOnly: () => setRecruiting((r) => !r),
+    nextPage: paging.next, prevPage: paging.prev, goToPage: paging.go,
     clearFilters: clear,
   }));
 
@@ -120,7 +124,7 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
     // This week's featured group (the site rotates one each week among groups that have named leaders). There is no "featured" flag in the data.
     spotlight: spotItem ? { ...toGroupData(spotItem, toneOf(spotItem.committee)), committeeSlug: slugOf(spotItem.committeeHref) } : null,
     spotlightLeaders: data && data !== 'failed' ? data.spotLeaders : [],
-    activeSearch: q, committees: committeeData,
+    activeSearch: q, ...paging.fields, committees: committeeData,
     selectedCommitteeMap: Object.fromEntries(committeeData.map((c) => [c.slug, c.isSelected])),
     selectedCommitteeCount: picked.length,
     isRecruitingOnly: recruiting, anyRecruiting: value.anyRecruiting, isFiltering: dirty,

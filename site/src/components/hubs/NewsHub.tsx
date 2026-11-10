@@ -7,6 +7,7 @@ import { fetchBodies } from '@/lib/records-client';
 import { committeeMap } from '@/lib/records';
 import { postDate } from '@/lib/dates';
 import { useHubSeed } from './HubSeed';
+import { usePaging } from './paging';
 
 // One colour per category, the same as the coded news cards.
 const TONE: Record<string, { color: string; onColor: string }> = {
@@ -19,17 +20,20 @@ export type NewsHubRef = {
   setSearch: (query: string) => void;
   setCategory: (name: string) => void; toggleCategory: (name: string) => void;
   setCommittee: (name: string) => void; toggleCommittee: (name: string) => void;
+  nextPage: () => void; prevPage: () => void; goToPage: (page: number) => void;
   clearFilters: () => void;
 };
-export type NewsHubProps = { children?: ReactNode; className?: string; limit?: number; defaultCategory?: string; defaultCommittee?: string };
+export type NewsHubProps = { children?: ReactNode; className?: string; limit?: number; pageSize?: number; defaultCategory?: string; defaultCommittee?: string };
+const list = (s: string) => s.split(',').map((x) => x.trim()).filter(Boolean);
+const has = (arr: string[], name: string) => arr.some((x) => x.toLowerCase() === name.toLowerCase());
 
 // Loads the latest stories and keeps the filters. It draws nothing itself: Studio gets the data ($ctx.newsHub) and actions to build any layout.
-const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children, className = '', limit = 12, defaultCategory = '', defaultCommittee = '' }, ref) {
+const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children, className = '', limit = 12, pageSize = 0, defaultCategory = '', defaultCommittee = '' }, ref) {
   const hubSeed = useHubSeed();
   const [posts, setPosts] = useState<Post[] | null>(() => hubSeed?.posts ?? null);
   const [failed, setFailed] = useState(false);
   const [cmap, setCmap] = useState<Record<string, string>>(() => (hubSeed?.bodies ? committeeMap(hubSeed.bodies) : {}));
-  const [q, setQ] = useState(''); const [cat, setCat] = useState(() => defaultCategory.trim()); const [committee, setCommittee] = useState(() => defaultCommittee.trim());
+  const [q, setQ] = useState(''); const [cats, setCats] = useState<string[]>(() => list(defaultCategory)); const [picked, setPicked] = useState<string[]>(() => list(defaultCommittee));
   useEffect(() => {
     if (hubSeed?.posts) return; // already seeded by the server
     let off = false;
@@ -41,7 +45,7 @@ const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children
     })().catch(() => { if (!off) { setPosts([]); setFailed(true); } });
     return () => { off = true; };
   }, [limit]);
-  useEffect(() => { setCat(defaultCategory.trim()); setCommittee(defaultCommittee.trim()); }, [defaultCategory, defaultCommittee, posts]);
+  useEffect(() => { setCats(list(defaultCategory)); setPicked(list(defaultCommittee)); }, [defaultCategory, defaultCommittee, posts]);
 
   const all = useMemo(() => (posts ?? []).map((p) => {
     const committee = cmap[p.bodyName] ?? ''; const tone = toneOf(p.category);
@@ -53,24 +57,32 @@ const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children
   }), [posts, cmap]);
   const matches = all.filter((p) => {
     if (q && !`${p.title} ${p.summary}`.toLowerCase().includes(q.toLowerCase())) return false;
-    if (cat && p.category !== cat) return false;
-    if (committee && p.committee.toLowerCase() !== committee.toLowerCase() && p.committeeShort.toLowerCase() !== committee.toLowerCase()) return false;
+    if (cats.length && !has(cats, p.category)) return false;
+    if (picked.length && !has(picked, p.committee) && !has(picked, p.committeeShort)) return false;
     return true;
   });
-  const shown = limit > 0 ? matches.slice(0, limit) : matches;
-  const dirty = !!(q || cat || committee);
-  const clear = () => { setQ(''); setCat(''); setCommittee(''); };
+  const paging = usePaging(matches.length, pageSize, [q, cats.join('|'), picked.join('|')].join('~'));
+  const shown = pageSize > 0 ? matches.slice(paging.from, paging.to) : limit > 0 ? matches.slice(0, limit) : matches;
+  const dirty = !!(q || cats.length || picked.length);
+  const clear = () => { setQ(''); setCats([]); setPicked([]); };
+  const toggleIn = (set: (f: (p: string[]) => string[]) => void, name: string) => set((p) => (has(p, name ?? '') ? p.filter((x) => x.toLowerCase() !== (name ?? '').toLowerCase()) : [...p, name]));
   useImperativeHandle(ref, () => ({
-    setSearch: (v: string) => setQ(v ?? ''), setCategory: (n: string) => setCat(n ?? ''), toggleCategory: (n: string) => setCat((c) => (c === n ? '' : n)),
-    setCommittee: (n: string) => setCommittee(n ?? ''), toggleCommittee: (n: string) => setCommittee((c) => (c === n ? '' : n)), clearFilters: clear,
+    setSearch: (v: string) => setQ(v ?? ''), setCategory: (n: string) => setCats(n ? [n] : []), toggleCategory: (n: string) => toggleIn(setCats, n),
+    setCommittee: (n: string) => setPicked(n ? [n] : []), toggleCommittee: (n: string) => toggleIn(setPicked, n),
+    nextPage: paging.next, prevPage: paging.prev, goToPage: paging.go, clearFilters: clear,
   }));
 
-  const categories = CATEGORIES.map((name) => ({ name, ...toneOf(name), isSelected: cat === name, count: all.filter((p) => p.category === name).length }));
-  const committees = Array.from(new Set(all.map((p) => p.committee).filter(Boolean))).sort().map((name) => ({ name, short: name.replace(/ Committee$/, ''), isSelected: committee.toLowerCase() === name.toLowerCase(), count: all.filter((p) => p.committee === name).length }));
+  const categories = CATEGORIES.map((name) => ({ name, ...toneOf(name), isSelected: has(cats, name), count: all.filter((p) => p.category === name).length }));
+  const committees = Array.from(new Set(all.map((p) => p.committee).filter(Boolean))).sort().map((name) => ({ name, short: name.replace(/ Committee$/, ''), isSelected: has(picked, name) || has(picked, name.replace(/ Committee$/, '')), count: all.filter((p) => p.committee === name).length }));
   const hub = {
     isLoading: !posts, hasError: failed, items: shown, first: shown[0] ?? null, totalCount: matches.length, shownCount: shown.length, allCount: all.length, hasMatches: shown.length > 0,
     countText: `${matches.length} stor${matches.length === 1 ? 'y' : 'ies'}${dirty ? ' match' : ''}`, categories, committees,
-    activeSearch: q, selectedCategory: cat, selectedCommittee: committee, isFiltering: dirty,
+    activeSearch: q, ...paging.fields,
+    selectedCategory: categories.find((c) => c.isSelected)?.name ?? '', selectedCategories: categories.filter((c) => c.isSelected).map((c) => c.name),
+    selectedCategoryMap: Object.fromEntries(categories.map((c) => [c.name, c.isSelected])), selectedCategoryCount: categories.filter((c) => c.isSelected).length,
+    selectedCommittee: committees.find((c) => c.isSelected)?.name ?? '', selectedCommittees: committees.filter((c) => c.isSelected).map((c) => c.name),
+    selectedCommitteeMap: Object.fromEntries(committees.map((c) => [c.name, c.isSelected])), selectedCommitteeCount: committees.filter((c) => c.isSelected).length,
+    isFiltering: dirty,
   };
   return <DataProvider name="newsHub" data={hub}><div className={className}>{children}</div></DataProvider>;
 });
