@@ -12,7 +12,7 @@ export function CategoryPill({ category, className = '' }: { category: string; c
 
 /** One story. "feature" is the big lead card; "wide" and "card" fill the grid. */
 export default function NewsCard({ post, size = 'card', priority = false }: { post: Post; size?: 'feature' | 'wide' | 'card'; priority?: boolean }) {
-  const href = `/news/${post.slug}`;
+  const href = `/gazette/${post.slug}`;
   if (size === 'feature') {
     return (
       <Link href={href} className="row-link zoom group grid items-center gap-6 no-underline md:grid-cols-12 md:gap-10">

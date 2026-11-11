@@ -7,9 +7,9 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const targets = {
-  'shared/menu.json': ['site/public/menu.json', 'records/menu.json', 'activities-site/menu.json', 'feedback-site/menu.json'],
-  'shared/suite-nav.js': ['records/suite-nav.js', 'activities-site/suite-nav.js', 'feedback-site/suite-nav.js'],
-  'shared/sso.js': ['records/sso.js', 'activities-site/sso.js', 'feedback-site/sso.js'],
+  'shared/menu.json': ['site/public/menu.json', 'records/menu.json', 'activities-site/menu.json', 'feedback-site/menu.json', 'gazette-site/menu.json'],
+  'shared/suite-nav.js': ['records/suite-nav.js', 'activities-site/suite-nav.js', 'feedback-site/suite-nav.js', 'gazette-site/suite-nav.js'],
+  'shared/sso.js': ['records/sso.js', 'activities-site/sso.js', 'feedback-site/sso.js', 'gazette-site/sso.js'],
 };
 const check = process.argv.includes('--check');
 let differing = 0;

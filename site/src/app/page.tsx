@@ -114,7 +114,7 @@ export default async function Home() {
       {posts.length ? (
         <section className={`band ${messageReady && message ? 'band-grey' : 'band-pale'}`} style={z(6)}>
           <div className={wrap}>
-            <SectionHead title="Latest news" linkLabel="All news" linkHref="/news" />
+            <SectionHead title="Latest from the Gazette" linkLabel="All posts" linkHref="/gazette" />
             <div className="mt-6 grid gap-6 md:mt-8 md:grid-cols-3 md:gap-8">{posts.map((p) => <div key={p.slug} className="rounded-xl bg-white p-3 pb-5 shadow-[0_1px_0_rgba(77,10,73,.08),0_10px_24px_-14px_rgba(77,10,73,.35)] transition-transform duration-300 hover:-translate-y-0.5"><PostCard post={p} /></div>)}</div>
           </div>
         </section>

@@ -167,7 +167,7 @@ PLASMIC.registerComponent(SafeImage, {
 
 // ---------------------------------------------------------------------------------------------------------------------------
 // Everything below is for designing whole pages in Plasmic Studio.
-//  - Create pages at the real paths (/, /events, /news, /student-groups, /resources, /about/meet-the-team, /about/houses): when one is
+//  - Create pages at the real paths (/, /events, /gazette, /student-groups, /resources, /about/meet-the-team, /about/houses): when one is
 //    published it replaces the coded page; otherwise the coded page shows.
 //  - Create Plasmic components named exactly "Header" and "Footer" to replace the site header and footer the same way.
 //  - Build them from the blocks below plus Plasmic's own boxes, text and images. The blocks that show live data load it themselves.

@@ -5,6 +5,7 @@ export const CATEGORIES = ['Impact', 'Events', 'Announcements', 'Stories'] as co
 export type Post = {
   slug: string; title: string; category: string; summary: string; published_at: string;
   author: string; bodyName: string; ay: string;
+  featured: boolean; tags: string[];
   cover: string; body: string; photos: { url: string; caption: string }[]; event: { id: string; title: string } | null;
 };
 
@@ -24,6 +25,7 @@ export function normalise(r: any): Post {
     published_at: r.published_at ?? r.created_at ?? '',
     cover: coverPath ? photoUrl(coverPath) : photos[0]?.url ?? '',
     body: r.body_md ?? '',
+    featured: r.featured === true, tags: Array.isArray(r.tags) ? (r.tags as unknown[]).map(String) : [],
     photos, event: r.event ?? null,
   };
 }
@@ -53,4 +55,40 @@ export async function getPost(slug: string): Promise<Post | null> {
   const { data, error } = await serverClient().schema('activities').rpc('public_post', { p_slug: slug });
   if (error) throw error;
   return data ? normalise(data) : null;
+}
+
+/** Category pages live at /gazette/<slug>. "Events" reads as "Event write-ups" in the menu so it does not clash with the Events page. */
+export const CATEGORY_SLUG: Record<string, string> = { Impact: 'impact', Events: 'events', Announcements: 'announcements', Stories: 'stories' };
+export const CATEGORY_LABEL: Record<string, string> = { Impact: 'Impact', Events: 'Event write-ups', Announcements: 'Announcements', Stories: 'Stories' };
+export const CATEGORY_BLURB: Record<string, string> = {
+  Impact: 'What MedSoc and its groups have achieved, and for whom.',
+  Events: 'Write-ups and photos from events across the year.',
+  Announcements: 'News, calls for applicants and changes you should know about.',
+  Stories: 'Voices and experiences from our students.',
+};
+export const categoryFromSlug = (slug: string) => CATEGORIES.find((c) => CATEGORY_SLUG[c] === slug) ?? null;
+
+export type GazetteHome = { featured: Post[]; latest: Post[]; categories: { category: string; total: number; items: Post[] }[]; years: { ay: string; n: number }[] };
+
+/**
+ * Everything the Gazette home needs, from one database call (activities.public_gazette_home, sql/gazette_public.sql).
+ * Until that file has been run it is built from the ordinary list call instead: the page looks the same, minus the featured picks.
+ */
+export async function getGazetteHome(): Promise<GazetteHome> {
+  const act = serverClient().schema('activities');
+  const r = await act.rpc('public_gazette_home', { p_featured: 4, p_latest: 8, p_per_category: 4 });
+  if (!r.error && r.data) {
+    const d = r.data as { featured?: unknown[]; latest?: unknown[]; categories?: { category: string; total: number; items: unknown[] }[]; years?: { ay: string; n: number }[] };
+    return {
+      featured: (d.featured ?? []).map(normalise), latest: (d.latest ?? []).map(normalise),
+      categories: (d.categories ?? []).map((c) => ({ category: c.category, total: c.total, items: c.items.map(normalise) })), years: d.years ?? [],
+    };
+  }
+  const [all, years] = await Promise.all([listPosts({ limit: 50 }), getPostYears()]);
+  const items = all.items;
+  return {
+    featured: [], latest: items.slice(0, 8),
+    categories: CATEGORIES.map((c) => { const mine = items.filter((p) => p.category === c); return { category: c, total: mine.length, items: mine.slice(0, 4) }; }),
+    years,
+  };
 }

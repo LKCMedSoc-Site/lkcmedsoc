@@ -41,7 +41,7 @@ export default async function TermPage({ params }: Props) {
 
       <section className="mt-10">
         <div className="flex items-end justify-between"><h2 className="display text-3xl">News from {ay}</h2>
-          {posts?.total ? <Link className="text-sm underline" href={`/news?ay=${encodeURIComponent(ay)}`}>All {posts.total} posts</Link> : null}</div>
+          {posts?.total ? <Link className="text-sm underline" href={`/gazette/all?ay=${encodeURIComponent(ay)}`}>All {posts.total} posts</Link> : null}</div>
         {posts?.items.length ? <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{posts.items.map((p) => <PostCard key={p.slug} post={p} />)}</div>
           : <p className="mt-2 text-muted">No write-ups from this year yet.</p>}
       </section>

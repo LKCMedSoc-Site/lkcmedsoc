@@ -43,7 +43,7 @@ export default async function CommitteePage({ params }: Props) {
                 );
               })}
             </ul>
-          ) : <p className="mt-4 max-w-xl text-muted">This committee runs events and programmes directly rather than through separate CCAs. See what it has been up to on the <Link className="underline" href="/news">news page</Link>.</p>}
+          ) : <p className="mt-4 max-w-xl text-muted">This committee runs events and programmes directly rather than through separate CCAs. See what it has been up to on the <Link className="underline" href="/gazette">Gazette</Link>.</p>}
         </div>
       </section>
     </>

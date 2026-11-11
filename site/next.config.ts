@@ -1,10 +1,13 @@
 import type { NextConfig } from 'next';
 
-// Old Wix addresses -> new ones. Blog posts keep their slug (/post/x -> /news/x).
+// Old Wix addresses -> new ones. Blog posts keep their slug (/post/x -> /gazette/x). /news became /gazette in 2026.
 const redirects = [
-  ['/post/:slug', '/news/:slug'],
-  ['/blog', '/news'],
-  ['/whats-up-at-lkcmedicine', '/news?category=Announcements'],
+  ['/post/:slug', '/gazette/:slug'],
+  ['/blog', '/gazette/all'],
+  ['/whats-up-at-lkcmedicine', '/gazette/announcements'],
+  // the News pages moved to the Gazette (query strings such as ?category= and ?ay= carry over)
+  ['/news', '/gazette/all'],
+  ['/news/:slug', '/gazette/:slug'],
   ['/calendar', '/events'],
   ['/calendar-defunct', '/events'],
   ['/studentlife', '/student-groups'],

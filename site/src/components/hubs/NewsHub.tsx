@@ -52,7 +52,7 @@ const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children
     return {
       slug: p.slug, title: p.title, category: p.category, categoryColor: tone.color, categoryOnColor: tone.onColor, summary: p.summary,
       publishedAt: p.published_at, dateText: postDate(p.published_at), author: p.author, from: p.bodyName, committee, committeeShort: committee.replace(/ Committee$/, ''),
-      cover: p.cover, hasCover: !!p.cover, link: `/news/${p.slug}`,
+      cover: p.cover, hasCover: !!p.cover, link: `/gazette/${p.slug}`,
     };
   }), [posts, cmap]);
   const matches = all.filter((p) => {
