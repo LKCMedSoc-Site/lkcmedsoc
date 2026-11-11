@@ -9,7 +9,7 @@ import { useHubSeed } from '@/components/hubs/HubSeed';
 import { usePaging } from '@/components/hubs/paging';
 import type { GroupItem } from '@/components/GroupsBrowser';
 import { toGroupData } from './groupData';
-import { toneFor, type Tone } from '@/lib/tones';
+import { assignTones, toneFor, type Tone } from '@/lib/tones';
 
 // Colours come from each body's stored colour (see lib/tones.ts), not from its position in the list.
 
@@ -103,8 +103,10 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
     clearFilters: clear,
   }));
 
-  const toneOf = (c: string) => toneFor(committees.find((x) => x.name === c)?.color, c);
-  const toneOfItem = (it: GroupItem) => toneFor(it.color, it.committeeColor, it.name);
+  const committeeTones = useMemo(() => assignTones(committees.map((c) => ({ name: c.name, color: c.color }))), [committees]);
+  const toneOf = (c: string) => committeeTones.get(c) ?? toneFor(null, c);
+  // A group's own colour if it chose one, otherwise its committee's.
+  const toneOfItem = (it: GroupItem) => (it.color ? toneFor(it.color, it.name) : toneOf(it.committee));
   const loading = !data, failed = data === 'failed';
   const dirty = !!(q || picked.length || recruiting);
   const value: GroupsCtx = { items, committees, shown, q, setQ, picked, recruiting, setRecruiting, toggle, anyRecruiting: items.some((i) => i.recruiting), dirty, clear, toneOf, toneOfItem, loading, failed };
@@ -112,7 +114,7 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
   // What Studio sees as $ctx.groupsHub. Chips can bind their "selected" look straight to committees[i].isSelected or selectedCommitteeMap[slug].
   const committeeData = committees.map((c) => ({
     name: c.name, short: c.name.replace(/ Committee$/, ''), slug: slugOf(c.href), href: c.href,
-    color: toneOf(c.name).bg, onColor: toneOf(c.name).fg, isSelected: picked.includes(c.name), count: items.filter((i) => i.committee === c.name).length,
+    color: toneOf(c.name).bg, onColor: toneOf(c.name).fg, tint: toneOf(c.name).tint, overlay: toneOf(c.name).overlay, isSelected: picked.includes(c.name), count: items.filter((i) => i.committee === c.name).length,
   }));
   const spotItem = data && data !== 'failed' && data.spotName ? items.find((i) => i.name === data.spotName) : undefined;
   const hub = {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { GroupData } from './GroupsList';
 
-const SAMPLE: GroupData = { name: 'Sample Group', committee: 'Sample Committee', committeeShort: 'Sample', description: 'A short description of what this group does.', chair: 'Alex Tan', logo: '', header: '', recruiting: true, link: '', committeeLink: '', color: '#8e2a88', onColor: '#ffffff', initials: 'SG' };
+const SAMPLE: GroupData = { name: 'Sample Group', committee: 'Sample Committee', committeeShort: 'Sample', description: 'A short description of what this group does.', chair: 'Alex Tan', logo: '', header: '', recruiting: true, link: '', committeeLink: '', color: '#0f766e', onColor: '#ffffff', tint: '#0f766e1f', overlay: '#0f766e8c', initials: 'SG' };
 // Inside a groups list these read the group being shown. Anywhere else they show a sample, so a card can still be designed.
 const useGroup = (): GroupData => (useSelector('group') as GroupData | undefined) ?? SAMPLE;
 

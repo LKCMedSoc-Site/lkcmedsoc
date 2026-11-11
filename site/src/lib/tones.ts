@@ -19,10 +19,14 @@ export const TONE_SLOTS = {
 } as const;
 
 export type ToneSlot = keyof typeof TONE_SLOTS;
-export type Tone = { bg: string; fg: string };
+export type Tone = { bg: string; fg: string; tint: string; overlay: string };
 
 const SLOT_NAMES = Object.keys(TONE_SLOTS) as ToneSlot[];
 const FG = '#ffffff';
+
+// A colour as a see-through wash: tint (about 12%) is the light resting state of a chip or pill; overlay (about 55%) is the wash over a photo.
+const withAlpha = (hex: string, a: number) => hex + Math.round(a * 255).toString(16).padStart(2, '0');
+const make = (slot: ToneSlot): Tone => ({ bg: TONE_SLOTS[slot], fg: FG, tint: withAlpha(TONE_SLOTS[slot], 0.12), overlay: withAlpha(TONE_SLOTS[slot], 0.55) });
 
 export const isToneSlot = (v: unknown): v is ToneSlot => typeof v === 'string' && v in TONE_SLOTS;
 
@@ -39,6 +43,25 @@ function fallbackSlot(name: string): ToneSlot {
  */
 export function toneFor(...candidates: (string | null | undefined)[]): Tone {
   const name = String(candidates[candidates.length - 1] ?? '');
-  for (const c of candidates.slice(0, -1)) if (isToneSlot(c)) return { bg: TONE_SLOTS[c], fg: FG };
-  return { bg: TONE_SLOTS[fallbackSlot(name)], fg: FG };
+  for (const c of candidates.slice(0, -1)) if (isToneSlot(c)) return make(c);
+  return make(fallbackSlot(name));
+}
+
+/**
+ * Colours for a set of bodies that sit side by side (every committee on the Student Groups page). Chosen colours are kept; the rest
+ * take their name-based pick, moved along to the next free colour when two would match, so no two committees share one while
+ * there are colours to spare. Names are handled in alphabetical order, so the result doesn't depend on how the list is ordered.
+ */
+export function assignTones(entries: { name: string; color?: string | null }[]): Map<string, Tone> {
+  const out = new Map<string, Tone>();
+  const used = new Set<ToneSlot>();
+  for (const e of entries) if (isToneSlot(e.color)) { out.set(e.name, make(e.color)); used.add(e.color); }
+  for (const e of [...entries].sort((a, b) => a.name.localeCompare(b.name))) {
+    if (out.has(e.name)) continue;
+    let i = SLOT_NAMES.indexOf(fallbackSlot(e.name));
+    for (let n = 0; n < SLOT_NAMES.length && used.has(SLOT_NAMES[i]) && used.size < SLOT_NAMES.length; n++) i = (i + 1) % SLOT_NAMES.length;
+    used.add(SLOT_NAMES[i]);
+    out.set(e.name, make(SLOT_NAMES[i]));
+  }
+  return out;
 }
