@@ -2,13 +2,12 @@
 
 The **Student groups hub** is a controller: it loads the groups, keeps the filters, and gives Studio data and actions.
 It draws nothing itself, so every input, chip and card on the page can be Studio's own elements.
-(I have not driven Studio myself, so button names below are from Plasmic's docs and may differ slightly. Tell me if a step doesn't match.)
+Studio is driven through the browser; the exact clicks, the dynamic-value recipe and the mistakes to avoid are in `STUDIO-BROWSER-GUIDE.md`. The looks (colours, shapes) are in `HTML-AGENT-REPORT.md`.
 
 ## 0. Paste the three starting pieces
 
-Open each `.html` file in this folder, select all, copy, and paste onto the Studio canvas (Cmd+V). Plasmic should convert it into normal stacks, text and boxes.
-Make each one a **component** (right-click > Extract as component) and name it: `Group card`, `Filter chip`, `Search bar`.
-Replace raw colours and fonts with the tokens (the pasted ones use the same hex values and DIN font names).
+Open each `.html` file in this folder (`group-card.html`, `filter-chip.html`, `search-bar.html`, `footer.html`), copy it, and paste onto the Studio canvas (Cmd+V). Plasmic converts it into normal stacks, text and boxes. These are current: copy their structure for new pages.
+The colours in them are placeholders (teal for a committee colour); the bindings below replace them.
 
 ## 1. The page skeleton
 
@@ -27,11 +26,11 @@ Pick these from the "dynamic value" (lightning bolt) menu under `groupsHub`.
 | `hasMatches` | false when the filters match nothing (use it to show an empty message) |
 | `isLoading`, `hasError` | For loading and error messages |
 | `activeSearch` | The words currently searched |
-| `committees` | One entry per committee: `name`, `short`, `slug`, `href`, `color`, `onColor`, `isSelected`, `count` |
+| `committees` | One entry per committee: `name`, `short`, `slug`, `href`, `color`, `onColor`, `tint`, `overlay`, `isSelected`, `count` |
 | `selectedCommitteeMap` | `{ "careers": true, ... }`, to look up whether a committee is on, by its slug |
 | `selectedCommitteeCount`, `isRecruitingOnly`, `anyRecruiting`, `isFiltering` | Filter state |
 
-Each entry in `items` has: `name`, `committee`, `committeeShort`, `committeeSlug`, `description`, `chair`, `logo`, `header`, `recruiting`, `link`, `committeeLink`, `color`, `onColor`, `initials`.
+Each entry in `items` has: `name`, `committee`, `committeeShort`, `committeeSlug`, `description`, `chair`, `logo`, `header`, `recruiting`, `link`, `committeeLink`, `color`, `onColor`, `tint`, `overlay`, `initials`.
 
 ## 3. Actions you can run
 
@@ -49,21 +48,20 @@ On an element's **Interactions** (e.g. "On click", "On change"): *Run component 
 
 **Search bar.** Replace the placeholder text in the pasted bar with Studio's **Text input**. Interaction: on change > `setSearch` with the input's current value.
 
-**Filter chip.** Give the component a variant called `isSelected` (selected look: dark purple fill, white text). Give it props `label` (text) and `slug`.
-Interaction: on click > `toggleCommittee` with `slug`.
+**Filter chip.** Light at rest (`tint` fill, `color` text and border), solid when pressed (`color` fill, `onColor` text). Bind this with a Style attribute: `({ backgroundColor: currentItem.isSelected ? currentItem.color : currentItem.tint, color: currentItem.isSelected ? currentItem.onColor : currentItem.color, borderColor: currentItem.color })`. There is no dot.
+Interaction: on click > `toggleCommittee` with `currentItem.slug` (type it as a dynamic value, not plain text).
 
 **The chip row.** Add a horizontal stack. Turn on **Repeat** for one chip and choose `groupsHub.committees`. Then, for the chip:
-- label = `currentItem.short`
+- label = `currentItem.short`, count = `currentItem.count` (count text inherits the chip's text colour at about 75% opacity)
 - slug = `currentItem.slug`
-- `isSelected` variant = `currentItem.isSelected` (no JavaScript needed; `groupsHub.selectedCommitteeMap[currentItem.slug]` also works)
-- dot colour = `currentItem.color`
+- selected look = `currentItem.isSelected` (`groupsHub.selectedCommitteeMap[currentItem.slug]` also works)
 
 **Group card + grid.** Add a grid or wrapping stack. Turn on **Repeat** and choose `groupsHub.items`. Inside, put the `Group card` and bind:
 - name = `currentItem.name`, description = `currentItem.description`, chair = `currentItem.chair`
-- committee tag text = `currentItem.committeeShort`, its background = `currentItem.color`, its text colour = `currentItem.onColor`
-- picture = `currentItem.header` (or `logo`). Use "visible when" `currentItem.header` so groups without a picture show the coloured initials box instead (`currentItem.initials`).
-- "Recruiting" tag: visible when `currentItem.recruiting`
+- committee pill text = `currentItem.committeeShort`; its Style = `({ backgroundColor: currentItem.tint, color: currentItem.color })`
+- image block: container Style `({ backgroundColor: currentItem.color })`; photo source `currentItem.header`, visible when `!!currentItem.header`; the tint layer Style `({ backgroundColor: currentItem.overlay })`, visible with the photo; logo source `currentItem.logo`, visible when `!!currentItem.logo`; initials text `currentItem.initials`, visible when `!currentItem.logo`
 - the card's link = `currentItem.link`
+- (Recruiting is removed. Do not add a Recruiting tag.)
 
 **Counts and messages.**
 - A text bound to `groupsHub.countText`.
@@ -73,5 +71,5 @@ Interaction: on click > `toggleCommittee` with `slug`.
 
 ## 5. Notes
 
-- Groups here load in the browser, so they aren't in the page's raw HTML yet (planned: server-side first load).
+- Groups are rendered on the server with the page, so the first HTML already has them. Committees' stored colours come from the database; see `site/src/lib/tones.ts`.
 - The old coded pieces still work inside the hub, so existing pages are unaffected.

@@ -1,10 +1,27 @@
-<div style="display:flex;flex-direction:column;gap:12px;padding:12px;background-color:#ffffff;border:2px solid #2a0628;border-radius:12px;width:320px;">
-<div style="display:flex;align-items:center;justify-content:center;width:100%;height:180px;background-color:#ebe1fa;border-radius:8px;"><span style="font-family:'DIN Engschrift',Arial Narrow,sans-serif;font-size:40px;color:#4d0a49;">AB</span></div>
-<div style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;width:100%;">
-<span style="display:flex;padding:4px 12px;background-color:#8e2a88;border-radius:999px;font-family:'DIN',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;color:#ffffff;">COMMITTEE</span>
-<span style="display:flex;padding:2px 10px;background-color:#e9ee2e;border-radius:999px;font-family:'DIN',Arial,sans-serif;font-size:12px;font-weight:700;color:#2a0628;">Recruiting</span>
-</div>
-<span style="font-family:'DIN Engschrift',Arial Narrow,sans-serif;font-size:30px;line-height:0.95;color:#2a0628;">GROUP NAME</span>
-<span style="font-family:'DIN',Arial,sans-serif;font-size:14px;line-height:1.4;color:#6a5a69;">A short description of what this group does and who it is for.</span>
-<span style="font-family:'DIN',Arial,sans-serif;font-size:14px;color:#6a5a69;">Chairperson · Alex Tan</span>
-</div>
+<a href="/student-groups" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; flex:1 1 250px; width:100%; max-width:360px; min-width:0; background-color:transparent; box-sizing:border-box;">
+  <div style="display:flex; flex-direction:column; justify-content:space-between; width:100%; height:100%; row-gap:16px; min-width:0;">
+    <div style="display:flex; flex-direction:column; row-gap:12px; min-width:0;">
+      <div style="position:relative; width:100%; height:200px; border-radius:12px; overflow:hidden; background-color:#0f766e;">
+        <img src="https://placehold.co/640x360/0f766e/ffffff?text=header" alt="Group header" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
+        <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#0f766e8c;"></div>
+        <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <img src="https://placehold.co/168x168/ffffff/0f766e?text=logo" alt="Group logo" style="width:84px; height:84px; border-radius:999px; object-fit:cover; background-color:#ffffff; border:3px solid #ffffff;" />
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:72px; line-height:0.9; color:#ffffff; text-transform:uppercase;">[BIND: currentItem.initials]</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:row; align-items:center;">
+        <span style="background-color:#0f766e1f; color:#0f766e; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">[BIND: currentItem.committeeShort]</span>
+      </div>
+      <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:32px; font-weight:400; line-height:0.94; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: currentItem.name]</span>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:6px; row-gap:2px;">
+        <span style="font-size:11px; font-weight:700; color:#8e2a88; letter-spacing:0.08em; text-transform:uppercase;">Chair</span>
+        <span style="font-size:13px; font-weight:700; color:#6a5a69;">[BIND: currentItem.chair]</span>
+      </div>
+      <span style="font-size:14px; line-height:1.5; color:#2a0f28;">[BIND: currentItem.description (Visibility: !!currentItem.description)]</span>
+    </div>
+    <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid #ddd2dc; font-size:13px; font-weight:700; color:#4d0a49;">
+      <span>View group</span>
+      <span>→</span>
+    </div>
+  </div>
+</a>
