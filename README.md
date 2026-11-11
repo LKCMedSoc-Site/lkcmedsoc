@@ -12,6 +12,8 @@ Code for the LKCMedSoc website and internal tools. This repository is public: it
 | `Inventory/` | Inventory app | inventory.lkcmedsoc.com | Vercel |
 | `sql/` | Database set-up files (Supabase project: lkcmedsoc-inventory) | not hosted | none |
 
+**Design:** UI rules (colour, type, shape, components, motion) are in `DESIGN.md`; product context is in `PRODUCT.md`.
+
 Each folder is its own Vercel project: set the project's "Root Directory" to the folder name. DNS for lkcmedsoc.com is on Cloudflare.
 
 **One menu:** the site menu is `shared/menu.json`. The website header reads it, and `records/`, `activities-site/` and `feedback-site/` show it as a bar across the top (`suite-nav.js`, in each folder). Each app carries its own copy, so nothing depends on another site being reachable.

@@ -17,12 +17,13 @@ Public website of LKCMedSoc, the Students' Medical Society representing all LKCM
 - Menu in `src/lib/nav.ts`; site facts in `src/lib/site.ts`; home copy in `src/lib/home.ts`.
 - Sign-in with NTU email on the page (AuthBox).
 - Plasmic is used for layout editing; keep components Plasmic-registered where they already are.
+- The Gazette (news, stories, announcements) lives at `/gazette`; posts are written and reviewed in `gazette-site/` and shared with Activities write-ups.
 
 ## Brand Commitments
-Name: LKCMedSoc / Students' Medical Society. Purple (p900 #3a0a2e family) and silver identity; DIN and DIN Engschrift fonts hosted in Supabase storage. Binding: the user chose to build on the existing v2 look rather than replace it.
+Name: LKCMedSoc / Students' Medical Society. Purple identity (darkest plum #2a0628, plum #4d0a49 on the website) with pink and lilac accents, no yellow; committees and CCAs get their own non-purple colours. DIN and DIN Engschrift fonts hosted in Supabase storage. The full rules (colour, type, shape, components, motion, accessibility) are in `DESIGN.md`; follow it for any UI work. Binding: build on the existing look rather than replace it.
 
 ## Evidence on Hand
-Real photos in the Supabase `post-photos` bucket, two student testimonials, real event/news data. Numbers (800+ students, 40+ CCAs, 150+ events) are written placeholders; the CCA count is live.
+Real photos in the Supabase `post-photos` bucket, two student testimonials, real event and Gazette post data. Numbers (800+ students, 40+ CCAs, 150+ events) are written placeholders; the CCA count is live.
 
 ## Product Principles
 - Serve students' daily use first without losing the applicant's first impression.
