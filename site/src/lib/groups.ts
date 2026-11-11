@@ -11,7 +11,7 @@ export function groupItems(bodies: Body[], leaders: Leader[]) {
   const items: GroupItem[] = groups.flatMap((g) => g.ccas.map((c) => ({
     name: c.name, href: `/student-groups/${g.slug}/${slugify(c.name)}`, committee: g.title, committeeHref: `/student-groups/${g.slug}`,
     chair: sortLeaders(leaders.filter((l) => l.level === 'CCA/Project' && l.body === c.name))[0]?.name ?? '',
-    description: c.description, logo: img(c.logo), header: img(c.header), recruiting: !!c.recruitment,
+    description: c.description, logo: img(c.logo), header: img(c.header), recruiting: !!c.recruitment, color: c.color, committeeColor: g.color,
   })));
-  return { groups, items, committees: groups.map((g) => ({ name: g.title, href: `/student-groups/${g.slug}` })) };
+  return { groups, items, committees: groups.map((g) => ({ name: g.title, href: `/student-groups/${g.slug}`, color: g.color })) };
 }

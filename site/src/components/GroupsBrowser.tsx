@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import SafeImage from '@/components/SafeImage';
 
-export type GroupItem = { name: string; href: string; committee: string; committeeHref: string; chair: string; description: string | null; logo: string; header: string; recruiting: boolean };
+export type GroupItem = { name: string; href: string; committee: string; committeeHref: string; chair: string; description: string | null; logo: string; header: string; recruiting: boolean; color?: string | null; committeeColor?: string | null };
 
 // Each committee gets one colour, used on its cards and its filter chip.
 const TONES = [
@@ -43,7 +43,7 @@ function Card({ g, tone }: { g: GroupItem; tone: (typeof TONES)[number] }) {
   );
 }
 
-export default function GroupsBrowser({ items, committees }: { items: GroupItem[]; committees: { name: string; href: string }[] }) {
+export default function GroupsBrowser({ items, committees }: { items: GroupItem[]; committees: { name: string; href: string; color?: string | null }[] }) {
   const [q, setQ] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
   const [grouped, setGrouped] = useState(true);

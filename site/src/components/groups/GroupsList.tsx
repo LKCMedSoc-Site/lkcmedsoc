@@ -17,7 +17,7 @@ export default function GroupsList({ columns = 3, gap = 16, byCommittee = true, 
   const cols = Math.min(6, Math.max(1, Math.round(columns)));
   const grid = { display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap } as const;
   const cards = (list: GroupItem[], offset: number) => list.map((it, i) => (
-    <DataProvider key={it.href} name="group" data={toGroupData(it, g.toneOf(it.committee))}>{repeatedElement(offset + i, children)}</DataProvider>
+    <DataProvider key={it.href} name="group" data={toGroupData(it, g.toneOfItem(it))}>{repeatedElement(offset + i, children)}</DataProvider>
   ));
   if (!g.shown.length) return <p className="mt-4 max-w-md text-lg text-muted">No groups match those filters. Try clearing one.</p>;
   if (!byCommittee) return <div className={className} style={grid}>{cards(g.shown, 0)}</div>;

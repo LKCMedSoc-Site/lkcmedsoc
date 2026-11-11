@@ -1,7 +1,7 @@
 import { serverClient } from './supabase';
 
 // Reads the public views in the records schema (public_bodies, public_leadership). No emails are used here.
-export type Body = { name: string; level: string; status: string; parent: string; description: string | null; logo: string | null; instagram: string | null; website: string | null; recruitment: string | null; header: string | null; about: string | null };
+export type Body = { name: string; level: string; status: string; parent: string; description: string | null; logo: string | null; instagram: string | null; website: string | null; recruitment: string | null; header: string | null; about: string | null; color: string | null };
 export type Leader = { ay: string; level: string; body: string; parent: string; title: string; name: string; photo?: string | null };
 
 const clean = (v: unknown): string | null => (v == null || v === '' || v === 'null' || v === 'N/A' ? null : String(v));
@@ -16,7 +16,7 @@ export function nameCase(s: string) {
 export function toBodies(data: any[]): Body[] {
   return data.map((r) => ({
     name: r.name, level: r.level ?? '', status: r.status ?? 'Active', parent: clean(r.parent_committee) ?? '',
-    description: clean(r.description), logo: clean(r.logo_url), instagram: clean(r.instagram), website: clean(r.website), recruitment: clean(r.recruitment_url), header: clean(r.header_url), about: clean(r.about_md),
+    description: clean(r.description), logo: clean(r.logo_url), instagram: clean(r.instagram), website: clean(r.website), recruitment: clean(r.recruitment_url), header: clean(r.header_url), about: clean(r.about_md), color: clean(r.color),
   })).filter((b) => b.name);
 }
 export function toLeaders(rows: any[]): { ay: string; leaders: Leader[] } {
@@ -47,7 +47,7 @@ export function sortLeaders(l: Leader[]) {
 }
 
 // Student Groups: one page per parent committee that has CCAs, headed with the committee's own name.
-export type Group = { slug: string; title: string; committee: string; ccas: Body[] };
+export type Group = { slug: string; title: string; committee: string; color: string | null; ccas: Body[] };
 /** "Local Community Involvement Committee" -> "local-community-involvement" */
 export const slugify = (s: string) => s.toLowerCase().replace(/ committee$/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -57,7 +57,7 @@ export function groupsOf(bodies: Body[]): Group[] {
   ccas.forEach((c) => byCommittee.set(c.parent, [...(byCommittee.get(c.parent) ?? []), c]));
   const sort = (l: Body[]) => l.sort((a, b) => a.name.localeCompare(b.name));
   const out: Group[] = [];
-  byCommittee.forEach((list, committee) => { if (committee) out.push({ slug: slugify(committee), title: committee, committee, ccas: sort(list) }); });
+  byCommittee.forEach((list, committee) => { if (committee) out.push({ slug: slugify(committee), title: committee, committee, color: bodies.find((b) => b.level === 'Committee' && b.name === committee)?.color ?? null, ccas: sort(list) }); });
   return out.sort((a, b) => a.title.localeCompare(b.title));
 }
 

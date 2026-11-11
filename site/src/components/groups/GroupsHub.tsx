@@ -9,18 +9,16 @@ import { useHubSeed } from '@/components/hubs/HubSeed';
 import { usePaging } from '@/components/hubs/paging';
 import type { GroupItem } from '@/components/GroupsBrowser';
 import { toGroupData } from './groupData';
+import { toneFor, type Tone } from '@/lib/tones';
 
-// One colour per committee, used on its badge and its filter chip. Hex values are the brand palette.
-export const TONES = [
-  { bg: '#8e2a88', fg: '#ffffff' }, { bg: '#c3a1f2', fg: '#2a0628' }, { bg: '#ff9fe6', fg: '#2a0628' },
-  { bg: '#4d0a49', fg: '#ffffff' }, { bg: '#d3a6cf', fg: '#2a0628' }, { bg: '#ebe1fa', fg: '#4d0a49' },
-];
+// Colours come from each body's stored colour (see lib/tones.ts), not from its position in the list.
 
 export type GroupsCtx = {
-  items: GroupItem[]; committees: { name: string; href: string }[]; shown: GroupItem[];
+  items: GroupItem[]; committees: { name: string; href: string; color?: string | null }[]; shown: GroupItem[];
   q: string; setQ: (v: string) => void; picked: string[]; toggle: (c: string) => void;
   recruiting: boolean; setRecruiting: (v: boolean) => void; anyRecruiting: boolean; dirty: boolean; clear: () => void;
-  toneOf: (committee: string) => (typeof TONES)[number];
+  toneOf: (committee: string) => Tone;
+  toneOfItem: (item: GroupItem) => Tone;
   loading: boolean; failed: boolean;
 };
 const Ctx = createContext<GroupsCtx | null>(null);
@@ -105,10 +103,11 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
     clearFilters: clear,
   }));
 
-  const toneOf = (c: string) => TONES[Math.max(0, committees.findIndex((x) => x.name === c)) % TONES.length];
+  const toneOf = (c: string) => toneFor(committees.find((x) => x.name === c)?.color, c);
+  const toneOfItem = (it: GroupItem) => toneFor(it.color, it.committeeColor, it.name);
   const loading = !data, failed = data === 'failed';
   const dirty = !!(q || picked.length || recruiting);
-  const value: GroupsCtx = { items, committees, shown, q, setQ, picked, recruiting, setRecruiting, toggle, anyRecruiting: items.some((i) => i.recruiting), dirty, clear, toneOf, loading, failed };
+  const value: GroupsCtx = { items, committees, shown, q, setQ, picked, recruiting, setRecruiting, toggle, anyRecruiting: items.some((i) => i.recruiting), dirty, clear, toneOf, toneOfItem, loading, failed };
 
   // What Studio sees as $ctx.groupsHub. Chips can bind their "selected" look straight to committees[i].isSelected or selectedCommitteeMap[slug].
   const committeeData = committees.map((c) => ({
@@ -118,11 +117,11 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
   const spotItem = data && data !== 'failed' && data.spotName ? items.find((i) => i.name === data.spotName) : undefined;
   const hub = {
     isLoading: loading, hasError: failed,
-    items: shown.map((it) => ({ ...toGroupData(it, toneOf(it.committee)), committeeSlug: slugOf(it.committeeHref) })),
+    items: shown.map((it) => ({ ...toGroupData(it, toneOfItem(it)), committeeSlug: slugOf(it.committeeHref) })),
     totalCount: matches.length, shownCount: shown.length, allCount: items.length, hasMatches: shown.length > 0,
     countText: `${matches.length} group${matches.length === 1 ? '' : 's'}${dirty ? ' match' : ''}`,
     // This week's featured group (the site rotates one each week among groups that have named leaders). There is no "featured" flag in the data.
-    spotlight: spotItem ? { ...toGroupData(spotItem, toneOf(spotItem.committee)), committeeSlug: slugOf(spotItem.committeeHref) } : null,
+    spotlight: spotItem ? { ...toGroupData(spotItem, toneOfItem(spotItem)), committeeSlug: slugOf(spotItem.committeeHref) } : null,
     spotlightLeaders: data && data !== 'failed' ? data.spotLeaders : [],
     activeSearch: q, ...paging.fields, committees: committeeData,
     selectedCommitteeMap: Object.fromEntries(committeeData.map((c) => [c.slug, c.isSelected])),

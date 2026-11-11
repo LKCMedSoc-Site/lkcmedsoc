@@ -114,15 +114,37 @@
     return { get: function () { return ta.value; }, el: h('div', null, toolbar, ta, preview, fileIn, h('p', { class: 'muted' }, 'Blocks start with ::: on their own line; callouts, photo rows and quotes end with a line of just :::. Use Preview to check how it looks.')) };
   }
 
+  // The colours a body can choose for its chip, badge and card. None are purple (that is the site's own colour); every one takes white text.
+  // Keep in step with TONE_SLOTS in site/src/lib/tones.ts and the check in sql/body_color.sql.
+  var COLORS = { blue: '#1d4ed8', cyan: '#0e7490', teal: '#0f766e', green: '#15803d', amber: '#b45309', orange: '#c2410c', red: '#b91c1c', slate: '#475569' };
+  function colorField(kit, initial, name) {
+    var h = kit.h, value = COLORS[initial] ? initial : '';
+    var chip = h('span', { class: 'colorchip' }, name);
+    var buttons = [];
+    function paint() {
+      chip.style.background = value ? COLORS[value] : '#8a8494';
+      buttons.forEach(function (b) { b.btn.setAttribute('aria-pressed', b.key === value ? 'true' : 'false'); });
+    }
+    function swatch(key, label, bg) {
+      var btn = h('button', { type: 'button', class: 'swatch' + (key ? '' : ' auto'), title: label, 'aria-label': label, style: bg ? 'background:' + bg : null, onclick: function () { value = key; paint(); } }, key ? '' : 'Auto');
+      buttons.push({ key: key, btn: btn });
+      return btn;
+    }
+    var row = h('div', { class: 'swatches' }, swatch('', 'Automatic', null), Object.keys(COLORS).map(function (k) { return swatch(k, k.charAt(0).toUpperCase() + k.slice(1), COLORS[k]); }));
+    paint();
+    return { get: function () { return value; }, el: h('div', { class: 'card' }, h('strong', null, 'Group colour'), h('p', { class: 'muted' }, 'Used for your filter chip, your badge and your card on the website. Auto picks one for you; a group with no colour of its own uses its committee’s.'), row, h('div', { class: 'row' }, chip)) };
+  }
+
   async function load(kit, body) {
     var h = kit.h, slot = kit.slot;
     slot.replaceChildren(h('p', { class: 'muted' }, 'Loading…'));
     var r = await kit.run(async function () {
-      return kit.must(await kit.sb.from('bodies').select('id,name,level,parent_committee,description,about_md,logo_url,header_url,instagram,website,recruitment_url').eq('id', body.id).single());
+      return kit.must(await kit.sb.from('bodies').select('id,name,level,parent_committee,description,about_md,logo_url,header_url,instagram,website,recruitment_url,color').eq('id', body.id).single());
     });
     if (!r) return;
     var logo = imageField(kit, r.id, 'Logo', 'Square works best. Shown as a round badge on your card and page.', r.logo_url, 400, true);
     var header = imageField(kit, r.id, 'Header image', 'A wide photo (landscape). Shown at the top of your card and your page.', r.header_url, 1800, false);
+    var color = colorField(kit, r.color, r.name);
     var blurb = h('textarea', { rows: 3, maxlength: 400, placeholder: 'One or two lines for your card, e.g. “Weekly visits to cheer up paediatric patients.”' });
     blurb.value = r.description || '';
     var count = h('span', { class: 'muted' }, '');
@@ -137,6 +159,7 @@
       save.disabled = true;
       var ok = await kit.run(async function () {
         kit.must(await kit.sb.rpc('save_my_body', { b: r.id, p_description: blurb.value, p_about_md: about.get(), p_logo_url: logo.get(), p_header_url: header.get(), p_instagram: ig.value, p_website: web.value, p_recruitment_url: join.value }));
+        kit.must(await kit.sb.rpc('save_my_body_color', { b: r.id, p_color: color.get() || null }));
         return true;
       }, 'Saved. The website updates within a few minutes.');
       save.disabled = false;
@@ -145,6 +168,7 @@
     slot.replaceChildren(
       h('div', { class: 'row' }, h('h3', { style: 'margin:0' }, r.name), view ? h('a', { href: view, target: '_blank', rel: 'noopener' }, 'View public page ↗') : null),
       h('div', { class: 'two' }, logo.el, header.el),
+      color.el,
       h('div', { class: 'card' }, h('strong', null, 'Short description'), h('p', { class: 'muted' }, 'Appears on your card in the Student Groups list.'), blurb, count),
       h('div', { class: 'card' }, h('strong', null, 'Links'), kit.field('Join / sign-up link', join), kit.field('Instagram', ig), kit.field('Website', web)),
       h('div', { class: 'card' }, h('strong', null, 'About your group'), h('p', { class: 'muted' }, 'The full write-up on your group’s page. Add photos, links and highlighted blocks.'), about.el),
