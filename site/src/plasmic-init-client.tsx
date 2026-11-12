@@ -26,7 +26,7 @@ PLASMIC.registerComponent(LiveNews, {
   displayName: 'News list (live)',
   description: 'Latest published news cards, from our database.',
   props: {
-    category: { type: 'choice', options: ['All', 'Impact', 'Events', 'Announcements', 'Stories'], defaultValue: 'All' },
+    category: { type: 'string', defaultValue: 'All', helpText: 'A category name exactly as it appears in the Gazette (All shows every category).' },
     count: { type: 'number', defaultValue: 6, displayName: 'How many' },
     columns: { type: 'choice', options: ['1', '2', '3'], defaultValue: '3' },
   },
@@ -439,7 +439,7 @@ PLASMIC.registerComponent(NewsHub, {
     children: hubSlot('$ctx.newsHub'),
     limit: { type: 'number', defaultValue: 12, displayName: 'Show at most (0 = all)', description: 'For a small preview, e.g. 3 on the home page.' },
     pageSize: { type: 'number', defaultValue: 0, displayName: 'Items per page (0 = no pages)', description: 'Turns on paging. Use nextPage, prevPage and goToPage with $ctx page, pageCount, hasNextPage, hasPrevPage and pages. Takes over from "Show at most".' },
-    defaultCategory: { type: 'choice', options: ['', 'Impact', 'Events', 'Announcements', 'Stories'], defaultValue: '', displayName: 'Start with this category' },
+    defaultCategory: { type: 'string', defaultValue: '', helpText: 'A category name exactly as it appears in the Gazette, or several separated by commas.', displayName: 'Start with this category' },
     defaultCommittee: { type: 'string', displayName: 'Start with this committee', description: 'A committee name. Leave empty for all.' },
   },
   providesData: true,

@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { CATEGORIES, CATEGORY_LABEL, CATEGORY_SLUG } from '@/lib/posts';
+import type { Category } from '@/lib/posts';
 
-/** The section bar under the Gazette masthead: Home, one link per category, and the full archive. `current` is "home", "all" or a category name. */
-export default function GazetteNav({ current }: { current: string }) {
+/** The section bar under the Gazette masthead: Home, one link per category (managed by ExCo), and the full archive. `current` is "home", "all" or a category name. */
+export default function GazetteNav({ current, categories }: { current: string; categories: Category[] }) {
   const items: { key: string; label: string; href: string }[] = [
     { key: 'home', label: 'Home', href: '/gazette' },
-    ...CATEGORIES.map((c) => ({ key: c, label: CATEGORY_LABEL[c], href: `/gazette/${CATEGORY_SLUG[c]}` })),
+    ...categories.map((c) => ({ key: c.name, label: c.name, href: `/gazette/${c.slug}` })),
     { key: 'all', label: 'Archive', href: '/gazette/all' },
   ];
   return (

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CATEGORY_BLURB, CATEGORY_LABEL, CATEGORY_SLUG, getGazetteHome, type GazetteHome } from '@/lib/posts';
+import { getGazetteHome, type GazetteHome } from '@/lib/posts';
 import { exco } from '@/lib/ay';
 import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 import GazetteNav from '@/components/gazette/GazetteNav';
@@ -29,7 +29,7 @@ export default async function GazettePage() {
           <p className="mt-3 max-w-xl text-lg text-mist">News, stories and updates from every corner of MedSoc.</p>
         </div>
       </section>
-      <GazetteNav current="home" />
+      <GazetteNav current="home" categories={(home?.categories ?? []).map((c) => ({ name: c.category, slug: c.slug, blurb: c.blurb, tone: c.tone }))} />
 
       <section className="band band-pale band-last" style={{ zIndex: 20 }}>
         <div className="mx-auto max-w-6xl px-4">
@@ -48,10 +48,10 @@ export default async function GazettePage() {
                   <section key={c.category} className="mt-16" aria-labelledby={`cat-${c.category}`}>
                     <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-p950 pb-2">
                       <div>
-                        <h2 id={`cat-${c.category}`} className="text-2xl font-bold text-p950">{CATEGORY_LABEL[c.category] ?? c.category}</h2>
-                        <p className="text-sm text-muted">{CATEGORY_BLURB[c.category]}</p>
+                        <h2 id={`cat-${c.category}`} className="text-2xl font-bold text-p950">{c.category}</h2>
+                        {c.blurb ? <p className="text-sm text-muted">{c.blurb}</p> : null}
                       </div>
-                      <Link href={`/gazette/${CATEGORY_SLUG[c.category]}`} className="link-arrow text-sm">All {c.total} →</Link>
+                      <Link href={`/gazette/${c.slug}`} className="link-arrow text-sm">All {c.total} →</Link>
                     </div>
                     <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{c.items.map((p) => <StoryCard key={p.slug} post={p} />)}</div>
                   </section>

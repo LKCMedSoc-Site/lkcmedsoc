@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { browserClient } from '@/lib/supabase';
-import { normalise, CATEGORIES, type Post } from '@/lib/posts';
+import { normalise, type Post } from '@/lib/posts';
 import { fetchBodies } from '@/lib/records-client';
 import { committeeMap } from '@/lib/records';
 import NewsCard from '@/components/NewsCard';
@@ -23,6 +23,7 @@ export default function NewsBlock({ count = 12, showFilters = true, className = 
     })().catch(() => { if (!off) setPosts([]); });
     return () => { off = true; };
   }, [count]);
+  const categories = useMemo(() => Array.from(new Set((posts ?? []).map((p) => p.category).filter(Boolean))), [posts]);   // the ones that have posts
   const committees = useMemo(() => Array.from(new Set(Object.values(cmap))).sort(), [cmap]);
   if (!posts) return <p className={`text-muted ${className}`}>Loading news…</p>;
   const shown = posts.filter((p) => (!cat || p.category === cat) && (!committee || cmap[p.bodyName] === committee)).slice(0, count);
@@ -30,7 +31,7 @@ export default function NewsBlock({ count = 12, showFilters = true, className = 
     <div className={className}>
       {showFilters ? (
         <div className="flex flex-wrap items-center gap-2">
-          {['', ...CATEGORIES].map((c) => <button key={c || 'all'} type="button" aria-pressed={cat === c} onClick={() => setCat(c)} className={chip(cat === c)}>{c || 'All'}</button>)}
+          {['', ...categories].map((c) => <button key={c || 'all'} type="button" aria-pressed={cat === c} onClick={() => setCat(c)} className={chip(cat === c)}>{c || 'All'}</button>)}
           {committees.length ? (
             <select aria-label="Committee" value={committee} onChange={(e) => setCommittee(e.target.value)} className="h-10 max-w-full rounded-full border border-p900/25 bg-white px-3 text-sm font-bold text-p900">
               <option value="">All committees</option>

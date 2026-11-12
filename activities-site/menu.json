@@ -32,17 +32,7 @@
         { "label": "MedSoc policy", "href": "/policy", "note": "How MedSoc and its CCAs operate." }
       ]
     },
-    {
-      "label": "Gazette", "href": "/gazette", "note": "News, stories and updates from MedSoc.",
-      "children": [
-        { "label": "Latest", "href": "/gazette", "note": "The top stories and newest posts" },
-        { "label": "Impact", "href": "/gazette/impact", "note": "What we have achieved, and for whom" },
-        { "label": "Stories", "href": "/gazette/stories", "note": "Voices and experiences from our students" },
-        { "label": "Announcements", "href": "/gazette/announcements", "note": "News and calls you should know about" },
-        { "label": "Event write-ups", "href": "/gazette/events", "note": "Write-ups and photos from events" },
-        { "label": "Archive", "href": "/gazette/all", "note": "Every post, by year, committee or category" }
-      ]
-    },
+    { "label": "Gazette", "href": "/gazette", "note": "News, stories and updates from MedSoc." },
     {
       "label": "Apps", "href": "/resources", "note": "The tools students and leaders use. One sign-in works on all of them.",
       "children": [

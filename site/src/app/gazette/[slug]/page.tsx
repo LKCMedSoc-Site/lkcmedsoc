@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import SafeImage from '@/components/SafeImage';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CATEGORY_LABEL, CATEGORY_SLUG, categoryFromSlug, getPost, getPostAy } from '@/lib/posts';
+import { categoryBySlug, getCategories, getPost, getPostAy } from '@/lib/posts';
 import { ayToSlug, exco } from '@/lib/ay';
 import { renderMarkdown } from '@/lib/markdown';
 import { postDate } from '@/lib/dates';
@@ -13,15 +13,15 @@ type Props = { params: Promise<{ slug: string }>; searchParams: Promise<ListingS
 
 // /gazette/impact (a category) and /gazette/<post-slug> (a post) share this one address pattern. A post slug always ends in a short id, so it can never equal a category name.
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug = (await params).slug, cat = categoryFromSlug(slug);
-  if (cat) return { title: CATEGORY_LABEL[cat] };
+  const slug = (await params).slug, cat = categoryBySlug(await getCategories(), slug);
+  if (cat) return { title: cat.name };
   const post = await getPost(slug).catch(() => null);
   return post ? { title: post.title, description: post.summary || undefined, openGraph: post.cover ? { images: [post.cover] } : undefined } : { title: 'Gazette' };
 }
 
 export default async function GazetteSlugPage({ params, searchParams }: Props) {
-  const slug = (await params).slug, cat = categoryFromSlug(slug);
-  if (cat) return <Listing sp={await searchParams} basePath={`/gazette/${slug}`} fixedCategory={cat} />;
+  const slug = (await params).slug, cat = categoryBySlug(await getCategories(), slug);
+  if (cat) return <Listing sp={await searchParams} basePath={`/gazette/${slug}`} fixedCategory={cat.name} />;
   const post = await getPost(slug).catch(() => null);
   if (!post) notFound();
   const html = renderMarkdown(post.body);
@@ -33,7 +33,7 @@ export default async function GazetteSlugPage({ params, searchParams }: Props) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-10">
       <div className="text-sm font-medium uppercase tracking-wide text-p500">
-        <Link href="/gazette" className="no-underline">Gazette</Link> · <Link href={`/gazette/${CATEGORY_SLUG[post.category] ?? 'all'}`} className="no-underline">{CATEGORY_LABEL[post.category] ?? post.category}</Link> · {postDate(post.published_at)}
+        <Link href="/gazette" className="no-underline">Gazette</Link> · <Link href={`/gazette/${post.categorySlug || 'all'}`} className="no-underline">{post.category}</Link>{post.subcategory ? <> · <Link href={`/gazette/${post.categorySlug}/${post.subcategorySlug}`} className="no-underline">{post.subcategory}</Link></> : null} · {postDate(post.published_at)}
       </div>
       <h1 className="display mt-1 text-5xl">{post.title}</h1>
       {post.bodyName || post.author ? <p className="mt-2 text-muted">{[post.bodyName, post.author && `by ${post.author}`].filter(Boolean).join(' · ')}</p> : null}

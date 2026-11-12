@@ -13,9 +13,37 @@ const OPTIONS: sanitizeHtml.IOptions = {
   },
 };
 
+/** The embed address for a YouTube or Vimeo link, or null. Only these two hosts are ever embedded, and the address is rebuilt from the video id. */
+export function videoEmbedUrl(raw: string): string | null {
+  let u: URL;
+  try { u = new URL(raw.trim()); } catch { return null; }
+  if (u.protocol !== 'https:') return null;
+  const host = u.hostname.replace(/^(www\.|m\.)/, '');
+  let id: string | null = null;
+  if (host === 'youtu.be') id = u.pathname.slice(1).split('/')[0];
+  else if (host === 'youtube.com') id = u.pathname === '/watch' ? u.searchParams.get('v') : /^\/(embed|shorts|live)\//.test(u.pathname) ? u.pathname.split('/')[2] : null;
+  if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) return `https://www.youtube-nocookie.com/embed/${id}`;
+  if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+    const m = /\/(?:video\/)?(\d{6,12})(?:\/|$)/.exec(u.pathname);
+    if (m) return `https://player.vimeo.com/video/${m[1]}`;
+  }
+  return null;
+}
+
+/** Post text is Markdown. A line `:::video <YouTube or Vimeo link>` becomes a responsive video; anything else with ::: stays plain text. */
 export function renderMarkdown(md: string): string {
-  const html = marked.parse(md ?? '', { async: false, gfm: true, breaks: false }) as string;
-  return sanitizeHtml(html, OPTIONS);
+  const videos: string[] = [];
+  const src = (md ?? '').replace(/^:::video[ \t]+(\S+)[ \t]*$/gm, (line, url: string) => {
+    const embed = videoEmbedUrl(url);
+    if (!embed) return line;
+    videos.push(embed);
+    return `\nLKCVIDEO${videos.length - 1}TOKEN\n`;
+  });
+  const html = sanitizeHtml(marked.parse(src, { async: false, gfm: true, breaks: false }) as string, OPTIONS);
+  return html.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, (_m, i: string) => {
+    const embed = videos[Number(i)];
+    return embed ? `<div class="blk-video"><iframe src="${embed}" title="Video" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>` : '';
+  });
 }
 
 /** For rich text that is already HTML (the Plasmic CMS editor). */

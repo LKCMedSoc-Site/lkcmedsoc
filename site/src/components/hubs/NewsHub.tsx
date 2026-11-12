@@ -2,7 +2,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState, type ReactNode } from 'react';
 import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { browserClient } from '@/lib/supabase';
-import { normalise, CATEGORIES, CATEGORY_LABEL, type Post } from '@/lib/posts';
+import { normalise, toneColor, DEFAULT_CATEGORIES, type Category, type Post } from '@/lib/posts';
 import { withAlpha } from '@/lib/tones';
 import { fetchBodies } from '@/lib/records-client';
 import { committeeMap } from '@/lib/records';
@@ -10,13 +10,9 @@ import { postDate } from '@/lib/dates';
 import { useHubSeed } from './HubSeed';
 import { usePaging } from './paging';
 
-// One colour per category, drawn from the brand purples (plum, magenta, violet and orchid families, deepened so all four take white text, like
-// committee colours do). Yellow is retired. Each also carries a light `tint` and a stronger `overlay` for light resting states and photo washes.
-const TONE: Record<string, { color: string; onColor: string }> = {
-  Impact: { color: '#4d0a49', onColor: '#ffffff' }, Events: { color: '#8e2a88', onColor: '#ffffff' },
-  Announcements: { color: '#6d4aa8', onColor: '#ffffff' }, Stories: { color: '#9a5d94', onColor: '#ffffff' },
-};
-const toneOf = (c: string) => { const t = TONE[c] ?? { color: '#6d4aa8', onColor: '#ffffff' }; return { ...t, tint: withAlpha(t.color, 0.12), overlay: withAlpha(t.color, 0.55) }; };
+// Each category carries its own colour (set by ExCo in the Gazette app): one of eight deepened brand purples, all with white text, like committee
+// colours do. Yellow is retired. Each also carries a light `tint` and a stronger `overlay` for light resting states and photo washes.
+const toneOf = (n: number) => { const color = toneColor(n); return { color, onColor: '#ffffff', tint: withAlpha(color, 0.12), overlay: withAlpha(color, 0.55) }; };
 
 export type NewsHubRef = {
   setSearch: (query: string) => void;
@@ -34,6 +30,16 @@ const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children
   const hubSeed = useHubSeed();
   const [posts, setPosts] = useState<Post[] | null>(() => hubSeed?.posts ?? null);
   const [failed, setFailed] = useState(false);
+  const [cats0, setCats0] = useState<Category[]>(() => hubSeed?.categories ?? DEFAULT_CATEGORIES);   // the categories ExCo manages, in order
+  useEffect(() => {
+    if (hubSeed?.categories) return;
+    let off = false;
+    browserClient().schema('activities').rpc('public_categories').then((r) => {
+      const rows = (r.data as { name: string; slug: string; blurb: string | null; tone: number }[] | null) ?? [];
+      if (!off && rows.length) setCats0(rows.map((c) => ({ name: c.name, slug: c.slug, blurb: c.blurb ?? '', tone: c.tone ?? 0 })));
+    });
+    return () => { off = true; };
+  }, [hubSeed]);
   const [cmap, setCmap] = useState<Record<string, string>>(() => (hubSeed?.bodies ? committeeMap(hubSeed.bodies) : {}));
   const [q, setQ] = useState(''); const [cats, setCats] = useState<string[]>(() => list(defaultCategory)); const [picked, setPicked] = useState<string[]>(() => list(defaultCommittee));
   useEffect(() => {
@@ -50,9 +56,9 @@ const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children
   useEffect(() => { setCats(list(defaultCategory)); setPicked(list(defaultCommittee)); }, [defaultCategory, defaultCommittee, posts]);
 
   const all = useMemo(() => (posts ?? []).map((p) => {
-    const committee = cmap[p.bodyName] ?? ''; const tone = toneOf(p.category);
+    const committee = cmap[p.bodyName] ?? ''; const tone = toneOf(p.categoryTone);
     return {
-      slug: p.slug, title: p.title, category: p.category, categoryLabel: CATEGORY_LABEL[p.category] ?? p.category, categoryColor: tone.color, categoryOnColor: tone.onColor, categoryTint: tone.tint, categoryOverlay: tone.overlay, featured: p.featured, summary: p.summary,
+      slug: p.slug, title: p.title, category: p.category, categoryLabel: p.category, subcategory: p.subcategory, categoryColor: tone.color, categoryOnColor: tone.onColor, categoryTint: tone.tint, categoryOverlay: tone.overlay, featured: p.featured, summary: p.summary,
       publishedAt: p.published_at, dateText: postDate(p.published_at), author: p.author, from: p.bodyName, committee, committeeShort: committee.replace(/ Committee$/, ''),
       cover: p.cover, hasCover: !!p.cover, link: `/gazette/${p.slug}`,
     };
@@ -74,7 +80,7 @@ const NewsHub = forwardRef<NewsHubRef, NewsHubProps>(function NewsHub({ children
     nextPage: paging.next, prevPage: paging.prev, goToPage: paging.go, clearFilters: clear,
   }));
 
-  const categories = CATEGORIES.map((name) => ({ name, label: CATEGORY_LABEL[name] ?? name, ...toneOf(name), isSelected: has(cats, name), count: all.filter((p) => p.category === name).length }));
+  const categories = cats0.map((c) => ({ name: c.name, label: c.name, slug: c.slug, ...toneOf(c.tone), isSelected: has(cats, c.name), count: all.filter((p) => p.category === c.name).length }));
   const committees = Array.from(new Set(all.map((p) => p.committee).filter(Boolean))).sort().map((name) => ({ name, short: name.replace(/ Committee$/, ''), isSelected: has(picked, name) || has(picked, name.replace(/ Committee$/, '')), count: all.filter((p) => p.committee === name).length }));
   const hub = {
     isLoading: !posts, hasError: failed, items: shown, first: shown[0] ?? null, totalCount: matches.length, shownCount: shown.length, allCount: all.length, hasMatches: shown.length > 0,

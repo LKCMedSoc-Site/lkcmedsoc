@@ -3,7 +3,11 @@
 (function () {
   'use strict';
   var P = window.P, h = P.h, sb = P.sb;
-  var CATS = ['Impact', 'Events', 'Announcements', 'Stories'];
+  // The categories are managed by ExCo in the Gazette app (activities.post_categories).
+  async function categoryNames(current) {
+    var rows = P.must(await P.act.from('post_categories').select('name,hidden,ord').order('ord').order('name'));
+    return rows.filter(function (r) { return !r.hidden || r.name === current; }).map(function (r) { return r.name; });
+  }
   var EDITABLE = ['Draft', 'Changes requested', 'Unpublished'];
   var BUCKET = 'post-photos';
   var photoUrl = function (path) { return P.cfg.SUPABASE_URL + '/storage/v1/object/public/' + BUCKET + '/' + path; };
@@ -61,12 +65,13 @@
     var evs = P.must(await P.act.from('activity_list').select('id,title,start_date,ay,body,status').in('status', ['Approved', 'Completed']).order('start_date', { ascending: false, nullsFirst: false }).limit(300));
     var bodies = P.must(await P.rec.rpc('my_bodies'));
     var ays = await P.years();
+    var CATS = await categoryNames(post && post.category);
     var evById = {}; evs.forEach(function (e) { evById[e.id] = e; });
     var defaultAy = P.defaultAy(ays), curAy = (post && post.ay) || defaultAy;
 
     var title = h('input', { id: 'p-title', class: 'grow', maxlength: 150, value: post ? post.title : '', placeholder: 'Title', disabled: !editable });
     var summary = h('textarea', { id: 'p-summary', maxlength: 300, placeholder: 'One or two sentences shown on the news list', disabled: !editable }, (post && post.summary) || '');
-    var cat = P.select(CATS, post ? post.category : 'Events', { id: 'p-cat', disabled: !editable });
+    var cat = P.select(CATS, post ? post.category : (CATS.indexOf('Activities') >= 0 ? 'Activities' : CATS[0]), { id: 'p-cat', disabled: !editable });
     var editorBox = h('div', { id: 'p-body' });
     var ev = P.select([['', 'Not about a specific event']].concat(evs.map(function (e) { return [e.id, e.title + ' (' + e.body + ', ' + e.ay + ')']; })), (post && post.activity_id) || '', { id: 'p-event', disabled: !editable });
     var body = P.select([['', 'No body']].concat(bodies.map(function (b) { return [b.id, b.name + ' (' + b.level + ')']; })), (post && post.body_id) || '', { id: 'p-body-id', disabled: !editable });

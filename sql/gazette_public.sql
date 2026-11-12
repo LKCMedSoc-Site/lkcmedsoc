@@ -1,5 +1,5 @@
 -- Public Gazette data: featured and tags on the public post functions, and one call that returns everything the Gazette home page needs.
--- Run after post_curation.sql. Safe to run more than once. Existing callers keep working: the post functions only gain extra keys
+-- Run after post_curation.sql, then run post_categories.sql, which replaces post_card and public_gazette_home from this file. Safe to run more than once. Existing callers keep working: the post functions only gain extra keys
 -- ('featured', 'tags', 'ay') and keep their signatures.
 
 -- One card's worth of a published post, shared by the list functions so they stay identical.
@@ -74,7 +74,7 @@ begin
         'items', (select coalesce(jsonb_agg(post_card(p) order by p.published_at desc, p.slug), '[]'::jsonb) from (
                     select * from posts where status = 'Published' and category = c.category order by published_at desc, slug limit nc) p)
       ) order by c.ord), '[]'::jsonb)
-      from (values ('Impact', 1), ('Events', 2), ('Announcements', 3), ('Stories', 4)) as c(category, ord)),
+      from (values ('Announcements', 1), ('Activities', 2), ('Publications', 3), ('Creative', 4)) as c(category, ord)),
     'years', public_post_years());
 end $$;
 

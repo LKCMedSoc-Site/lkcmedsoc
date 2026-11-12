@@ -6,6 +6,9 @@ const redirects = [
   ['/blog', '/gazette/all'],
   ['/whats-up-at-lkcmedicine', '/gazette/announcements'],
   // the News pages moved to the Gazette (query strings such as ?category= and ?ay= carry over)
+  ['/gazette/impact', '/gazette/activities'],   // categories were renamed: Impact and Events became Activities, Stories became Creative
+  ['/gazette/events', '/gazette/activities'],
+  ['/gazette/stories', '/gazette/creative'],
   ['/news', '/gazette/all'],
   ['/news/:slug', '/gazette/:slug'],
   ['/calendar', '/events'],

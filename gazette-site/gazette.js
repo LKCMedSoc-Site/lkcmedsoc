@@ -10,7 +10,8 @@
   }
   P.years = years;
   P.defaultAy = function (ays) { var o = ays.filter(function (y) { return y.is_open; })[0]; return (o || ays[0] || {}).ay; };
-  var CATS = ['Impact', 'Events', 'Announcements', 'Stories'];
+  // Categories are data, managed on the Categories tab (ExCo): activities.post_categories.
+  async function categories() { return P.must(await P.act.from('post_categories').select('*').order('ord').order('name')); }
   var STATUSES = ['Draft', 'Submitted', 'Changes requested', 'Published', 'Rejected', 'Unpublished'];
   var EDITABLE = ['Draft', 'Changes requested', 'Unpublished'];
   var BUCKET = 'post-photos';
@@ -69,12 +70,25 @@
     var evs = P.must(await P.act.from('activity_list').select('id,title,start_date,ay,body,status').in('status', ['Approved', 'Completed']).order('start_date', { ascending: false, nullsFirst: false }).limit(300));
     var bodies = P.must(await P.rec.rpc('my_bodies'));
     var ays = await P.years();
+    var catRows = await categories();
+    var CATS = catRows.filter(function (r) { return !r.parent && (!r.hidden || (post && post.category === r.name)); }).map(function (r) { return r.name; });
     var evById = {}; evs.forEach(function (e) { evById[e.id] = e; });
     var defaultAy = P.defaultAy(ays), curAy = (post && post.ay) || defaultAy;
 
     var title = h('input', { id: 'p-title', class: 'grow', maxlength: 150, value: post ? post.title : '', placeholder: 'Title', disabled: !editable });
     var summary = h('textarea', { id: 'p-summary', maxlength: 300, placeholder: 'One or two sentences shown on the news list', disabled: !editable }, (post && post.summary) || '');
-    var cat = P.select(CATS, post ? post.category : 'Events', { id: 'p-cat', disabled: !editable });
+    var cat = P.select(CATS, post ? post.category : (CATS.indexOf('Activities') >= 0 ? 'Activities' : CATS[0]), { id: 'p-cat', disabled: !editable });
+    // Sub-category: the choices belong to the chosen category (sql/post_subcategories.sql)
+    var subSel = h('select', { id: 'p-sub', disabled: !editable }), subBox = h('div');
+    function fillSub() {
+      var cur = (post && post.subcategory) || '';
+      var kids = catRows.filter(function (r) { return r.parent === cat.value && (!r.hidden || r.name === cur); });
+      subSel.replaceChildren(h('option', { value: '' }, 'None'), kids.map(function (k) { return h('option', { value: k.name, selected: k.name === cur }, k.name); }));
+      subBox.hidden = !kids.length;
+    }
+    subBox.appendChild(P.field('Sub-category', subSel));
+    cat.addEventListener('change', function () { if (post) post.subcategory = ''; fillSub(); });
+    fillSub();
     var editorBox = h('div', { id: 'p-body' });
     var ev = P.select([['', 'Not about a specific event']].concat(evs.map(function (e) { return [e.id, e.title + ' (' + e.body + ', ' + e.ay + ')']; })), (post && post.activity_id) || '', { id: 'p-event', disabled: !editable });
     var body = P.select([['', 'No body']].concat(bodies.map(function (b) { return [b.id, b.name + ' (' + b.level + ')']; })), (post && post.body_id) || '', { id: 'p-body-id', disabled: !editable });
@@ -96,7 +110,7 @@
     photos.forEach(function (f) { if (bodyAtLoad.indexOf(f.path) >= 0) managed[f.path] = true; });
     var mdNow = function () { return ed ? ed.getMarkdown() : bodyAtLoad; };
     function collect(md) {
-      var s = { title: title.value.trim(), summary: summary.value, body_md: md, category: cat.value, show_author: showName.checked, activity_id: ev.value };
+      var s = { title: title.value.trim(), summary: summary.value, body_md: md, category: cat.value, subcategory: subSel.value, show_author: showName.checked, activity_id: ev.value };
       if (!ev.value) s.body_id = body.value;
       return s;
     }
@@ -170,9 +184,9 @@
     var parts = [h('h2', null, isNew ? 'New post' : 'Post'), post ? h('div', { class: 'row' }, statusPill(post.status), post.ay ? P.pill(post.ay) : null) : null];
     if (post && post.decision_note && post.status !== 'Published') parts.push(h('div', { class: 'card' }, h('b', null, post.status + ': '), post.decision_note));
     if (!editable) parts.push(h('p', { class: 'muted' }, post.status === 'Submitted' ? 'Waiting for a reviewer. You can take it back to keep editing.' : 'This post is locked.'));
-    parts.push(P.field('Title', title), P.field('Summary', summary, 'Up to 300 characters.'), P.field('Category', cat),
+    parts.push(P.field('Title', title), P.field('Summary', summary, 'Up to 300 characters.'), P.field('Category', cat), subBox,
       P.field('About an event', ev), P.field('MedSoc term', term, null), termHint, P.field('Body', body), bodyHint,
-      P.field('Text', editorBox), h('label', { class: 'chk' }, showName, 'Show my name on the post'));
+      P.field('Text', editorBox, 'To show a video, put ":::video" and a YouTube or Vimeo link on a line of its own, for example :::video https://youtu.be/abc123XYZ_0'), h('label', { class: 'chk' }, showName, 'Show my name on the post'));
     if (editable) parts.push(h('div', { class: 'sticky' }, save));
 
     if (!isNew) {
@@ -305,7 +319,7 @@
     var ayList = Array.from(new Set(rows.map(function (r) { return r.ay; }).filter(Boolean))).sort().reverse();
     var q = h('input', { id: 'a-q', class: 'grow', type: 'search', placeholder: 'Search title, author or tag', value: allF.q });
     var st = P.select(['All'].concat(STATUSES), allF.status, { id: 'a-status' });
-    var ct = P.select(['All'].concat(CATS), allF.category, { id: 'a-cat' });
+    var ct = P.select(['All'].concat((await categories()).map(function (r) { return r.name; })), allF.category, { id: 'a-cat' });
     var ay = P.select(['All'].concat(ayList), allF.ay, { id: 'a-ay' });
     var box = h('div');
     function match(r) {
@@ -349,11 +363,58 @@
       h('div', { class: 'row' }, q), h('div', { class: 'row' }, st, ct, ay), box));
   }
 
+  // ---------- categories (ExCo): add, rename, reorder, hide; each can have sub-categories ----------
+  async function categoriesView() {
+    P.loading();
+    var rows = await categories();
+    var counts = {}, subCounts = {};
+    var posts = [];
+    try { posts = await P.fetchAll(function () { return P.act.from('posts').select('id,category,subcategory'); }); }
+    catch (e) { posts = await P.fetchAll(function () { return P.act.from('posts').select('id,category'); }); }   // sub-categories not installed yet
+    posts.forEach(function (r) { counts[r.category] = (counts[r.category] || 0) + 1; if (r.subcategory) subCounts[r.subcategory] = (subCounts[r.subcategory] || 0) + 1; });
+    var tops = rows.filter(function (r) { return !r.parent; });
+    var newName = h('input', { id: 'c-new', class: 'grow', maxlength: 30, placeholder: 'Name, e.g. Opportunities or Humans of Med' });
+    var newBlurb = h('input', { id: 'c-new-blurb', class: 'grow', maxlength: 160, placeholder: 'One line shown under the heading (optional)' });
+    var newParent = P.select([['', 'A category (top level)']].concat(tops.map(function (t) { return [t.name, 'A sub-category of ' + t.name]; })), '', { id: 'c-parent' });
+    var add = h('button', { class: 'btn', id: 'c-add', onclick: async function () {
+      if (newName.value.trim().length < 2) { P.toast('Give it a name', true); return; }
+      var args = { p_old: null, p_name: newName.value, p_blurb: P.blank(newBlurb.value), p_ord: null, p_hidden: false };
+      if (newParent.value) args.p_parent = newParent.value;
+      if (await P.run(async function () { P.must(await P.act.rpc('save_category', args)); }, 'Added')) P.dispatch();
+    } }, 'Add');
+    function row(r, isSub) {
+      var name = h('input', { value: r.name, maxlength: 30, 'aria-label': 'Name' });
+      var blurb = h('input', { value: r.blurb || '', maxlength: 160, class: 'grow', 'aria-label': 'Description' });
+      var ord = h('input', { type: 'number', value: r.ord, style: 'width:70px', 'aria-label': 'Order' });
+      var hid = h('input', { type: 'checkbox', checked: r.hidden, 'aria-label': 'Hidden' });
+      var n = (isSub ? subCounts[r.name] : counts[r.name]) || 0, kids = rows.filter(function (k) { return k.parent === r.name; }).length;
+      return [h('div', { class: 'row' }, isSub ? '↳ ' : null, name), h('div', { class: 'row' }, blurb), ord, h('label', { class: 'chk' }, hid, 'Hide'), String(n),
+        h('div', { class: 'row' },
+          h('button', { class: 'ghost', onclick: async function () {
+            if (await P.run(async function () { P.must(await P.act.rpc('save_category', { p_old: r.name, p_name: name.value, p_blurb: P.blank(blurb.value), p_ord: Number(ord.value) || r.ord, p_hidden: hid.checked })); }, 'Saved')) P.dispatch();
+          } }, 'Save'),
+          n || kids ? null : h('button', { class: 'danger', onclick: async function () {
+            if (!confirm('Delete ' + r.name + '?')) return;
+            if (await P.run(async function () { P.must(await P.act.rpc('delete_category', { p_name: r.name })); }, 'Deleted')) P.dispatch();
+          } }, 'Delete'))];
+    }
+    var table = [];
+    tops.forEach(function (t) {
+      table.push(row(t, false));
+      rows.filter(function (k) { return k.parent === t.name; }).forEach(function (k) { table.push(row(k, true)); });
+    });
+    P.show(h('div', { class: 'stack' }, h('h2', null, 'Categories'),
+      h('p', { class: 'muted' }, 'The sections of the Gazette. Authors pick a category for each post, and a sub-category inside it if there is one (for example Creative, then Humans of Med). Renaming keeps the page address, so links keep working. Hidden ones leave the menu and the home page; their posts stay. One with posts or sub-categories cannot be deleted.'),
+      h('div', { class: 'card stack' }, h('h3', { style: 'margin-top:0' }, 'Add'), h('div', { class: 'row' }, newParent), h('div', { class: 'row' }, newName), h('div', { class: 'row' }, newBlurb), h('div', { class: 'row' }, add)),
+      P.table(['Name', 'Description', 'Order', '', 'Posts', ''], table)));
+  }
+
   P.route('/', { public: false, nav: 'posts', fn: function () { P.nav('#/posts'); } });
   P.route('/posts', { public: false, nav: 'posts', fn: myPosts });
   P.route('/post/:id', { public: false, nav: 'posts', fn: editor });
   P.route('/review', { public: false, nav: 'review', fn: reviewList });
   P.route('/review/:id', { public: false, nav: 'review', fn: reviewDetail });
   P.route('/all', { public: false, nav: 'all', exco: true, fn: allPosts });
+  P.route('/categories', { public: false, nav: 'categories', exco: true, fn: categoriesView });
   P.route('/approvers', { public: false, nav: 'approvers', exco: true, fn: approvers });
 })();

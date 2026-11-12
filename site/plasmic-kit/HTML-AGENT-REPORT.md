@@ -62,7 +62,7 @@ Write `display:flex`, never `inline-flex`. Never put `display:block` on an `<img
 Pictures: `<img src="https://placehold.co/640x360/ebe1fa/4d0a49?text=Image" alt="...">`. Arrows as text "→".
 Dynamic text spans must say what they bind, so Plasmic labels the layer: `[BIND: currentItem.name]`, `[BIND: $ctx.groupsHub.countText]`.
 The site adds motion automatically, so do not fake it. It only works with the right structure:
-- A whole card is ONE `<a>`, so it lifts 2px with a soft shadow on hover. Give it `flex:1 1 250px; width:100%; max-width:360px`.
+- A whole card is ONE `<a>`, so it lifts 2px with a soft shadow on hover. That `<a>` must be the card surface (`background-color:#ffffff; border-radius:12px; padding:12px`), because the shadow follows its edge; a transparent link makes the shadow hug the text. Give it `flex:1 1 250px; width:100%; max-width:360px`.
 - An `<img>` inside an `<a>` zooms to 1.05. Keep it alone in its own `overflow:hidden` box.
 - A trailing arrow must be the LAST child beside a sibling text span so it slides 4px.
 - Buttons and button-like links rise 2px with a soft shadow on hover and press down on click.

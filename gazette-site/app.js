@@ -93,6 +93,7 @@
     if (P.me) tabs.push(['posts', 'My posts', '#/posts']);
     if (P.approver || P.exco) tabs.push(['review', 'Review' + (P.badge ? ' (' + P.badge + ')' : ''), '#/review']);
     if (P.exco) tabs.push(['all', 'All posts', '#/all']);
+    if (P.exco) tabs.push(['categories', 'Categories', '#/categories']);
     if (P.exco) tabs.push(['approvers', 'Approvers', '#/approvers']);
     var cur = P.current && P.current.opts && P.current.opts.nav;
     $tabs.hidden = !P.me;
