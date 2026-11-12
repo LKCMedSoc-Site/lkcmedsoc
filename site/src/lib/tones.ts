@@ -25,7 +25,7 @@ const SLOT_NAMES = Object.keys(TONE_SLOTS) as ToneSlot[];
 const FG = '#ffffff';
 
 // A colour as a see-through wash: tint (about 12%) is the light resting state of a chip or pill; overlay (about 55%) is the wash over a photo.
-const withAlpha = (hex: string, a: number) => hex + Math.round(a * 255).toString(16).padStart(2, '0');
+export const withAlpha = (hex: string, a: number) => hex + Math.round(a * 255).toString(16).padStart(2, '0');
 const make = (slot: ToneSlot): Tone => ({ bg: TONE_SLOTS[slot], fg: FG, tint: withAlpha(TONE_SLOTS[slot], 0.12), overlay: withAlpha(TONE_SLOTS[slot], 0.55) });
 
 export const isToneSlot = (v: unknown): v is ToneSlot => typeof v === 'string' && v in TONE_SLOTS;

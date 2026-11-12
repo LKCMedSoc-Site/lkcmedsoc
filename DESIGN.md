@@ -47,7 +47,7 @@ Tokens live in the `@theme` block of `site/src/app/globals.css`. Use the tokens 
 - **Buttons:** pill-shaped. Plum fill on light panels, pink fill on dark panels. A disabled state for Previous and Next.
 - **Pagination:** the current page is solid plum with white text, the others white with plum text.
 - **Empty and thin data:** every layout must survive a missing summary, picture, or body. Design for 20+ items and several pages.
-- **Category labels (Gazette):** Impact, Event write-ups, Announcements, Stories. Known deviation: `NewsCard` and `NewsHub` still colour category pills with the old four-colour set (including yellow for Announcements). Replace with plum, magenta, lilac and orchid variants when that code is next touched.
+- **Category labels (Gazette):** Impact, Event write-ups, Announcements, Stories. In the Plasmic hub (`NewsHub`) they are four deepened brand purples, all with white text: plum `#4d0a49`, magenta `#8e2a88`, violet `#6d4aa8`, orchid `#9a5d94`, each with a light `tint` and a stronger `overlay`. Known deviation: the coded `NewsCard` still uses the old four-colour set, including yellow for Announcements. Replace it with the same four when that code is next touched.
 
 ## Motion
 Defined in `globals.css` and switched off for people who ask for reduced motion. Do not fake it in markup.

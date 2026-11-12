@@ -34,8 +34,8 @@ Actions: `setSearch(query)`, `setCommittee(name)`, `toggleCommittee(name)`, `set
 ## newsHub
 Settings: `limit` (12), `pageSize`, `defaultCategory`, `defaultCommittee` (one name, or several separated by commas).
 Fields: `items`, `first`, `totalCount`, `shownCount`, `allCount`, `hasMatches`, `countText`, `categories`, `committees`, `activeSearch`, `selectedCategory`, `selectedCommittee`, `isFiltering`.
-Story: `slug, title, category, categoryColor, categoryOnColor, summary, publishedAt, dateText, author, from, committee, committeeShort, cover, hasCover, link`.
-Category: `name, color, onColor, isSelected, count`. Committee: `name, short, isSelected, count`.
+Story: `slug, title, category, categoryLabel, categoryColor, categoryOnColor, categoryTint, categoryOverlay, featured, summary, publishedAt, dateText, author, from, committee, committeeShort, cover, hasCover, link` (`link` is `/gazette/<slug>`; `categoryLabel` reads "Event write-ups" for Events; the category colours are deepened brand purples with white text, `Tint` is a light see-through version and `Overlay` a stronger one for a photo wash).
+Category: `name, label, color, onColor, tint, overlay, isSelected, count`. Committee: `name, short, isSelected, count`.
 Actions: `setSearch(query)`, `setCategory(name)`, `toggleCategory(name)`, `setCommittee(name)`, `toggleCommittee(name)`, `nextPage()`, `prevPage()`, `goToPage(page)`, `clearFilters()`.
 
 ## peopleHub

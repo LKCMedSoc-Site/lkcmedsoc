@@ -74,7 +74,7 @@ Field lists: `DATA-CHEATSHEET.md`. Context names: `$ctx.groupsHub`, `$ctx.events
 |---|---|---|
 | Event card | `eventsHub.items[i]` | title, whenText, day, monthShort, venue, summary, committeeShort, spotsText, cover (hasCover), link |
 | Event spotlight | `eventsHub.next` | same fields, plus `notice` (show, text, link) |
-| News card | `newsHub.items[i]` | title, summary, category (+ categoryColor, categoryOnColor), dateText, from, cover (hasCover), link |
+| Gazette (news) card | `newsHub.items[i]`; lead story `newsHub.first` | title, summary, categoryLabel (+ categoryColor, categoryOnColor, categoryTint), dateText, from, cover (hasCover), link |
 | Group card | `groupsHub.items[i]` | name, description, chair, committeeShort, color, onColor, tint, overlay, header, logo, initials, link |
 | Person card | `peopleHub.exco / committeeHeads / yearReps / streamReps [i]` | name, title, photo (hasPhoto), initials, group, link |
 | Committee chip | `groupsHub.committees[i]` | short, count, color, onColor, tint, isSelected, slug |
@@ -96,13 +96,13 @@ Design cards for the thin real data:
 - Do not draw hover; the site adds it.
 
 ## 6. Not built yet
-A carousel; an events Month view and List/Month toggle; a utility row above the header. Events and news do not yet use the stored committee colours (events has none; news still colours by category). Recruiting is removed entirely: do not draw a Recruiting tag or filter. Legacy: `GroupsBrowser.tsx` (the coded Student Groups page, shown only if the Plasmic page is down) still uses its own old purple colour list.
+A carousel; an events Month view and List/Month toggle; a utility row above the header. Events does not yet use the stored committee colours (it has none). The Gazette colours stories by category, not committee. The news page is now the Gazette at `/gazette` (the old `/news` route is gone); its hub is still `newsHub`. Recruiting is removed entirely: do not draw a Recruiting tag or filter. Legacy: `GroupsBrowser.tsx` (the coded Student Groups page, shown only if the Plasmic page is down) still uses its own old purple colour list.
 
 ## 7. Header
 The header is a registered block ("Site header (editable content)"), not HTML. Its logo text, menu items, drop-down links, highlight cards and Apply button are settings in Studio. Do not draw one; describe changes to the Director.
 
 ## 8. Working files in this folder
-`filter-chip.html`, `group-card.html`, `search-bar.html` and `footer.html` are current patterns: copy their structure and styling for new pages. They use placeholder text and a teal placeholder colour.
+`filter-chip.html`, `group-card.html`, `search-bar.html`, `footer.html` and `gazette-page.html` (a whole page in one paste) are current patterns: copy their structure and styling for new pages. They use placeholder text and a teal placeholder colour.
 
 ## 9. Open decisions
 - The notice strip colour, now that yellow is retired.
