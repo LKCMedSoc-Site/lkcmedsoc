@@ -1,0 +1,115 @@
+<div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#ffffff; color:#1f1f1f; font-family:Arial, Arimo, 'Liberation Sans', Helvetica, sans-serif; padding:88px 0 72px; box-sizing:border-box;">
+
+  <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; padding:0 16px; box-sizing:border-box;">
+
+    <!-- INSERT (Studio): wrap this whole design in "Policy editing: wrap the document", inside the Policy document hub. -->
+    <!-- top bar: breadcrumb, then the PDF link. INSERT "Policy editing: mode switch" at the right of this bar. -->
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:center; width:100%; column-gap:16px; row-gap:8px; padding-bottom:14px; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:row; align-items:center; column-gap:8px;">
+        <a href="/policy" style="font-size:14px; font-weight:700; color:#2a0628; text-decoration:none;">Policy</a>
+        <span style="font-size:14px; color:#cfcfcf;">/</span>
+        <span style="font-size:14px; color:#595959;">[BIND: $ctx.policyDoc.tierLabel]</span>
+      </div>
+      <a href="/policy/bylaws-money/latest.pdf" style="font-size:14px; font-weight:700; color:#2a0628; text-decoration:none;">[BIND: $ctx.policyDoc.pdfLabel]</a>
+    </div>
+
+    <!-- contents column + the document -->
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; width:100%; column-gap:40px; row-gap:24px; box-sizing:border-box;">
+
+      <!-- contents column: repeat $ctx.policyDoc.provisions (currentProvision); the link goes to currentProvision.link -->
+      <div style="display:flex; flex-direction:column; row-gap:2px; flex:0 0 224px; width:224px; max-width:100%; box-sizing:border-box;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#595959; padding:0 8px 8px;">Contents</span>
+        <a href="#B-9.1" style="display:flex; flex-direction:row; column-gap:10px; padding:5px 8px; text-decoration:none; color:#1f1f1f; font-size:14px; line-height:1.35;">
+          <span style="flex:0 0 46px; font-weight:700; color:#2a0628;">[BIND: currentProvision.ref]</span>
+          <span style="min-width:0;">[BIND: currentProvision.heading]</span>
+        </a>
+        <a href="#B-9.2" style="display:flex; flex-direction:row; column-gap:10px; padding:5px 8px; text-decoration:none; color:#1f1f1f; font-size:14px; line-height:1.35;">
+          <span style="flex:0 0 46px; font-weight:700; color:#2a0628;">[BIND: currentProvision.ref]</span>
+          <span style="min-width:0;">[BIND: currentProvision.heading]</span>
+        </a>
+      </div>
+
+      <!-- the document -->
+      <div style="display:flex; flex-direction:column; flex:1 1 480px; min-width:0; max-width:832px; box-sizing:border-box;">
+        <div style="width:100%; height:3px; background-color:#2a0628;"></div>
+
+        <div style="display:flex; flex-direction:column; row-gap:12px; width:100%; padding:32px 0 0; box-sizing:border-box;">
+          <span style="font-size:32px; font-weight:700; line-height:1.2; color:#2a0628;">[BIND: $ctx.policyDoc.title]</span>
+          <span style="font-size:16px; line-height:1.6; color:#595959; max-width:600px;">[BIND: $ctx.policyDoc.summary (Visibility: !!$ctx.policyDoc.summary)]</span>
+        </div>
+
+        <!-- status block -->
+        <div style="display:flex; flex-direction:column; row-gap:4px; width:100%; margin-top:20px; padding:14px 0; border-top:1px solid #cfcfcf; border-bottom:1px solid #cfcfcf; box-sizing:border-box;">
+          <div style="display:flex; flex-direction:row; column-gap:20px; font-size:14px;"><span style="flex:0 0 120px; color:#595959;">Status</span><span style="font-weight:700;">[BIND: $ctx.policyDoc.statusText]</span></div>
+          <div style="display:flex; flex-direction:row; column-gap:20px; font-size:14px;"><span style="flex:0 0 120px; color:#595959;">Current through</span><span style="font-weight:700;">[BIND: $ctx.policyDoc.currentThrough (Visibility: !!$ctx.policyDoc.currentThrough)]</span></div>
+          <div style="display:flex; flex-direction:row; column-gap:20px; font-size:14px;"><span style="flex:0 0 120px; color:#595959;">In force from</span><span style="font-weight:700;">[BIND: $ctx.policyDoc.effectiveText (Visibility: !!$ctx.policyDoc.effectiveText)]</span></div>
+          <div style="display:flex; flex-direction:row; column-gap:20px; font-size:14px;"><span style="flex:0 0 120px; color:#595959;">Type</span><span style="font-weight:700;">[BIND: $ctx.policyDoc.tierLabel]</span></div>
+          <div style="display:flex; flex-direction:row; column-gap:20px; font-size:14px;"><span style="flex:0 0 120px; color:#595959;">Changed by</span><span style="font-weight:700;">[BIND: $ctx.policyDoc.owner]</span></div>
+        </div>
+
+        <!-- notice (Visibility: $ctx.policyDoc.isDraft) -->
+        <div style="display:flex; flex-direction:column; width:100%; margin-top:20px; padding:12px 16px; background-color:#ffffff; border:1px solid #cfcfcf; border-left:3px solid #2a0628; box-sizing:border-box;">
+          <span style="font-size:15px; line-height:1.55;"><b>Draft proposal.</b> This has not been adopted, so it is not binding yet. The wording can still change.</span>
+        </div>
+
+        <!-- INSERT "Policy editing: proposals banner" here, above the first provision. -->
+        <!-- one provision: repeat $ctx.policyDoc.provisions (currentProvision). Put the elements of the provision inside "Policy editing: one provision" (Provision number = currentProvision.ref). The number sits in its own column; the text is one bound HTML block. -->
+        <div id="B-9.1" style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; width:100%; column-gap:16px; row-gap:6px; padding:24px 0 20px; border-bottom:1px solid #f0f0f0; box-sizing:border-box;">
+          <a href="#B-9.1" style="flex:0 0 64px; font-size:15px; font-weight:700; color:#2a0628; text-decoration:none; padding-top:3px;">[BIND: currentProvision.ref]</a>
+          <div style="display:flex; flex-direction:column; row-gap:10px; flex:1 1 320px; min-width:0;">
+            <span style="font-size:18px; font-weight:700; line-height:1.3; color:#1f1f1f;">[BIND: currentProvision.heading]</span>
+            <!-- REPLACE the next line with the "Policy provision text" component (HTML = currentProvision.html): it styles the lists and tables inside the text. -->
+            <div style="font-size:17px; line-height:1.7; color:#1f1f1f;">[BIND: currentProvision.html]</div>
+            <!-- source note, one per line of currentProvision.notes (repeat; Visibility: currentProvision.hasNotes) -->
+            <span style="font-size:13px; font-style:italic; text-align:right; color:#2a0628;">[[BIND: currentNote]]</span>
+          </div>
+        </div>
+
+        <!-- the pieces a provision's rich text can contain, drawn once so each can be styled in Studio: a table and a list -->
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; width:100%; column-gap:16px; row-gap:6px; padding:24px 0 20px; border-bottom:1px solid #f0f0f0; box-sizing:border-box;">
+          <span style="flex:0 0 64px; font-size:15px; font-weight:700; color:#2a0628; padding-top:3px;">B-9.3</span>
+          <div style="display:flex; flex-direction:column; row-gap:14px; flex:1 1 320px; min-width:0;">
+            <span style="font-size:18px; font-weight:700; line-height:1.3;">Approval limits (amounts to be set)</span>
+            <div style="display:flex; flex-direction:column; width:100%; border:1px solid #cfcfcf; box-sizing:border-box;">
+              <div style="display:flex; flex-direction:row; width:100%; border-bottom:2px solid #2a0628; font-size:14px; font-weight:700; color:#2a0628;">
+                <span style="flex:1 1 50%; padding:8px 10px; border-right:1px solid #cfcfcf;">Amount</span>
+                <span style="flex:1 1 50%; padding:8px 10px;">Approved by</span>
+              </div>
+              <div style="display:flex; flex-direction:row; width:100%; border-bottom:1px solid #cfcfcf; font-size:14px;">
+                <span style="flex:1 1 50%; padding:8px 10px; border-right:1px solid #cfcfcf;">Up to S$X, within an approved budget</span>
+                <span style="flex:1 1 50%; padding:8px 10px;">Committee or CCA head + Treasurer</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:row; column-gap:10px; font-size:17px; line-height:1.7;"><span style="color:#2a0628;">•</span><span style="min-width:0;">A list item, as it appears inside a provision.</span></div>
+          </div>
+        </div>
+
+        <!-- INSERT "Policy editing: add a provision" here, after the last provision. -->
+        <!-- versions: repeat $ctx.policyDoc.versions (currentVersion; Visibility: hasVersions). Recent changes: repeat $ctx.policyDoc.recentChanges (currentChange; Visibility: hasChanges). -->
+        <div style="display:flex; flex-direction:column; width:100%; margin-top:36px; padding-bottom:8px; border-bottom:1px solid #cfcfcf; box-sizing:border-box;">
+          <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#595959;">Versions</span>
+        </div>
+        <a href="/policy/bylaws-money?v=1" style="font-size:15px; line-height:1.5; color:#1f1f1f; padding-top:10px;"><u>Version [BIND: currentVersion.version]</u> · from [BIND: currentVersion.dateText] · [BIND: currentVersion.title]</a>
+
+        <div style="display:flex; flex-direction:column; width:100%; margin-top:28px; padding-bottom:8px; border-bottom:1px solid #cfcfcf; box-sizing:border-box;">
+          <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#595959;">Recent changes</span>
+        </div>
+        <span style="font-size:15px; line-height:1.5; padding-top:10px;"><b style="color:#2a0628;">[BIND: currentChange.number]</b> [BIND: currentChange.title] · [BIND: currentChange.dateText]</span>
+        <a href="/policy/changelog" style="font-size:15px; color:#1f1f1f; padding-top:10px;"><u>Full changelog</u></a>
+
+        <!-- previous / next document -->
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; width:100%; column-gap:16px; row-gap:12px; margin-top:44px; padding-top:16px; border-top:1px solid #cfcfcf; box-sizing:border-box;">
+          <a href="/policy/bylaws-people" style="display:flex; flex-direction:column; row-gap:2px; text-decoration:none; color:#2a0628; font-size:15px; font-weight:700;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#595959;">Previous document</span>
+            <span>[BIND: $ctx.policyDoc.prev.title (Visibility: !!$ctx.policyDoc.prev)]</span>
+          </a>
+          <a href="/policy/bylaws-events" style="display:flex; flex-direction:column; row-gap:2px; align-items:flex-end; text-align:right; text-decoration:none; color:#2a0628; font-size:15px; font-weight:700;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#595959;">Next document</span>
+            <span>[BIND: $ctx.policyDoc.next.title (Visibility: !!$ctx.policyDoc.next)]</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

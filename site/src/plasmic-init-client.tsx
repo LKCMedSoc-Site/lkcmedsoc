@@ -9,6 +9,9 @@ import PeopleList from '@/components/PeopleList';
 import EventsHub from '@/components/hubs/EventsHub';
 import NewsHub from '@/components/hubs/NewsHub';
 import PeopleHub from '@/components/hubs/PeopleHub';
+import PolicyHub from '@/components/hubs/PolicyHub';
+import PolicyDocHub from '@/components/hubs/PolicyDocHub';
+import { PolicyEditRoot, PolicyModeSwitch, PolicyProposals, PolicyAddProvision, PolicyEditable, PolicyExcoDocuments, PolicyProvisionText } from '@/components/policy/PolicyEditParts';
 import GroupsHub from '@/components/groups/GroupsHub';
 import GroupsList from '@/components/groups/GroupsList';
 import { GroupsSearch, GroupsCommitteeChips, GroupsRecruitingToggle, GroupsClear, GroupsCount } from '@/components/groups/GroupsFilters';
@@ -455,6 +458,81 @@ PLASMIC.registerComponent(NewsHub, {
     clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
   },
   importPath: '@/components/hubs/NewsHub',
+});
+PLASMIC.registerComponent(PolicyHub, {
+  name: 'PolicyHub', displayName: 'Policy hub (documents and search)',
+  description: 'Loads the published policy documents, grouped by tier, plus search. Draws nothing: use Studio elements with $ctx.policyHub and its actions.',
+  props: { children: hubSlot('$ctx.policyHub') },
+  providesData: true,
+  refActions: {
+    setSearch: { description: 'Search the policy text, or type a provision number such as B-9.4', argTypes: [{ name: 'query', type: 'string' }] },
+    clearSearch: { description: 'Clear the search', argTypes: [] },
+  },
+  importPath: '@/components/hubs/PolicyHub',
+});
+PLASMIC.registerComponent(PolicyDocHub, {
+  name: 'PolicyDocHub', displayName: 'Policy document hub (one document)',
+  description: 'Loads one policy document with its provisions, versions, recent changes and the previous and next document. Draws nothing: use Studio elements with $ctx.policyDoc.',
+  props: {
+    children: hubSlot('$ctx.policyDoc'),
+    slug: { type: 'string', displayName: 'Document address', helpText: 'On a page at /policy/[slug], set this to $ctx.params.slug. Leave empty while designing: the first document is shown as a preview.' },
+  },
+  providesData: true,
+  importPath: '@/components/hubs/PolicyDocHub',
+});
+// Editing a policy document where it is read (ExCo only; readers never see any of these). Place them in the document design; see DATA-CHEATSHEET.md, "Policy editing".
+PLASMIC.registerComponent(PolicyEditRoot, {
+  name: 'PolicyEditRoot', displayName: 'Policy editing: wrap the document',
+  description: 'Put this around the whole document design, inside the Policy document hub. It switches editing on for ExCo and gives $ctx.policyEdit (isExco, mode, isEditing, canEdit, openProposalCount). Draws nothing for readers.',
+  props: { children: { type: 'slot' as const, displayName: 'Document design' } },
+  providesData: true,
+  importPath: '@/components/policy/PolicyEditParts',
+  importName: 'PolicyEditRoot',
+});
+PLASMIC.registerComponent(PolicyModeSwitch, {
+  name: 'PolicyModeSwitch', displayName: 'Policy editing: mode switch',
+  description: 'The Viewing / Editing (or Suggesting) switch. Only ExCo see it. Put it in the top bar, inside "Policy editing: wrap the document".',
+  props: {},
+  importPath: '@/components/policy/PolicyEditParts',
+  importName: 'PolicyModeSwitch',
+});
+PLASMIC.registerComponent(PolicyProposals, {
+  name: 'PolicyProposals', displayName: 'Policy editing: proposals banner',
+  description: 'Proposals about the whole document (such as adopting a draft) with their votes, and the "Propose adopting" button. Only ExCo see it. Put it above the first provision.',
+  props: {},
+  importPath: '@/components/policy/PolicyEditParts',
+  importName: 'PolicyProposals',
+});
+PLASMIC.registerComponent(PolicyAddProvision, {
+  name: 'PolicyAddProvision', displayName: 'Policy editing: add a provision',
+  description: 'The "Add a provision" button and form. Only ExCo see it, and only in Editing or Suggesting. Put it after the last provision.',
+  props: {},
+  importPath: '@/components/policy/PolicyEditParts',
+  importName: 'PolicyAddProvision',
+});
+PLASMIC.registerComponent(PolicyEditable, {
+  name: 'PolicyEditable', displayName: 'Policy editing: one provision',
+  description: 'Put the elements of ONE provision inside this (inside the repeat over $ctx.policyDoc.provisions). Readers see them as designed. In Editing or Suggesting, ExCo get an Edit button, and the editor replaces them. Pending proposals show underneath.',
+  props: {
+    refId: { type: 'string', displayName: 'Provision number', helpText: 'Bind to currentProvision.ref (for example "B-9.4").' },
+    children: { type: 'slot' as const, displayName: 'The provision as readers see it' },
+  },
+  importPath: '@/components/policy/PolicyEditParts',
+  importName: 'PolicyEditable',
+});
+PLASMIC.registerComponent(PolicyProvisionText, {
+  name: 'PolicyProvisionText', displayName: 'Policy provision text',
+  description: 'Shows one provision\'s text with its lists and tables already styled. Set "HTML" to currentProvision.html.',
+  props: { html: { type: 'string', displayName: 'HTML', helpText: 'Bind to currentProvision.html.' } },
+  importPath: '@/components/policy/PolicyEditParts',
+  importName: 'PolicyProvisionText',
+});
+PLASMIC.registerComponent(PolicyExcoDocuments, {
+  name: 'PolicyExcoDocuments', displayName: 'Policy editing: all documents (ExCo)',
+  description: 'For the contents page: every document, published or not, with a "Shown on the website" tick. Only ExCo see it.',
+  props: {},
+  importPath: '@/components/policy/PolicyEditParts',
+  importName: 'PolicyExcoDocuments',
 });
 PLASMIC.registerComponent(PeopleHub, {
   name: 'PeopleHub', displayName: 'People hub (data and search)',
