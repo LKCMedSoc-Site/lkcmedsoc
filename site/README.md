@@ -35,7 +35,7 @@ Status: written but **not yet built or run** (the build sandbox could not reach 
 Everything on the site can be designed in Plasmic Studio. Pages and layout pieces fall back to the coded version when there is no Plasmic version, so you can move over one page at a time and nothing breaks in between.
 
 **Replace a page.** In Studio, create a page at the real path and publish it. These paths are checked:
-`/`, `/events`, `/news`, `/student-groups`, `/resources`, `/about/meet-the-team`, `/about/houses`.
+`/`, `/events`, `/student-groups`, `/gazette`, `/resources`, `/policy`, `/policy/[slug]`, `/about/meet-the-team`, `/about/houses`. The full list, and the structure agreed but not built yet, is in `SITEMAP.md` at the repo root.
 (To check another page, add `const designed = await plasmicData('/path'); if (designed) return <PlasmicView data={designed} />;` at the top of its page; see `src/app/events/page.tsx`.)
 
 **Replace the header or footer.** Create Plasmic components named exactly `Header` and `Footer`, and publish them.
