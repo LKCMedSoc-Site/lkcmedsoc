@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { renderMarkdown } from '@/lib/markdown';
-import { policyDoc, policyChangelog, policyIndex, tierLabel, statusText, longDate, type ChangeEntry } from '@/lib/policy';
+import { policyDoc, policyChangelog, policyIndex, policyIsExco, tierLabel, statusText, longDate, type ChangeEntry } from '@/lib/policy';
+import { sessionToken } from '@/lib/policy-auth';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 import PrintButton from '@/components/policy/PrintButton';
 import ZoomControl from '@/components/policy/ZoomControl';
 import { PolicyEditProvider, ModeSwitch, ClauseView, DocProposals, AddProvision } from '@/components/policy/PolicyEdit';
@@ -19,7 +21,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // A policy document, laid out like one: a contents column, then a white sheet with numbered provisions.
 export default async function PolicyDocPage({ params, searchParams }: Props) {
   const slug = (await params).slug, v = ver((await searchParams).v);
-  const view = await policyDoc(slug, v).catch(() => null);
+  const token = await sessionToken();
+  // A page designed in Plasmic at /policy/[slug] replaces the coded one below. ExCo keep the coded page (with the editing controls) unless the design includes
+  // the editing pieces ("Policy editing: wrap the document"), so a design that forgot them can never lock editors out. An older version (?v=) always uses the coded page.
+  if (v === null) {
+    const designed = await plasmicData(`/policy/${slug}`);
+    if (designed && (JSON.stringify(designed).includes('PolicyEditRoot') || !(await policyIsExco(token)))) return <PlasmicView data={designed} />;
+  }
+  const view = await policyDoc(slug, v, token).catch(() => null);
   if (!view) notFound();
   const { doc, clauses, versions } = view;
   const full = await policyChangelog(slug).catch(() => [] as ChangeEntry[]);

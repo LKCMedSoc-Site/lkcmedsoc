@@ -298,3 +298,7 @@ body:has([data-plasmic-route]) > .site-chrome { display: none; }
 .pe-diff del { color: var(--color-bad); text-decoration: line-through; } .pe-diff ins { color: var(--color-ok); text-decoration: underline; }
 .pe-tally { margin-top: .75rem; } .pe-votes { margin: .5rem 0 0; padding: 0; list-style: none; font-size: .88rem; } .pe-votes li { padding: .2rem 0; border-top: 1px solid #f0eaf0; }
 .pe-top { margin-top: 1rem; }
+
+.pe-exco-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .25rem 1rem; } .pe-exco-row .pe-check { margin: 0; font-size: .9em; white-space: nowrap; }
+@media (max-width: 600px) { .pe-exco-row { grid-template-columns: 1fr; } }
+@media print { .pe-exco { display: none !important; } }

@@ -1,22 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import ExcoDocuments from '@/components/policy/ExcoDocuments';
 import ZoomControl from '@/components/policy/ZoomControl';
-import { TIERS, policyIndex, policySearch, statusText, type PolicyDoc, type Hit } from '@/lib/policy';
+import { TIERS, policyIndex, policySearch, policyIsExco, statusText, type PolicyDoc, type Hit } from '@/lib/policy';
+import { sessionToken } from '@/lib/policy-auth';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = { title: 'Policy', description: 'How LKCMedSoc is run: the Constitution, Bylaws and Guides, with the NTU and School rules that sit above them.' };
 export const revalidate = 60;
 
-// Quick ways in, by what someone wants to do. Each goes to one provision.
-const GOALS: { label: string; href: string }[] = [
-  { label: 'Run an event', href: '/policy/bylaws-events#B-11.2' },
-  { label: 'Start or register a CCA', href: '/policy/bylaws-bodies#B-3.2' },
-  { label: 'Raise or hold money', href: '/policy/bylaws-money#B-9.4' },
-  { label: 'Take a place on a trip', href: '/policy/bylaws-people#B-6.2' },
-  { label: 'Book or look after a space', href: '/policy/bylaws-spaces-records#B-8.1' },
-  { label: 'See how roles are recorded', href: '/policy/bylaws-people#B-5.1' },
-];
-
 export default async function PolicyPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  // A page designed in Plasmic at this path replaces the coded one below. ExCo keep the coded page (which has the "all documents" panel) unless the design
+  // includes the "Policy editing: all documents (ExCo)" piece, so a design that forgot it can never lock them out.
+  const designed = await plasmicData('/policy');
+  if (designed && (JSON.stringify(designed).includes('PolicyExcoDocuments') || !(await policyIsExco(await sessionToken())))) return <PlasmicView data={designed} />;
   const q = ((await searchParams).q ?? '').trim();
   let docs: PolicyDoc[] = []; let hits: Hit[] = []; let failed = false;
   try { docs = await policyIndex(); } catch { failed = true; }
@@ -55,14 +52,9 @@ export default async function PolicyPage({ searchParams }: { searchParams: Promi
                 ))}
               </ul>
             </>
-          ) : (
-            <>
-              <h2 className="doc-h2">I want to…</h2>
-              <ul className="mt-3 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
-                {GOALS.map((g) => <li key={g.label}><Link href={g.href} className="underline">{g.label}</Link></li>)}
-              </ul>
-            </>
-          )}
+          ) : null}
+
+          <ExcoDocuments />
 
           {TIERS.map((t) => {
             const list = docs.filter((d) => d.tier === t.tier);

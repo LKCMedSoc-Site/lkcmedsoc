@@ -27,16 +27,23 @@ export type ChangeEntry = {
 export type Hit = { doc_slug: string; doc_title: string; ref: string; heading: string; snippet: string };
 
 // Cached for a minute, and tagged so an edit made on the page can refresh it at once (see app/policy/actions.ts).
-const act = () => createClient(SUPABASE_URL, SUPABASE_KEY, {
+// With a token (ExCo signed in) the call runs as that person and is not cached, so unpublished documents and fresh edits show.
+const act = (token?: string | null) => createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
-  global: { fetch: (input, init) => fetch(input, { ...init, next: { revalidate: 60, tags: ['policy'] } }) },
+  global: token
+    ? { headers: { Authorization: `Bearer ${token}` }, fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) }
+    : { fetch: (input, init) => fetch(input, { ...init, next: { revalidate: 60, tags: ['policy'] } }) },
 }).schema('activities');
 
 export async function policyIndex(): Promise<PolicyDoc[]> {
   const { data, error } = await act().rpc('policy_index'); if (error) throw error;
   return (data ?? []) as PolicyDoc[];
 }
-export async function policyDoc(slug: string, version?: number | null): Promise<DocView | null> {
+export async function policyDoc(slug: string, version?: number | null, token?: string | null): Promise<DocView | null> {
+  if (token) {   // signed in: an ExCo member can read a document that is not published yet. If the token has expired, fall back to the public view.
+    const r = await act(token).rpc('policy_doc', { p_slug: slug, p_version: version ?? null });
+    if (!r.error && r.data) return r.data as DocView;
+  }
   const { data, error } = await act().rpc('policy_doc', { p_slug: slug, p_version: version ?? null }); if (error) throw error;
   return (data ?? null) as DocView | null;
 }
@@ -60,3 +67,9 @@ export const longDate = (s: string | null) => {
 /** Where the Policy editor app lives (it only opens for ExCo). Set NEXT_PUBLIC_POLICY_APP_URL to point elsewhere, e.g. the local editor. */
 export const POLICY_APP = process.env.NEXT_PUBLIC_POLICY_APP_URL ?? 'https://policy.lkcmedsoc.com/';
 export const editUrl = (slug: string, ref?: string) => `${POLICY_APP}#/d/${slug}${ref ? `?edit=${encodeURIComponent(ref)}` : ''}`;
+
+/** Is this signed-in person ExCo? (Signed out, or an expired token, counts as no.) */
+export async function policyIsExco(token: string | null): Promise<boolean> {
+  if (!token) return false;
+  try { const r = await act(token).rpc('is_exco'); return r.data === true; } catch { return false; }
+}

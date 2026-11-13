@@ -1,0 +1,74 @@
+<div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#ffffff; color:#1f1f1f; font-family:Arial, Arimo, 'Liberation Sans', Helvetica, sans-serif; padding:88px 0 72px; box-sizing:border-box;">
+
+  <div style="display:flex; flex-direction:column; width:100%; max-width:864px; padding:0 16px; box-sizing:border-box;">
+
+    <!-- top bar: where you are, and the changelog link -->
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:center; width:100%; column-gap:16px; row-gap:8px; padding-bottom:14px; box-sizing:border-box;">
+      <span style="font-size:14px; color:#595959;">Policy</span>
+      <a href="/policy/changelog" style="font-size:14px; font-weight:700; color:#2a0628; text-decoration:none;">Changelog</a>
+    </div>
+    <div style="width:100%; height:3px; background-color:#2a0628;"></div>
+
+    <!-- title and lead -->
+    <div style="display:flex; flex-direction:column; row-gap:12px; width:100%; padding:36px 0 0; box-sizing:border-box;">
+      <span style="font-size:32px; font-weight:700; line-height:1.2; color:#2a0628;">LKCMedSoc policy</span>
+      <span style="font-size:16px; line-height:1.6; color:#595959; max-width:600px;">How MedSoc is run, in one place. Every provision has a number you can quote, and every change is recorded in the changelog.</span>
+    </div>
+
+    <!-- notice (shown while any document is still a draft) -->
+    <div style="display:flex; flex-direction:column; width:100%; margin-top:24px; padding:12px 16px; background-color:#ffffff; border:1px solid #cfcfcf; border-left:3px solid #2a0628; box-sizing:border-box;">
+      <span style="font-size:15px; line-height:1.55; color:#1f1f1f;"><b>Draft proposal.</b> Documents marked “Draft proposal” have not been adopted yet, so they are not binding. If an NTU or School rule conflicts with a MedSoc rule, the NTU or School rule applies.</span>
+    </div>
+
+    <!-- search -->
+    <div style="display:flex; flex-direction:row; column-gap:8px; width:100%; margin-top:24px; box-sizing:border-box;">
+      <!-- REPLACE this box with Studio's Text input. On change: Run element action, Policy hub, Set search (the same way the Student Groups search is wired). -->
+      <div style="display:flex; flex-direction:row; align-items:center; flex:1 1 auto; min-width:0; min-height:44px; padding:10px 14px; background-color:#ffffff; border:1px solid #cfcfcf; border-radius:4px; box-sizing:border-box;">
+        <span style="font-size:15px; color:#6b6b6b;">Search the policy, or type a number like B-9.4</span>
+      </div>
+      <button style="display:flex; flex-direction:row; align-items:center; justify-content:center; height:44px; padding:0 20px; background-color:#2a0628; color:#ffffff; border:0; border-radius:4px; font-family:Arial, Arimo, 'Liberation Sans', Helvetica, sans-serif; font-size:14px; font-weight:700; cursor:pointer;">Search</button>
+    </div>
+
+    <!-- search results (Visibility: $ctx.policyHub.isSearching). One row per $ctx.policyHub.results (currentResult). -->
+    <div style="display:flex; flex-direction:column; width:100%; margin-top:32px; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:column; width:100%; padding-bottom:8px; border-bottom:1px solid #cfcfcf; box-sizing:border-box;">
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#595959;">[BIND: $ctx.policyHub.resultsText]</span>
+      </div>
+      <a href="/policy/bylaws-money#B-9.4" style="display:flex; flex-direction:column; row-gap:3px; width:100%; padding:14px 8px; border-bottom:1px solid #ececec; text-decoration:none; color:inherit; box-sizing:border-box;">
+        <span style="font-size:15px; line-height:1.4;"><b style="color:#2a0628;">[BIND: currentResult.ref]</b> &nbsp; <b>[BIND: currentResult.heading]</b> <span style="color:#595959;">· [BIND: currentResult.docTitle]</span></span>
+        <span style="font-size:14px; line-height:1.5; color:#595959;">[BIND: currentResult.snippet]</span>
+      </a>
+    </div>
+
+    <!-- INSERT "Policy editing: all documents (ExCo)" here, under the search box (only ExCo see it). -->
+    <!-- one block per tier: repeat $ctx.policyHub.tiers (currentTier); the rows inside repeat currentTier.items (currentItem) -->
+    <div style="display:flex; flex-direction:column; width:100%; margin-top:40px; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:column; width:100%; padding-bottom:8px; border-bottom:1px solid #cfcfcf; box-sizing:border-box;">
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#595959;">[BIND: currentTier.label]</span>
+      </div>
+      <span style="font-size:14px; line-height:1.55; color:#595959; padding-top:10px;">[BIND: currentTier.note]</span>
+
+      <!-- one row per document (repeat). A whole row is ONE link. -->
+      <a href="/policy/bylaws-money" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; width:100%; column-gap:20px; row-gap:4px; padding:14px 4px; border-bottom:1px solid #ececec; text-decoration:none; color:inherit; box-sizing:border-box;">
+        <div style="display:flex; flex-direction:column; row-gap:3px; min-width:0; flex:1 1 360px;">
+          <span style="font-size:16px; font-weight:700; line-height:1.3; color:#2a0628;">[BIND: currentItem.title]</span>
+          <span style="font-size:14px; line-height:1.5; color:#595959;">[BIND: currentItem.summary (Visibility: !!currentItem.summary)]</span>
+        </div>
+        <span style="font-size:13px; color:#595959; white-space:nowrap;">[BIND: currentItem.statusText]</span>
+      </a>
+
+      <!-- a second row, only to show the spacing -->
+      <a href="/policy/bylaws-events" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:flex-start; width:100%; column-gap:20px; row-gap:4px; padding:14px 4px; border-bottom:1px solid #ececec; text-decoration:none; color:inherit; box-sizing:border-box;">
+        <div style="display:flex; flex-direction:column; row-gap:3px; min-width:0; flex:1 1 360px;">
+          <span style="font-size:16px; font-weight:700; line-height:1.3; color:#2a0628;">[BIND: currentItem.title]</span>
+          <span style="font-size:14px; line-height:1.5; color:#595959;">[BIND: currentItem.summary (Visibility: !!currentItem.summary)]</span>
+        </div>
+        <span style="font-size:13px; color:#595959; white-space:nowrap;">[BIND: currentItem.statusText]</span>
+      </a>
+
+      <!-- shown instead of the rows when a tier has nothing (Visibility: !currentTier.hasItems) -->
+      <span style="font-size:14px; color:#595959; padding:14px 4px 0;">Nothing published yet.</span>
+    </div>
+
+  </div>
+</div>

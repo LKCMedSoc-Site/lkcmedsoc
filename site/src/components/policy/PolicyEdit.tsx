@@ -26,6 +26,8 @@ type Ctx = {
 };
 const C = createContext<Ctx | null>(null);
 const usePE = () => useContext(C);
+/** For the Plasmic-facing pieces: the editing state (null outside an editing wrapper). */
+export const usePolicyEdit = usePE;
 const aNo = (n: number) => `A-${String(n).padStart(3, '0')}`;
 const db = () => browserClient().schema('activities');
 // The editor writes bullets as "* " where the stored text uses "- ": normalise so an unchanged list is not reported as a change.
@@ -44,6 +46,7 @@ export function PolicyEditProvider({ slug, draft, past, children }: { slug: stri
   }, []);
 
   const load = useCallback(async () => {
+    if (!slug) return;
     const w = await call<Working | null>('policy_working', { p_slug: slug }); setWorking(w);
     const list = await call<{ id: string; doc_slug: string; status: string }[]>('policy_amendments');
     const mine = list.filter((a) => a.doc_slug === slug && (a.status === 'proposed' || a.status === 'approved'));
@@ -113,24 +116,35 @@ function useAct() {
 }
 
 // ---------- one provision ----------
-export function ClauseView({ refId, heading, html, notes }: { refId: string; heading: string; html: string; notes: string[] }) {
+/** Wraps whatever shows one provision. Readers just see the children; ExCo in Editing / Suggesting also get the edit button, the editor (in place of the children) and any pending proposal. Used by the coded page and by Plasmic pages. */
+export function Editable({ refId, children }: { refId: string; children?: React.ReactNode }) {
   const c = usePE(); const [editing, setEditing] = useState(false);
   const w = c?.working?.clauses.find((x) => x.ref === refId);
   const here = (c?.open ?? []).filter((d) => d.amendment.kind === 'change' && d.changes.some((x) => x.ref === refId));
   const canEdit = !!c && c.exco && c.mode !== 'view' && !!w;
   return (
+    <>
+      {editing && w && c ? <ClauseEditor clause={w} onDone={() => setEditing(false)} /> : (
+        <>
+          {children}
+          {canEdit ? <p className="pe-row"><button type="button" className="pe-btn" onClick={() => setEditing(true)}>{c!.mode === 'edit' ? 'Edit' : 'Suggest a change'}</button></p> : null}
+        </>
+      )}
+      {c && c.exco ? here.map((d) => <Proposal key={d.amendment.id} d={d} refId={refId} />) : null}
+    </>
+  );
+}
+
+export function ClauseView({ refId, heading, html, notes }: { refId: string; heading: string; html: string; notes: string[] }) {
+  return (
     <section id={refId} className="doc-clause">
       <a className="doc-ref" href={`#${refId}`} title="Link to this provision">{refId}</a>
       <div>
-        {editing && w && c ? <ClauseEditor clause={w} onDone={() => setEditing(false)} /> : (
-          <>
-            <h2 className="doc-head">{heading}</h2>
-            <div className="doc-body prose-lkc" dangerouslySetInnerHTML={{ __html: html }} />
-            {notes.map((n) => <p key={n} className="doc-note">[{n}]</p>)}
-            {canEdit ? <p className="pe-row"><button type="button" className="pe-btn" onClick={() => setEditing(true)}>{c!.mode === 'edit' ? 'Edit' : 'Suggest a change'}</button></p> : null}
-          </>
-        )}
-        {c && c.exco ? here.map((d) => <Proposal key={d.amendment.id} d={d} refId={refId} />) : null}
+        <Editable refId={refId}>
+          <h2 className="doc-head">{heading}</h2>
+          <div className="doc-body prose-lkc" dangerouslySetInnerHTML={{ __html: html }} />
+          {notes.map((n) => <p key={n} className="doc-note">[{n}]</p>)}
+        </Editable>
       </div>
     </section>
   );
