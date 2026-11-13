@@ -22,8 +22,8 @@ export default function SiteSearch({ groups = [], index = [], label = 'Search', 
   }, []);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-label="Search the site" className={`press flex h-10 items-center gap-2 rounded-full border border-p500 px-3 text-sm text-mist hover:bg-p900 lg:px-4 ${className}`}>
-        <Search aria-hidden className="h-4 w-4" /><span className="hidden lg:inline">{label}</span><kbd className="hidden rounded border border-p500 px-1.5 text-xs text-p300 xl:inline">/</kbd>
+      <button type="button" onClick={() => setOpen(true)} aria-label="Search the site" className={`press flex h-10 items-center gap-2 rounded-full border border-p500 px-3 text-sm text-mist hover:bg-p900 xl:px-4 ${className}`}>
+        <Search aria-hidden className="h-4 w-4" /><span className="hidden xl:inline">{label}</span><kbd className="hidden rounded border border-p500 px-1.5 text-xs text-p300 xl:inline">/</kbd>
       </button>
       <SearchOverlay open={open} onClose={() => setOpen(false)} items={items} />
     </>

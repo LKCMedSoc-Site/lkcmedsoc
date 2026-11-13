@@ -25,6 +25,7 @@ Two parts: what the website serves today, and the structure agreed in discussion
 | `/policy` | Policy contents page (search, documents by tier) | Yes (readers; ExCo keep the coded page unless the design has the editing pieces) |
 | `/policy/[slug]` | One policy document (`?v=N` for an older version) | Yes (same rule); `?v=` always coded |
 | `/policy/[slug]/latest.pdf` | The document as a PDF (`?v=N` for an older version) | Coded only |
+| `/sign-in` | Plain sign-in page (`?next=` says where to go afterwards: this site or another lkcmedsoc.com address). The header's Sign in button opens a lightbox instead; this page is for email links and links from the other apps. Not indexed | Coded only |
 | `/policy/changelog` | Every change that has come into force | Coded only |
 | `/president-message`, `/about/work-with-us`, `/about/alumni`, `/exco/ay26-27` | Plain text pages from `site/content/*.md` (the `[...slug]` catch-all). `/students-corner` redirects to `/resources` | Coded only |
 

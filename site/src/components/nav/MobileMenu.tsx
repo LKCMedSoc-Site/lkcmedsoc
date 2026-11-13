@@ -9,13 +9,18 @@ import { SITE } from '@/lib/site';
 import { useSiteMenu } from '@/lib/useSiteMenu';
 import SearchOverlay, { type SearchItem } from '@/components/SearchOverlay';
 import ChildLink from './ChildLink';
+import SignInDialog from './SignInDialog';
+import { browserClient } from '@/lib/supabase';
+import { useSession } from '@/lib/useSession';
 
 // The phone menu: a round button that opens a full-screen sheet with the whole menu, the quick links, and Resources and Apply pinned at the bottom.
-export default function MobileMenu({ groups = [], index = [], menuItems, ctaText, ctaUrl, logoText, className = '', onOpenChange }: { groups?: NavItem[]; index?: SearchItem[]; menuItems?: NavItem[]; ctaText?: string; ctaUrl?: string; logoText?: string; className?: string; onOpenChange?: (open: boolean) => void }) {
+export default function MobileMenu({ groups = [], index = [], menuItems, ctaText, ctaUrl, logoText, showSignIn = true, signInText, className = '', onOpenChange }: { groups?: NavItem[]; index?: SearchItem[]; menuItems?: NavItem[]; ctaText?: string; ctaUrl?: string; logoText?: string; showSignIn?: boolean; signInText?: string; className?: string; onOpenChange?: (open: boolean) => void }) {
   const { nav, items } = useSiteMenu(groups, index, menuItems);
   const [open, setOpenState] = useState(false);
   const [find, setFind] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [signIn, setSignIn] = useState(false);
+  const user = useSession();
   const path = usePathname();
   const setOpen = (v: boolean) => { setOpenState(v); onOpenChange?.(v); };
   useEffect(() => { setOpen(false); setFind(false); }, [path]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -34,6 +39,9 @@ export default function MobileMenu({ groups = [], index = [], menuItems, ctaText
           </div>
           <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-4 pb-4">
             <button type="button" onClick={() => { setOpen(false); setFind(true); }} className="flex w-full items-center gap-3 rounded-xl bg-p900 px-4 py-3 text-left text-mist"><Search aria-hidden className="h-5 w-5" />Search pages and CCAs</button>
+            {showSignIn && user !== undefined ? (user
+              ? <button type="button" onClick={() => { void browserClient().auth.signOut(); }} className="mt-2 flex w-full items-center justify-between rounded-xl bg-p900 px-4 py-3 text-left text-mist"><span className="truncate">Signed in as {user.email}</span><span className="ml-3 shrink-0 font-bold text-white">Sign out</span></button>
+              : <button type="button" onClick={() => { setOpen(false); setSignIn(true); }} className="mt-2 flex w-full items-center justify-between rounded-xl bg-p900 px-4 py-3 text-left font-bold text-white">{signInText || 'Sign in'}</button>) : null}
             <ul className="mt-2">
               {nav.map((item) => (
                 <li key={item.label} className="border-b border-p900">
@@ -64,6 +72,7 @@ export default function MobileMenu({ groups = [], index = [], menuItems, ctaText
         </div>,
         document.body,
       ) : null}
+      <SignInDialog open={signIn} onClose={() => setSignIn(false)} />
       <SearchOverlay open={find} onClose={() => setFind(false)} items={items} />
     </>
   );

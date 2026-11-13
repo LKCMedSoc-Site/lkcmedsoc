@@ -4,7 +4,7 @@ import Header from '@/components/Header';
 import type { Highlight, NavItem } from '@/lib/nav';
 
 export type SiteHeaderBlockProps = {
-  logoText?: string; tagline?: string; menuItems?: NavItem[]; highlights?: Highlight[]; ctaText?: string; ctaUrl?: string;
+  logoText?: string; tagline?: string; menuItems?: NavItem[]; highlights?: Highlight[]; ctaText?: string; ctaUrl?: string; showSignIn?: boolean; signInText?: string;
   previewOpenMenu?: 'none' | 'student-groups' | 'about' | 'resources' | 'apps';
   pinned?: 'fixed' | 'sticky'; hideOnScrollDown?: boolean; className?: string;
 };
