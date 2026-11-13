@@ -10,7 +10,13 @@ next-env.d.ts
 _to_delete/
 .fuse_hidden*
 fonts/
+# the Arimo files the policy PDFs embed (SIL Open Font License) must ship
+!site/src/fonts/
 
 # Local tooling and editor junk
 .claude/
 .fuse_hidden*
+
+# Unconfirmed policy draft (generated from the structure doc): keep out of the public repo until ExCo adopts it
+sql/policy_seed.sql
+site/scripts/policy-seed.json

@@ -39,6 +39,10 @@ const redirects = [
 ] as const;
 
 const config: NextConfig = {
+  // pdfkit reads its font files from disk when it runs, so it must not be bundled (policy PDFs, /policy/<document>/latest.pdf).
+  serverExternalPackages: ['pdfkit'],
+  // the PDF route reads the Arimo font files from disk: make sure they are shipped with it
+  outputFileTracingIncludes: { '/policy/[slug]/latest.pdf': ['./src/fonts/arimo/**'] },
   // Photos live in our Supabase storage. Next shrinks them to the size each place on the page needs.
   images: {
     formats: ['image/avif', 'image/webp'],

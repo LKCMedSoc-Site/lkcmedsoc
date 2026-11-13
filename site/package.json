@@ -7,17 +7,20 @@
     "build": "next build",
     "start": "next start",
     "mock": "node scripts/mock-supabase.mjs",
-    "dev:mock": "NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 next dev"
+    "dev:mock": "NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321 NEXT_PUBLIC_POLICY_APP_URL='http://localhost:3800/?mock' next dev"
   },
   "dependencies": {
     "@plasmicapp/loader-nextjs": "^2.0.30",
     "@radix-ui/react-slot": "^1.1.0",
     "@supabase/supabase-js": "^2.45.4",
+    "@toast-ui/editor": "^3.2.2",
+    "@types/pdfkit": "^0.17.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
     "marked": "^15.0.0",
     "next": "^15.0.0",
+    "pdfkit": "^0.20.2",
     "qrcode.react": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
