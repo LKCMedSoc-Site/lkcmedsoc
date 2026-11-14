@@ -12,8 +12,6 @@ import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 import { withAlpha } from '@/lib/tones';
 import type { PublicEvent } from '@/lib/events';
 import Leaders from '@/components/Leaders';
-import PostCard from '@/components/PostCard';
-import EventRow from '@/components/EventRow';
 
 export const revalidate = 300;
 type Props = { params: Promise<{ committee: string; body: string }> };
@@ -73,23 +71,46 @@ export default async function BodyPage({ params }: Props) {
       </section>
       <section className="band band-pale band-last" style={{ zIndex: 20 }}>
         <div className="mx-auto grid max-w-6xl gap-10 px-4 md:grid-cols-12 md:gap-12">
-          <div className="space-y-10 md:col-span-7">
-            {g.hasAbout ? <div><h2 className="h-xl" style={{ color: col }}>About {g.name}</h2><div className="prose-lkc group-prose mt-4 text-lg" dangerouslySetInnerHTML={{ __html: g.aboutHtml }} /></div> : null}
-            {g.hasEvents ? <div><h2 className="h-xl" style={{ color: col }}>Coming up</h2><div className="mt-4 border-b border-p900/20">{events.filter((e) => e.body === b.name).slice(0, 3).map((e) => <EventRow key={e.id} ev={e} />)}</div></div> : null}
-            {g.hasPosts ? <div><h2 className="h-xl" style={{ color: col }}>From the news</h2><div className="mt-5 grid gap-6 sm:grid-cols-2">{posts.filter((x) => x.bodyName === b.name).slice(0, 3).map((x) => <PostCard key={x.slug} post={x} />)}</div></div> : null}
-            {!g.hasAbout && !g.hasEvents && !g.hasPosts ? <div><h2 className="h-xl" style={{ color: col }}>Latest</h2><p className="mt-3 max-w-md text-muted">Nothing posted by {g.name} yet. Events and write-ups appear here once they are published.</p></div> : null}
+          {/* The write-up launches straight in and gets most of the width. */}
+          <div className="min-w-0 md:col-span-8">
+            {g.hasAbout ? <div className="prose-lkc group-prose text-lg" dangerouslySetInnerHTML={{ __html: g.aboutHtml }} /> : <p className="max-w-md text-muted">{g.name} has not written its page yet. Check back soon.</p>}
           </div>
-          <aside className="md:col-span-5">
-            <div className="rounded-2xl p-6 md:p-8" style={{ background: col, color: '#fff' }}>
-              <h2 className="display text-4xl text-white">Who leads it</h2>
+          {/* The side column stays in view while the write-up scrolls. */}
+          <aside className="md:col-span-4 md:self-start md:sticky md:top-24 md:max-h-[calc(100vh-7rem)] md:overflow-y-auto">
+            <div className="rounded-2xl p-6" style={{ background: col, color: '#fff' }}>
+              <h2 className="display text-3xl text-white">Who leads it</h2>
               {g.ay ? <p className="mt-1 text-sm text-white/75">{g.ay}</p> : null}
-              {g.hasLeaders ? <Leaders className="mt-4 text-base [&_.text-muted]:text-white/75 [&_.font-medium]:text-white" list={sortLeaders(leaders.filter((l) => l.level === 'CCA/Project' && l.body === b.name))} /> : <p className="mt-4 text-white/80">Leaders for this group are not listed yet.</p>}
-              <p className="mt-6 border-t border-white/25 pt-4 text-sm text-white/80">Part of the <Link href={g.committeeLink} className="font-bold text-white underline-offset-2 hover:underline">{g.committee}</Link>.</p>
+              {g.hasLeaders ? <Leaders className="mt-3 text-base [&_.text-muted]:text-white/75 [&_.font-medium]:text-white" list={sortLeaders(leaders.filter((l) => l.level === 'CCA/Project' && l.body === b.name))} /> : <p className="mt-3 text-white/80">Leaders for this group are not listed yet.</p>}
+              <p className="mt-4 border-t border-white/25 pt-3 text-sm text-white/80">Part of the <Link href={g.committeeLink} className="font-bold text-white underline-offset-2 hover:underline">{g.committee}</Link>.</p>
             </div>
-            {g.hasSiblings ? (
-              <div className="mt-8">
-                <p className="text-sm font-bold" style={{ color: col }}>More from this committee</p>
-                <ul className="mt-2 flex flex-wrap gap-2">{g.siblings.slice(0, 8).map((s) => <li key={s.name}><Link href={s.link} className="press block rounded-full px-3 py-1.5 text-sm font-medium no-underline hover:!text-white" style={{ background: s.tint, color: s.color }}>{s.name}</Link></li>)}</ul>
+            {g.hasEvents ? (
+              <div className="mt-6">
+                <h2 className="text-sm font-bold uppercase tracking-wider" style={{ color: col }}>Coming up</h2>
+                <ul className="mt-2 divide-y divide-p900/15 border-y border-p900/15">
+                  {g.events.slice(0, 3).map((e) => (
+                    <li key={e.id}>
+                      <Link href={e.link} className="flex items-center gap-3 py-2.5 no-underline">
+                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-center leading-none" style={{ background: col, color: '#fff' }}><span><span className="block text-[10px] font-bold tracking-wider">{e.monthShort}</span><span className="display block text-xl">{e.day}</span></span></span>
+                        <span className="min-w-0"><span className="block truncate text-sm font-bold text-ink">{e.title}</span><span className="block truncate text-xs text-muted">{e.whenText}</span></span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {g.hasPosts ? (
+              <div className="mt-6">
+                <h2 className="text-sm font-bold uppercase tracking-wider" style={{ color: col }}>From the news</h2>
+                <ul className="mt-2 divide-y divide-p900/15 border-y border-p900/15">
+                  {g.posts.slice(0, 3).map((x) => (
+                    <li key={x.slug}>
+                      <Link href={x.link} className="block py-2.5 no-underline">
+                        <span className="block text-xs text-muted">{x.dateText}</span>
+                        <span className="block text-sm font-bold leading-snug text-ink">{x.title}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ) : null}
           </aside>

@@ -3,6 +3,7 @@
 The page at `/student-groups/[committee]/[body]` (for example `/student-groups/careers/psychiatry-sig`). The coded page in `src/app/student-groups/[committee]/[body]/page.tsx` stays as the fallback and is replaced the moment a Plasmic page exists at that path.
 
 ## Look (decided)
+- **Layout:** the write-up launches straight in (no "About …" heading) and takes about two thirds of the width. The right column holds Who leads it, then Coming up and From the news, both small (three items at most). It is `position: sticky` (top 96px) so it follows as the write-up scrolls; in Studio, check the side column's Position is sticky and Align self is start.
 - **A background hero with colour transparency.** The group's header photo fills the hero, under a see-through wash of the group's colour (about 80%), with a 36px slant at the bottom. No header photo: the colour alone is the hero.
 - **The group's colour is the page's primary colour.** The hero wash, the headings, links, buttons, callouts, the "Who leads it" panel and the committee chips all take `$ctx.groupPage.color`. Never hard-code a colour in this page. Purple is not used for the content; it stays in the site header and footer.
 - **Social links are icons.** Round outline icon buttons next to the Join button, one per link in `$ctx.groupPage.links`.
@@ -13,7 +14,7 @@ The page at `/student-groups/[committee]/[body]` (for example `/student-groups/c
 3. Bind the fields below. The `[BIND: …]` markers in the pasted HTML say which field goes where.
 4. For the icon row, repeat ONE link over `$ctx.groupPage.links`: `href` = `currentItem.url`, and inside it put **Group page: social icon** with **Which icon** = `currentItem.kind`. Colour the icon like text (it uses the text colour).
 5. For the write-up, delete the sample text and put **Group page: write-up** in its place. It draws the students' write-up with every block styled in the group's colour.
-6. Visibility: the Join button when `hasJoin`; the icon row when `hasLinks`; the write-up when `hasAbout`; Coming up when `hasEvents`; From the news when `hasPosts`; the leaders list when `hasLeaders`; committee chips when `hasSiblings`.
+6. Visibility: the Join button when `hasJoin`; the icon row when `hasLinks`; the write-up when `hasAbout`; Coming up when `hasEvents`; From the news when `hasPosts`; the leaders list when `hasLeaders`. (`siblings` is still in the data but the page no longer shows "More from this committee".)
 7. Publish (the Director does this).
 
 ## `$ctx.groupPage`
