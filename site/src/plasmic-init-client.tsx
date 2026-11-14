@@ -7,6 +7,7 @@ import LiveEvents from '@/components/LiveEvents';
 import TeamBlock from '@/components/TeamBlock';
 import PeopleList from '@/components/PeopleList';
 import EventsHub from '@/components/hubs/EventsHub';
+import ToneBox from '@/components/ToneBox';
 import NewsHub from '@/components/hubs/NewsHub';
 import PeopleHub from '@/components/hubs/PeopleHub';
 import PolicyHub from '@/components/hubs/PolicyHub';
@@ -407,6 +408,15 @@ PLASMIC.registerComponent(GroupLink, {
   props: { children: 'slot' }, importPath: '@/components/groups/GroupParts',
 });
 
+PLASMIC.registerComponent(ToneBox, {
+  name: 'ToneBox', displayName: 'Tone box (coloured from data)', description: "A box coloured by a prop: bind Color to an event's or committee's colour. Look: solid, tint, text or outline.",
+  props: {
+    children: 'slot', color: { type: 'string', description: "A colour such as currentItem.color" },
+    look: { type: 'choice', options: ['solid', 'tint', 'text', 'outline'], defaultValue: 'tint' }, as: { type: 'choice', options: ['div', 'span'], defaultValue: 'div' },
+  },
+  importPath: '@/components/ToneBox',
+});
+
 // Headless controllers for events, news and the team: they give Studio data and actions, and draw nothing themselves.
 const hubSlot = (what: string) => ({ type: 'slot' as const, displayName: 'Contents', defaultValue: { type: 'text' as const, value: `Design your layout here with Studio's own elements, using ${what}.` } });
 PLASMIC.registerComponent(EventsHub, {
@@ -430,6 +440,8 @@ PLASMIC.registerComponent(EventsHub, {
     toggleRsvpOnly: { description: 'Flip the RSVP-open filter', argTypes: [] },
     setOpenToEveryone: { description: 'Hide NTU-students-only events', argTypes: [{ name: 'on', type: 'boolean' }] },
     toggleOpenToEveryone: { description: 'Flip the open-to-everyone filter', argTypes: [] },
+    openEvent: { description: 'Open an event in the lightbox (pass its id)', argTypes: [{ name: 'id', type: 'string' }] },
+    closeEvent: { description: 'Close the event lightbox', argTypes: [] },
     prevMonth: { description: 'Month view: go to the previous month', argTypes: [] },
     nextMonth: { description: 'Month view: go to the next month', argTypes: [] },
     setCalendarMonth: { description: 'Month view: show one month (key like 2026-11)', argTypes: [{ name: 'key', type: 'string' }] },

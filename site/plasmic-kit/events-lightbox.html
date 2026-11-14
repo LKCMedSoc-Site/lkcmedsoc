@@ -1,0 +1,52 @@
+<!--
+  EVENT LIGHTBOX. Paste inside the Events hub (anywhere in its contents; it is position:fixed so it floats over the page).
+  Visibility: $ctx.eventsHub.hasSelected. Data: $ctx.eventsHub.selected
+    {id, title, whenText, venue, summary, committeeShort, color, onColor, tint, overlay, isMultiDay, dayCount, multiDayText,
+     day, monthShort, cover, hasCover, spotsText, rsvpOpen, ntuOnly, link}
+  Actions: the dark backdrop and the close button -> Events hub > closeEvent. Cards and grid events -> Events hub > openEvent(id).
+  Colours: the cover panel background, the committee pill and the date badge text use selected.color / tint (committee colour).
+-->
+<div style="position:fixed; top:0; left:0; right:0; bottom:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+  <!-- BACKDROP: onClick -> closeEvent -->
+  <div style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:#2a0628cc;"></div>
+
+  <!-- PANEL -->
+  <div style="position:relative; display:flex; flex-direction:column; width:100%; max-width:640px; max-height:100%; overflow:auto; background-color:#ffffff; border-radius:12px; box-sizing:border-box;">
+    <!-- COVER: committee colour block; the photo sits over it when [BIND: selected.hasCover] -->
+    <div style="position:relative; width:100%; height:200px; background-color:#1d4ed8; flex:0 0 auto; overflow:hidden;">
+      <img src="https://placehold.co/1280x400/1d4ed8/ffffff?text=selected.cover" alt="Event cover" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
+      <div style="position:absolute; top:16px; left:16px; display:flex; flex-direction:column; align-items:center; background-color:#ffffff; border-radius:8px; padding:6px 12px;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:30px; line-height:0.9; color:#1d4ed8; text-transform:uppercase;">[BIND: selected.day]</span>
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.12em; color:#1d4ed8; text-transform:uppercase;">[BIND: selected.monthShort]</span>
+      </div>
+      <!-- CLOSE: onClick -> closeEvent -->
+      <button aria-label="Close" style="position:absolute; top:12px; right:12px; display:flex; align-items:center; justify-content:center; width:36px; height:36px; background-color:#ffffff; border:0; border-radius:999px; cursor:pointer; padding:0;">
+        <img alt="" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a0628' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E" style="width:16px; height:16px;" />
+      </button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; row-gap:14px; padding:24px; min-width:0;">
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:8px; row-gap:8px;">
+        <!-- COMMITTEE PILL: background selected.tint, text selected.color -->
+        <span style="background-color:#1d4ed81f; color:#1d4ed8; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">[BIND: selected.committeeShort]</span>
+        <!-- MULTI-DAY PILL (Visibility: selected.isMultiDay) -->
+        <span style="border:1px solid #8e2a88; color:#8e2a88; padding:3px 11px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">[BIND: selected.multiDayText]</span>
+        <!-- (Visibility: selected.ntuOnly) -->
+        <span style="border:1px solid #4d0a49; color:#4d0a49; padding:3px 11px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">NTU students</span>
+      </div>
+      <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: selected.title]</span>
+      <span style="font-size:13px; font-weight:700; letter-spacing:0.04em; color:#6a5a69; text-transform:uppercase;">[BIND: selected.whenText]</span>
+      <span style="font-size:13px; font-weight:700; letter-spacing:0.04em; color:#8e2a88; text-transform:uppercase;">[BIND: selected.venue]</span>
+      <!-- (Visibility: !!selected.summary) -->
+      <span style="font-size:15px; line-height:1.6; color:#2a0f28;">[BIND: selected.summary]</span>
+      <!-- (Visibility: !!selected.spotsText) -->
+      <span style="font-size:12px; font-weight:700; letter-spacing:0.06em; color:#8e2a88; text-transform:uppercase;">[BIND: selected.spotsText]</span>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:10px; row-gap:10px; padding-top:8px;">
+        <!-- FULL DETAILS: link to selected.link (RSVP and the add-to-calendar buttons live on that page) -->
+        <a href="/events" style="text-decoration:none; display:flex; align-items:center; height:44px; padding:0 22px; background-color:#4d0a49; color:#ffffff; border-radius:999px; font-size:13px; font-weight:700;">Full details and RSVP</a>
+        <!-- CLOSE: onClick -> closeEvent -->
+        <button style="display:flex; align-items:center; height:44px; padding:0 22px; background-color:#ffffff; color:#4d0a49; border:1px solid #ddd2dc; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
