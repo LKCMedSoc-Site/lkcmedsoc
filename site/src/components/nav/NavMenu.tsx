@@ -16,7 +16,7 @@ export default function NavMenu({ groups = [], index = [], items, highlights = [
   return (
     <nav aria-label="Main" className={`hidden h-full items-center lg:flex ${className}`}>
       {nav.map((item) => {
-        if (!item.children) return <Link key={item.label} href={item.href} aria-current={here(item.href) ? 'page' : undefined} className="nav-link">{item.label}</Link>;
+        if (!item.children?.length) return <Link key={item.label} href={item.href} aria-current={here(item.href) ? 'page' : undefined} className="nav-link">{item.label}</Link>;
         const hl = highlights.find((h) => isMenu(item, h.menu) && (h.title || h.body || h.eyebrow));
         const forced = !!previewOpen && previewOpen !== 'none' && isMenu(item, previewOpen); // only ever set inside Studio
         return (
@@ -32,7 +32,7 @@ export default function NavMenu({ groups = [], index = [], items, highlights = [
                 <Link href={item.href} className="link-arrow mt-5 inline-block !text-pink !decoration-p500">See all {item.label.toLowerCase()}</Link>
               </div>
               <ul className={`${hl ? 'col-span-5 grid-cols-1' : 'col-span-8 grid-cols-2'} grid gap-x-6 gap-y-1`}>
-                {item.children.map((c) => (
+                {item.children!.map((c) => (
                   <li key={c.href + c.label}>
                     <ChildLink c={c} className="group/link flex items-start justify-between gap-3 rounded-xl px-3 py-3 text-white no-underline hover:bg-p900">
                       <span><span className="block font-bold">{c.label}</span>{c.note ? <span className="block text-sm text-mist">{c.note}</span> : null}</span>

@@ -45,7 +45,7 @@ export default function MobileMenu({ groups = [], index = [], menuItems, ctaText
             <ul className="mt-2">
               {nav.map((item) => (
                 <li key={item.label} className="border-b border-p900">
-                  {item.children ? (
+                  {item.children?.length ? (
                     <>
                       <button type="button" aria-expanded={expanded === item.label} onClick={() => setExpanded(expanded === item.label ? null : item.label)} className="flex w-full items-center justify-between py-3">
                         <span className="display text-5xl">{item.label}</span><ChevronDown aria-hidden className={`h-6 w-6 text-pink transition-transform ${expanded === item.label ? 'rotate-180' : ''}`} />
