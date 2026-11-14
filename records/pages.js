@@ -117,22 +117,46 @@
   // The colours a body can choose for its chip, badge and card. None are purple (that is the site's own colour); every one takes white text.
   // Keep in step with TONE_SLOTS in site/src/lib/tones.ts and the check in sql/body_color.sql.
   var COLORS = { blue: '#1d4ed8', cyan: '#0e7490', teal: '#0f766e', green: '#15803d', amber: '#b45309', orange: '#c2410c', red: '#b91c1c', slate: '#475569' };
+  // Any colour can be chosen. It is stored as #rrggbb; the website (site/src/lib/tones.ts) and this preview both darken it, only if needed,
+  // until white text on it reaches 4.5:1 contrast, so a pale pick can never make a chip unreadable. Keep the two copies of readable() in step.
+  function lum(hex) {
+    var c = [1, 3, 5].map(function (i) { var v = parseInt(hex.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function readable(hex) {
+    var rgb = [1, 3, 5].map(function (i) { return parseInt(hex.substr(i, 2), 16); });
+    for (var n = 0; n < 40 && 1.05 / (lum('#' + rgb.map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join('')) + 0.05) < 4.5; n++) rgb = rgb.map(function (v) { return Math.round(v * 0.95); });
+    return '#' + rgb.map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join('');
+  }
+  var HEX = /^#[0-9a-fA-F]{6}$/;
   function colorField(kit, initial, name) {
-    var h = kit.h, value = COLORS[initial] ? initial : '';
+    var h = kit.h, value = (COLORS[initial] || HEX.test(initial || '')) ? initial : '';
     var chip = h('span', { class: 'colorchip' }, name);
+    var note = h('span', { class: 'muted' }, '');
     var buttons = [];
+    var custom = h('input', { type: 'color', class: 'swatch-input', 'aria-label': 'Pick any colour' });
+    var customBtn = h('label', { class: 'swatch custom', title: 'Pick any colour' }, h('span', null, 'Any'), custom);
+    function hexOf(v) { return COLORS[v] || (HEX.test(v) ? v.toLowerCase() : ''); }
     function paint() {
-      chip.style.background = value ? COLORS[value] : '#8a8494';
+      var raw = hexOf(value), shown = raw ? readable(raw) : '';
+      chip.style.background = shown || '#8a8494';
+      note.textContent = raw && shown !== raw ? 'Shown a little darker on the website so white text stays easy to read.' : '';
       buttons.forEach(function (b) { b.btn.setAttribute('aria-pressed', b.key === value ? 'true' : 'false'); });
+      var isCustom = HEX.test(value);
+      customBtn.setAttribute('aria-pressed', isCustom ? 'true' : 'false');
+      customBtn.style.background = isCustom ? value : '';
+      customBtn.classList.toggle('on', isCustom);
+      if (isCustom) custom.value = value.toLowerCase();
     }
     function swatch(key, label, bg) {
       var btn = h('button', { type: 'button', class: 'swatch' + (key ? '' : ' auto'), title: label, 'aria-label': label, style: bg ? 'background:' + bg : null, onclick: function () { value = key; paint(); } }, key ? '' : 'Auto');
       buttons.push({ key: key, btn: btn });
       return btn;
     }
-    var row = h('div', { class: 'swatches' }, swatch('', 'Automatic', null), Object.keys(COLORS).map(function (k) { return swatch(k, k.charAt(0).toUpperCase() + k.slice(1), COLORS[k]); }));
+    custom.addEventListener('input', function () { value = custom.value.toLowerCase(); paint(); });
+    var row = h('div', { class: 'swatches' }, swatch('', 'Automatic', null), Object.keys(COLORS).map(function (k) { return swatch(k, k.charAt(0).toUpperCase() + k.slice(1), COLORS[k]); }), customBtn);
     paint();
-    return { get: function () { return value; }, el: h('div', { class: 'card' }, h('strong', null, 'Group colour'), h('p', { class: 'muted' }, 'Used for your filter chip, your badge and your card on the website. Auto picks one for you; a group with no colour of its own uses its committee’s.'), row, h('div', { class: 'row' }, chip)) };
+    return { get: function () { return value; }, el: h('div', { class: 'card' }, h('strong', null, 'Group colour'), h('p', { class: 'muted' }, 'Used for your filter chip, your badge and your card on the website. Pick a suggested colour or choose any colour you like with Any. Auto picks one for you; a group with no colour of its own uses its committee’s.'), row, h('div', { class: 'row' }, chip, note)) };
   }
 
   async function load(kit, body) {

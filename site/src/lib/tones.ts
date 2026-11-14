@@ -1,7 +1,7 @@
 // MedSoc's committee and group colours, in one place.
 //
-// A body (committee or CCA) stores a colour *name* in records.bodies.color, never a hex value, so the shades can be tuned here
-// without touching the database and nobody can pick an unreadable colour. Every fill takes white text (all pass 4.5:1 contrast),
+// A body (committee or CCA) stores either a colour *name* from the list below or any #rrggbb hex in records.bodies.color. Names can be
+// tuned here without touching the database; a hex is darkened by readable() so nobody can pick an unreadable colour. Every fill takes white text (all pass 4.5:1 contrast),
 // so chips, badges and cards read as one family. None of them are purple: purple is the site's own colour, so committees stand
 // out against it.
 //
@@ -26,7 +26,22 @@ const FG = '#ffffff';
 
 // A colour as a see-through wash: tint (about 12%) is the light resting state of a chip or pill; overlay (about 55%) is the wash over a photo.
 export const withAlpha = (hex: string, a: number) => hex + Math.round(a * 255).toString(16).padStart(2, '0');
-const make = (slot: ToneSlot): Tone => ({ bg: TONE_SLOTS[slot], fg: FG, tint: withAlpha(TONE_SLOTS[slot], 0.12), overlay: withAlpha(TONE_SLOTS[slot], 0.55) });
+const makeHex = (hex: string): Tone => ({ bg: hex, fg: FG, tint: withAlpha(hex, 0.12), overlay: withAlpha(hex, 0.55) });
+const make = (slot: ToneSlot): Tone => makeHex(TONE_SLOTS[slot]);
+const fromStored = (c: unknown): Tone | null => (isToneSlot(c) ? make(c) : isHexColor(c) ? makeHex(readable(c.toLowerCase())) : null);
+
+const HEX = /^#[0-9a-fA-F]{6}$/;
+export const isHexColor = (v: unknown): v is string => typeof v === 'string' && HEX.test(v);
+
+const channel = (v: number) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+const luminance = (rgb: number[]) => 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
+
+/** Any picked colour, darkened only as far as needed for white text to reach 4.5:1. Keep in step with readable() in records/pages.js. */
+export function readable(hex: string): string {
+  let rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  for (let n = 0; n < 40 && 1.05 / (luminance(rgb) + 0.05) < 4.5; n++) rgb = rgb.map((v) => Math.round(v * 0.95));
+  return '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
 
 export const isToneSlot = (v: unknown): v is ToneSlot => typeof v === 'string' && v in TONE_SLOTS;
 
@@ -43,7 +58,7 @@ function fallbackSlot(name: string): ToneSlot {
  */
 export function toneFor(...candidates: (string | null | undefined)[]): Tone {
   const name = String(candidates[candidates.length - 1] ?? '');
-  for (const c of candidates.slice(0, -1)) if (isToneSlot(c)) return make(c);
+  for (const c of candidates.slice(0, -1)) { const t = fromStored(c); if (t) return t; }
   return make(fallbackSlot(name));
 }
 
@@ -55,7 +70,7 @@ export function toneFor(...candidates: (string | null | undefined)[]): Tone {
 export function assignTones(entries: { name: string; color?: string | null }[]): Map<string, Tone> {
   const out = new Map<string, Tone>();
   const used = new Set<ToneSlot>();
-  for (const e of entries) if (isToneSlot(e.color)) { out.set(e.name, make(e.color)); used.add(e.color); }
+  for (const e of entries) { const t = fromStored(e.color); if (!t) continue; out.set(e.name, t); if (isToneSlot(e.color)) used.add(e.color); }
   for (const e of [...entries].sort((a, b) => a.name.localeCompare(b.name))) {
     if (out.has(e.name)) continue;
     let i = SLOT_NAMES.indexOf(fallbackSlot(e.name));
