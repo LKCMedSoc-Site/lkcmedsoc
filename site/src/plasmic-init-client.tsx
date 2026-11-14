@@ -8,6 +8,7 @@ import TeamBlock from '@/components/TeamBlock';
 import PeopleList from '@/components/PeopleList';
 import EventsHub from '@/components/hubs/EventsHub';
 import ToneBox from '@/components/ToneBox';
+import { EventTag, EventDateBadge, EventAccent, EventCover } from '@/components/hubs/EventParts';
 import NewsHub from '@/components/hubs/NewsHub';
 import PeopleHub from '@/components/hubs/PeopleHub';
 import PolicyHub from '@/components/hubs/PolicyHub';
@@ -406,6 +407,24 @@ PLASMIC.registerComponent(GroupRecruiting, {
 PLASMIC.registerComponent(GroupLink, {
   name: 'GroupLink', displayName: 'Group: link wrapper', description: "Wrap the whole card in this to link to the group's page.",
   props: { children: 'slot' }, importPath: '@/components/groups/GroupParts',
+});
+
+const eventProp = { type: 'object' as const, displayName: 'Event', description: 'Bind to the event (currentItem in a repeat). Leave empty inside the lightbox: it then reads the selected event.' };
+PLASMIC.registerComponent(EventTag, {
+  name: 'EventTag', displayName: 'Event: committee tag', description: "The event's committee on its own colour. A pill, a pale tint, a bar or a dot.",
+  props: { event: eventProp, look: { type: 'choice', options: ['pill', 'tint', 'bar', 'dot'], defaultValue: 'pill', displayName: 'Look' } }, importPath: '@/components/hubs/EventParts',
+});
+PLASMIC.registerComponent(EventDateBadge, {
+  name: 'EventDateBadge', displayName: 'Event: date badge', description: 'White badge with the day and month in the committee colour.',
+  props: { event: eventProp }, importPath: '@/components/hubs/EventParts',
+});
+PLASMIC.registerComponent(EventAccent, {
+  name: 'EventAccent', displayName: 'Event: colour edge', description: "A stripe, bar or dot in the committee colour, for the edge of a card or a calendar chip.",
+  props: { event: eventProp, look: { type: 'choice', options: ['stripe', 'bar', 'dot'], defaultValue: 'stripe', displayName: 'Look' }, thickness: { type: 'number', defaultValue: 4 } }, importPath: '@/components/hubs/EventParts',
+});
+PLASMIC.registerComponent(EventCover, {
+  name: 'EventCover', displayName: 'Event: cover fill', description: "Fills its parent with the committee colour and the event's photo over it. The parent needs position relative and a height.",
+  props: { event: eventProp }, importPath: '@/components/hubs/EventParts',
 });
 
 PLASMIC.registerComponent(ToneBox, {
