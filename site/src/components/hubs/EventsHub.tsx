@@ -125,7 +125,7 @@ const EventsHub = forwardRef<EventsHubRef, EventsHubProps>(function EventsHub({ 
   const calendar = {
     key: cKey, label: monthLabel(cKey), year: cy, monthName: LONG[cm - 1], weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     days: calDays, weeks: Array.from({ length: cells / 7 }, (_, w) => ({ days: calDays.slice(w * 7, w * 7 + 7) })),
-    eventCount: calDays.filter((d) => d.inMonth).reduce((n, d) => n + d.events.length, 0),
+    eventCount: new Set(calDays.filter((d) => d.inMonth).flatMap((d) => d.events.map((e) => e.id))).size,
     months: Array.from({ length: 12 }, (_, i) => { const key = `${cy}-${String(i + 1).padStart(2, '0')}`; return { key, short: SHORT[i], isSelected: key === cKey, hasEvents: calEvents.some((e) => e.monthKey === key) }; }),
   };
 
