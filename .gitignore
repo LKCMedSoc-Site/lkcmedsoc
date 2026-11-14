@@ -20,3 +20,4 @@ fonts/
 # Unconfirmed policy draft (generated from the structure doc): keep out of the public repo until ExCo adopts it
 sql/policy_seed.sql
 site/scripts/policy-seed.json
+.cca-images-preview/
