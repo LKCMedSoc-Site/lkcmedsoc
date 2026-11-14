@@ -15,7 +15,7 @@ const input = 'w-full rounded-lg border border-p300 bg-white px-3 py-2.5';
 
 type Guest = { status: string; name: string; code: string };
 
-export default function EventView({ id, initial }: { id: string; initial: PublicEvent | null }) {
+export default function EventView({ id, initial, bare = false }: { id: string; initial: PublicEvent | null; bare?: boolean }) {
   const sb = browserClient();
   const [ev, setEv] = useState<PublicEvent | null>(initial);
   const [signedIn, setSignedIn] = useState(false);
@@ -100,17 +100,17 @@ export default function EventView({ id, initial }: { id: string; initial: Public
 
   return (
     <article>
-      <div className="bg-p900 text-white">
+      {bare ? null : <div className="bg-p900 text-white">
         <div className="mx-auto max-w-3xl px-4 py-10">
           <div className="text-sm text-p300">{ev.body}</div>
           <h1 className="display mt-1 text-5xl text-white">{ev.title}</h1>
           <div className="mt-3 text-lg">{whenText(ev)}</div>
           {ev.venue ? <div className="text-p300">{ev.venue}</div> : null}
-          {ev.visibility === 'Members' ? <span className="mt-3 inline-block rounded-full bg-mist px-2 py-0.5 text-xs text-p900">For NTU students</span> : null}
+          {ev.visibility === 'Members' ? <span className="mt-3 inline-block rounded-full bg-mist px-2 py-0.5 text-xs text-p900">Students only</span> : null}
         </div>
-      </div>
-      <div className="mx-auto max-w-3xl space-y-5 px-4 py-8">
-        {ev.summary ? <p className="whitespace-pre-wrap">{ev.summary}</p> : null}
+      </div>}
+      <div className={bare ? 'space-y-5' : 'mx-auto max-w-3xl space-y-5 px-4 py-8'}>
+        {ev.summary && !bare ? <p className="whitespace-pre-wrap">{ev.summary}</p> : null}
 
         {!done && ev.start_date ? (
           <div className="flex flex-wrap gap-2">
@@ -160,7 +160,7 @@ export default function EventView({ id, initial }: { id: string; initial: Public
         )}
 
         {signedIn ? <p><Button variant="outline" size="sm" onClick={() => void sb.auth.signOut()}>Sign out</Button></p> : null}
-        <p><Link className="underline" href="/events">All events</Link></p>
+        {bare ? null : <p><Link className="underline" href="/events">All events</Link></p>}
         <p className="text-xs text-muted">Checking in on the day is done at the portal (scan the organisers&rsquo; QR code).</p>
       </div>
     </article>

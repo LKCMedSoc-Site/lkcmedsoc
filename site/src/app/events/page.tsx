@@ -22,7 +22,7 @@ export default async function EventsPage() {
   const committees = committeeMap(await getBodies().catch(() => []));
   return (
     <>
-      <PageHero title="Events" intro="What is coming up across MedSoc. Open to everyone unless marked “NTU students”; you only sign in when you RSVP." />
+      <PageHero title="Events" intro="What is coming up across MedSoc. Open to everyone unless marked “Students only”; you only sign in when you RSVP." />
       <section className="band band-pale band-last" style={{ zIndex: 20 }}>
         <div className="mx-auto max-w-6xl px-4">
           {failed ? <p className="rounded-lg bg-red-100 px-3 py-2 text-bad">Events could not be loaded right now. Please try again in a minute.</p> : <EventsBrowser events={events} committees={committees} />}

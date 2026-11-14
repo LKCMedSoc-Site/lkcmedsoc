@@ -8,6 +8,7 @@ import TeamBlock from '@/components/TeamBlock';
 import PeopleList from '@/components/PeopleList';
 import EventsHub from '@/components/hubs/EventsHub';
 import ToneBox from '@/components/ToneBox';
+import EventActions from '@/components/hubs/EventActions';
 import { EventTag, EventDateBadge, EventAccent, EventCover } from '@/components/hubs/EventParts';
 import NewsHub from '@/components/hubs/NewsHub';
 import PeopleHub from '@/components/hubs/PeopleHub';
@@ -427,6 +428,10 @@ PLASMIC.registerComponent(EventCover, {
   props: { event: eventProp }, importPath: '@/components/hubs/EventParts',
 });
 
+PLASMIC.registerComponent(EventActions, {
+  name: 'EventActions', displayName: 'Event: calendar, RSVP and ticket', description: "Add to calendar, RSVP (sign in or guest) and the ticket QR for the event. Inside the lightbox it uses the selected event.",
+  props: { event: { type: 'object', displayName: 'Event', description: 'Leave empty inside the lightbox.' } }, importPath: '@/components/hubs/EventActions',
+});
 PLASMIC.registerComponent(ToneBox, {
   name: 'ToneBox', displayName: 'Tone box (coloured from data)', description: "A box coloured by a prop: bind Color to an event's or committee's colour. Look: solid, tint, text or outline.",
   props: {

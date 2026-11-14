@@ -19,7 +19,7 @@ export default function EventRow({ ev }: { ev: PublicEvent }) {
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           {ev.body ? <span className="text-muted">{ev.body}</span> : null}
           <SpotsPill ev={ev} />
-          {ev.visibility === 'Members' ? <span className="rounded-full bg-p900 px-2.5 py-0.5 text-xs text-white">NTU students</span> : null}
+          {ev.visibility === 'Members' ? <span className="rounded-full bg-p900 px-2.5 py-0.5 text-xs text-white">Students only</span> : null}
         </div>
       </div>
       <span aria-hidden className="row-arrow display text-4xl text-p500 md:text-6xl">→</span>

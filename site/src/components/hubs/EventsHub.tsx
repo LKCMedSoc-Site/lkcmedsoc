@@ -40,7 +40,7 @@ function toEvent(e: PublicEvent, cmap: Record<string, string>, bodies: Body[]) {
   const dayCount = e.start_date && endDate ? daysBetween(e.start_date, endDate) + 1 : 1;
   const spotsText = !e.rsvp_open ? '' : e.spots_left == null ? 'RSVP open' : e.spots_left === 0 ? 'Full: waitlist open' : `${e.spots_left} spot${e.spots_left === 1 ? '' : 's'} left`;
   return {
-    color: tone.bg, onColor: tone.fg, tint: tone.tint, overlay: tone.overlay, isMultiDay: dayCount > 1, dayCount, multiDayText: dayCount > 1 ? `${dayCount}-day event` : '', lastDate: endDate,
+    color: tone.bg, onColor: tone.fg, tint: tone.tint, overlay: tone.overlay, isMultiDay: dayCount > 1, dayCount, multiDayText: dayCount > 1 ? `${dayCount}-day event` : '', organiserText: e.body ? `Organised by ${e.body}` : '', lastDate: endDate,
     id: e.id, title: e.title, venue: e.venue ?? '', summary: e.summary ?? '', organiser: e.body ?? '', committee, committeeShort: committee.replace(/ Committee$/, ''),
     startDate: e.start_date ?? '', endDate: e.end_date ?? '', startTime: fmtTime(e.start_time), endTime: fmtTime(e.end_time), whenText: whenText(e),
     day: d ? String(d[2]) : '', monthShort: d ? SHORT[d[1] - 1] : 'TBC', monthKey: monthKey(e), monthLabel: monthLabel(monthKey(e)),
@@ -119,7 +119,7 @@ const EventsHub = forwardRef<EventsHubRef, EventsHubProps>(function EventsHub({ 
   const calDays = Array.from({ length: cells }, (_, i) => {
     const d = new Date(Date.UTC(cy, cm - 1, 1 - lead + i));
     const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-    const events = calEvents.filter((e) => e.startDate && date >= e.startDate.slice(0, 10) && date <= e.lastDate).map((e) => { const n = daysBetween(e.startDate.slice(0, 10), date) + 1; return { ...e, dayNumber: n, isFirstDay: n === 1, spanText: e.isMultiDay ? `Day ${n} of ${e.dayCount}` : '' }; });
+    const events = calEvents.filter((e) => e.startDate && date >= e.startDate.slice(0, 10) && date <= e.lastDate).map((e) => { const n = daysBetween(e.startDate.slice(0, 10), date) + 1; const wd = new Date(date + 'T00:00:00Z').getUTCDay(); return { ...e, dayNumber: n, isFirstDay: n === 1, showLabel: n === 1 || wd === 0, spanText: e.isMultiDay ? `Day ${n} of ${e.dayCount}` : '' }; });
     return { date, day: d.getUTCDate(), inMonth: d.getUTCMonth() === cm - 1, isToday: date === nowKey, hasEvents: events.length > 0, events };
   });
   const calendar = {
