@@ -20,10 +20,14 @@ export type EventsHubRef = {
   setOpenToEveryone: (on: boolean) => void; toggleOpenToEveryone: () => void;
   nextPage: () => void; prevPage: () => void; goToPage: (page: number) => void;
   clearFilters: () => void;
+  prevMonth: () => void; nextMonth: () => void; setCalendarMonth: (key: string) => void;
 };
 
 const monthKey = (e: PublicEvent) => { const d = ymd(e.start_date); return d ? `${d[0]}-${String(d[1]).padStart(2, '0')}` : 'tbc'; };
 const monthLabel = (k: string) => (k === 'tbc' ? 'Date to be confirmed' : `${LONG[+k.split('-')[1] - 1]} ${k.split('-')[0]}`);
+
+const shiftMonth = (k: string, by: number) => { const [y, m] = k.split('-').map(Number); const d = new Date(Date.UTC(y, m - 1 + by, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`; };
+const todayKey = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; };
 
 function toEvent(e: PublicEvent, cmap: Record<string, string>) {
   const d = ymd(e.start_date); const committee = e.body ? cmap[e.body] ?? '' : '';
@@ -62,14 +66,16 @@ const EventsHub = forwardRef<EventsHubRef, EventsHubProps>(function EventsHub({ 
   useEffect(() => { setRsvp(!!defaultRsvpOnly); setPicked(list(defaultCommittee)); }, [defaultRsvpOnly, defaultCommittee, state]);
 
   const all = useMemo(() => (state?.events ?? []).map((e) => toEvent(e, state?.cmap ?? {})), [state]);
-  const matches = all.filter((e) => {
+  const pass = (e: (typeof all)[number], useMonth: boolean) => {
     if (q && !`${e.title} ${e.venue} ${e.organiser}`.toLowerCase().includes(q.toLowerCase())) return false;
     if (picked.length && !picked.some((p) => p.toLowerCase() === e.committee.toLowerCase() || p.toLowerCase() === e.committeeShort.toLowerCase())) return false;
-    if (month && e.monthKey !== month) return false;
+    if (useMonth && month && e.monthKey !== month) return false;
     if (rsvp && !e.rsvpOpen) return false;
     if (open && e.ntuOnly) return false;
     return true;
-  });
+  };
+  const matches = all.filter((e) => pass(e, true));
+  const [calKey, setCalKey] = useState('');
   const paging = usePaging(matches.length, pageSize, [q, picked.join('|'), month, rsvp, open].join('~'));
   const shown = pageSize > 0 ? matches.slice(paging.from, paging.to) : limit > 0 ? matches.slice(0, limit) : matches;
   const dirty = !!(q || picked.length || month || rsvp || open);
@@ -78,6 +84,7 @@ const EventsHub = forwardRef<EventsHubRef, EventsHubProps>(function EventsHub({ 
   useImperativeHandle(ref, () => ({
     setSearch: (v: string) => setQ(v ?? ''), setCommittee: (n: string) => setPicked(n ? [n] : []), toggleCommittee: (n: string) => setPicked((p) => (p.some((x) => x.toLowerCase() === (n ?? '').toLowerCase()) ? p.filter((x) => x.toLowerCase() !== (n ?? '').toLowerCase()) : [...p, n])),
     setMonth: (k: string) => setMonth(k ?? ''), toggleMonth: (k: string) => setMonth((m) => (m === k ? '' : k)),
+    prevMonth: () => setCalKey((k) => shiftMonth(k || firstKey, -1)), nextMonth: () => setCalKey((k) => shiftMonth(k || firstKey, 1)), setCalendarMonth: (k: string) => setCalKey(k ?? ''),
     setRsvpOnly: (on: boolean) => setRsvp(!!on), toggleRsvpOnly: () => setRsvp((r) => !r),
     setOpenToEveryone: (on: boolean) => setOpen(!!on), toggleOpenToEveryone: () => setOpen((o) => !o), nextPage: paging.next, prevPage: paging.prev, goToPage: paging.go, clearFilters: clear,
   }));
@@ -90,9 +97,31 @@ const EventsHub = forwardRef<EventsHubRef, EventsHubProps>(function EventsHub({ 
   const days = nd ? Math.round((Date.UTC(nd[0], nd[1] - 1, nd[2]) - Date.now()) / 864e5) : null;
   const notice = { show: !!next && (next.rsvpOpen || (days !== null && days <= 14)), text: next ? `${next.rsvpOpen ? 'RSVP open' : 'Coming up'}: ${next.title}` : '', link: next?.link ?? '', daysAway: days };
 
+  // Month view: the chosen month (default: the month of the next event, else this month) as weeks of days. Filters apply except the month filter.
+  const nowKey = todayKey();
+  const firstKey = all[0]?.monthKey && all[0].monthKey !== 'tbc' ? all[0].monthKey : nowKey.slice(0, 7);
+  const cKey = calKey || firstKey;
+  const calEvents = all.filter((e) => pass(e, false));
+  const [cy, cm] = cKey.split('-').map(Number);
+  const lead = new Date(Date.UTC(cy, cm - 1, 1)).getUTCDay();
+  const dim = new Date(Date.UTC(cy, cm, 0)).getUTCDate();
+  const cells = Math.ceil((lead + dim) / 7) * 7;
+  const calDays = Array.from({ length: cells }, (_, i) => {
+    const d = new Date(Date.UTC(cy, cm - 1, 1 - lead + i));
+    const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    const events = calEvents.filter((e) => e.startDate.slice(0, 10) === date);
+    return { date, day: d.getUTCDate(), inMonth: d.getUTCMonth() === cm - 1, isToday: date === nowKey, hasEvents: events.length > 0, events };
+  });
+  const calendar = {
+    key: cKey, label: monthLabel(cKey), year: cy, monthName: LONG[cm - 1], weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    days: calDays, weeks: Array.from({ length: cells / 7 }, (_, w) => ({ days: calDays.slice(w * 7, w * 7 + 7) })),
+    eventCount: calDays.filter((d) => d.inMonth).reduce((n, d) => n + d.events.length, 0),
+    months: Array.from({ length: 12 }, (_, i) => { const key = `${cy}-${String(i + 1).padStart(2, '0')}`; return { key, short: SHORT[i], isSelected: key === cKey, hasEvents: calEvents.some((e) => e.monthKey === key) }; }),
+  };
+
   const hub = {
     isLoading: !state, hasError: !!state?.failed, items: shown, totalCount: matches.length, shownCount: shown.length, allCount: all.length, hasMatches: shown.length > 0,
-    countText: `${matches.length} event${matches.length === 1 ? '' : 's'}${dirty ? ' match' : ' coming up'}`, monthGroups, committees, months, next: next ?? null, notice,
+    countText: `${matches.length} event${matches.length === 1 ? '' : 's'}${dirty ? ' match' : ' coming up'}`, monthGroups, committees, months, calendar, next: next ?? null, notice,
     activeSearch: q, ...paging.fields, selectedCommittee: committees.find((c) => c.isSelected)?.name ?? '', selectedCommittees: committees.filter((c) => c.isSelected).map((c) => c.name), selectedCommitteeMap: Object.fromEntries(committees.map((c) => [c.name, c.isSelected])), selectedCommitteeCount: committees.filter((c) => c.isSelected).length, selectedMonth: month, isRsvpOnly: rsvp, isOpenToEveryone: open, isFiltering: dirty,
   };
   return <DataProvider name="eventsHub" data={hub}><div className={className}>{children}</div></DataProvider>;
