@@ -94,3 +94,9 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 15px; col
 .swatch-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
 .swatch.custom:focus-within { outline: 2px solid var(--p900); outline-offset: 2px; }
 .colorchip { display: inline-block; padding: 6px 14px; border-radius: 999px; color: #fff; font-size: 13px; font-weight: 700; }
+
+/* Group pages: icon-link rows and the preview of the newer blocks */
+.socialrow { display: grid; grid-template-columns: 9.5rem 1fr auto; gap: 8px; margin: 6px 0; align-items: center; } @media (max-width: 700px) { .socialrow { grid-template-columns: 1fr; } }
+.md-preview .blk-columns { display: grid; gap: 14px 24px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin: 1em 0; }
+.md-preview .blk-toggle { border: 1px solid var(--line); border-radius: 10px; padding: 2px 12px; margin: .8em 0; background: #fff; } .md-preview .blk-toggle > summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.md-preview .blk-video { aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; } .md-preview .blk-video iframe { width: 100%; height: 100%; border: 0; }

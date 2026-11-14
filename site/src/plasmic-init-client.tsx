@@ -17,6 +17,8 @@ import PolicyDocHub from '@/components/hubs/PolicyDocHub';
 import { PolicyEditRoot, PolicyModeSwitch, PolicyProposals, PolicyAddProvision, PolicyEditable, PolicyExcoDocuments, PolicyProvisionText } from '@/components/policy/PolicyEditParts';
 import GroupsHub from '@/components/groups/GroupsHub';
 import GroupsList from '@/components/groups/GroupsList';
+import GroupPageHub from '@/components/groups/GroupPageHub';
+import { GroupAbout, GroupSocialIcon } from '@/components/groups/GroupPageParts';
 import { GroupsSearch, GroupsCommitteeChips, GroupsRecruitingToggle, GroupsClear, GroupsCount } from '@/components/groups/GroupsFilters';
 import { GroupText, GroupImage, GroupBadge, GroupRecruiting, GroupLink } from '@/components/groups/GroupParts';
 import { PersonText, PersonPhoto, PersonLink } from '@/components/PersonParts';
@@ -347,6 +349,32 @@ PLASMIC.registerComponent(GroupsHub, {
     clearFilters: { description: 'Reset the search and every filter', argTypes: [] },
   },
   importPath: '@/components/groups/GroupsHub',
+});
+// One student group's own page: the hub loads the group; the pieces below read it. Build the page at /student-groups/[committee]/[body].
+PLASMIC.registerComponent(GroupPageHub, {
+  name: 'GroupPageHub', displayName: 'Group page hub (one group)',
+  description: 'Loads one student group with its colour, pictures, write-up, icon links, leaders, upcoming events, news and the other groups in its committee. Draws nothing: use Studio elements with $ctx.groupPage.',
+  props: {
+    children: { type: 'slot' as const, displayName: 'Contents', defaultValue: { type: 'text' as const, value: "Design the page here with Studio's own elements, using $ctx.groupPage." } },
+    committee: { type: 'string', displayName: 'Committee address', helpText: 'On a page at /student-groups/[committee]/[body], set this to $ctx.params.committee. Leave empty while designing: a real group is shown as a preview.' },
+    body: { type: 'string', displayName: 'Group address', helpText: 'Set this to $ctx.params.body on that page.' },
+  },
+  providesData: true,
+  importPath: '@/components/groups/GroupPageHub',
+});
+PLASMIC.registerComponent(GroupAbout, {
+  name: 'GroupAbout', displayName: 'Group page: write-up',
+  description: "The group's write-up, with every block the students can add (columns, toggles, callouts, photos, buttons, quotes, video) already styled in the group's colour. Put it inside the Group page hub.",
+  props: {}, importPath: '@/components/groups/GroupPageParts', importName: 'GroupAbout',
+});
+PLASMIC.registerComponent(GroupSocialIcon, {
+  name: 'GroupSocialIcon', displayName: 'Group page: social icon',
+  description: 'An icon for a link kind (instagram, telegram, tiktok, youtube, facebook, linkedin, whatsapp, discord, x, email, website, join). Inside a repeat of $ctx.groupPage.links, bind "Which icon" to currentItem.kind. It takes the text colour, so colour it like any text.',
+  props: {
+    kind: { type: 'string', displayName: 'Which icon', helpText: 'Bind to currentItem.kind inside a repeat of $ctx.groupPage.links.' },
+    size: { type: 'number', defaultValue: 22, displayName: 'Size in pixels' },
+  },
+  importPath: '@/components/groups/GroupPageParts', importName: 'GroupSocialIcon',
 });
 PLASMIC.registerComponent(GroupsList, {
   name: 'GroupsList', displayName: 'Groups list (repeats your card)',

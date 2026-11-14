@@ -1,4 +1,4 @@
-import { getBodies, getLeaders, type Body, type Leader } from './records';
+import { getBodies, getLeaders, slugify, type Body, type Leader } from './records';
 import { serverClient } from './supabase';
 import { getCategories, listPosts, type Category, type Post } from './posts';
 import type { PublicEvent } from './events';
@@ -24,6 +24,9 @@ async function fetchEvents(): Promise<PublicEvent[] | undefined> {
 function pageSlug(designJson: string): string {
   try { const d = JSON.parse(designJson) as { entryCompMetas?: { params?: Record<string, string> }[] }; return d.entryCompMetas?.[0]?.params?.slug ?? ''; } catch { return ''; }
 }
+function pageParam(designJson: string, name: string): string {
+  try { const d = JSON.parse(designJson) as { entryCompMetas?: { params?: Record<string, string> }[] }; return d.entryCompMetas?.[0]?.params?.[name] ?? ''; } catch { return ''; }
+}
 async function fetchPolicyDoc(slug: string): Promise<DocBundle | undefined> {
   try {
     const token = await sessionToken();
@@ -35,20 +38,21 @@ async function fetchPolicyDoc(slug: string): Promise<DocBundle | undefined> {
 export async function getHubSeed(designJson: string): Promise<HubSeed | null> {
   const uses = (name: string) => designJson.includes(name);
   const groups = uses('GroupsHub'), events = uses('EventsHub'), news = uses('NewsHub'), people = uses('PeopleHub');
-  const policyIdx = uses('PolicyHub'), policyOne = uses('PolicyDocHub');
-  if (!groups && !events && !news && !people && !policyIdx && !policyOne) return null;
+  const policyIdx = uses('PolicyHub'), policyOne = uses('PolicyDocHub'), groupOne = uses('GroupPageHub');
+  if (!groups && !events && !news && !people && !policyIdx && !policyOne && !groupOne) return null;
   const slug = policyOne ? pageSlug(designJson) : '';
   const [bodies, lead, ev, posts, categories, policyDocs, policyOneBundle] = await Promise.all([
     getBodies().catch(() => undefined),
-    groups || people ? getLeaders().catch(() => undefined) : undefined,
-    events ? fetchEvents() : undefined,
-    news ? listPosts({ limit: 60 }).then((r) => r.items).catch(() => undefined) : undefined,
+    groups || people || groupOne ? getLeaders().catch(() => undefined) : undefined,
+    events || groupOne ? fetchEvents() : undefined,
+    news || groupOne ? listPosts({ limit: 60 }).then((r) => r.items).catch(() => undefined) : undefined,
     news ? getCategories().catch(() => undefined) : undefined,
     policyIdx || policyOne ? policyIndex().catch(() => undefined) : undefined,
     policyOne && slug ? fetchPolicyDoc(slug) : undefined,
   ]);
   return {
-    bodies: bodies?.map((b) => ({ ...b, about: null })), // the long write-ups are not needed by the hubs; keep the page light
+    // The long write-ups are not needed by the hubs; keep the page light. A single group's page keeps its own write-up.
+    bodies: bodies?.map((b) => (groupOne && slugify(b.name) === pageParam(designJson, 'body') ? b : { ...b, about: null })),
     leaders: lead?.leaders, ay: lead?.ay, events: ev, posts, categories, policyDocs, policyDoc: policyOneBundle, rand: Math.random(),
   };
 }

@@ -51,39 +51,73 @@ export function sanitizeBody(html: string): string {
   return sanitizeHtml(html ?? '', OPTIONS);
 }
 
-// ---- Group pages: the write-up managers type in the records app (records/pages.js has the same block rules) ----
+// ---- Group pages: the write-up managers type in the records app (records/pages.js has the same block rules; keep the two in step) ----
 const GROUP_OPTIONS: sanitizeHtml.IOptions = {
   ...OPTIONS,
-  allowedTags: [...(OPTIONS.allowedTags as string[]), 'aside', 'div', 'figure'],
-  allowedClasses: { aside: ['blk-callout'], div: ['blk-photos'], figure: ['blk-quote'], a: ['blk-button'] },
+  allowedTags: [...(OPTIONS.allowedTags as string[]), 'aside', 'div', 'figure', 'details', 'summary'],
+  allowedClasses: { aside: ['blk-callout'], div: ['blk-photos', 'blk-columns', 'blk-col'], figure: ['blk-quote'], a: ['blk-button'], details: ['blk-toggle'] },
 };
 const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const parse = (md: string) => marked.parse(md, { async: false, gfm: true, breaks: false }) as string;
 
+// A line that opens a block that has a closing ::: line (the one-line blocks, button and video, do not).
+const OPENS = /^:::(callout|photos|quote|columns|toggle)(?:\s+.*)?$/;
+
 /**
- * Markdown plus four blocks:
+ * Markdown plus these blocks (each closes with a line of just :::, and they can sit inside each other):
  *   :::callout ... :::      a highlighted box
  *   :::photos ... :::       photos side by side
  *   :::quote ... :::        a pull quote
+ *   :::columns ... :::      two to four columns; a line of just ||| starts the next column
+ *   :::toggle Title ... ::: a section that opens and closes
  *   :::button Label | https://link     a big button
+ *   :::video https://youtube.com/...   a YouTube or Vimeo video
  */
 export function renderGroupMarkdown(md: string): string {
-  const lines = (md ?? '').replace(/\r/g, '').split('\n');
+  const videos: string[] = [];
+  const html = blocks((md ?? '').replace(/\r/g, '').split('\n'), videos, 0);
+  const clean = sanitizeHtml(html, GROUP_OPTIONS);
+  return clean.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, (_m, i: string) => {
+    const embed = videos[Number(i)];
+    return embed ? `<div class="blk-video"><iframe src="${embed}" title="Video" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>` : '';
+  });
+}
+
+function blocks(lines: string[], videos: string[], depth: number): string {
   const out: string[] = []; let buf: string[] = []; let i = 0;
   const flush = () => { if (buf.length) { out.push(parse(buf.join('\n'))); buf = []; } };
   while (i < lines.length) {
     const ln = lines[i]; let m: RegExpExecArray | null;
-    if ((m = /^:::(callout|photos|quote)\s*$/.exec(ln))) {
-      flush(); const inner: string[] = []; i++;
-      while (i < lines.length && !/^:::\s*$/.test(lines[i])) { inner.push(lines[i]); i++; }
+    if (depth < 4 && (m = OPENS.exec(ln))) {
+      flush(); const inner: string[] = []; let open = 1; i++;
+      while (i < lines.length) {
+        if (/^:::\s*$/.test(lines[i])) { open--; if (open === 0) break; }
+        else if (OPENS.test(lines[i])) open++;
+        inner.push(lines[i]); i++;
+      }
       i++;
-      const html = parse(inner.join('\n'));
-      out.push(m[1] === 'callout' ? `<aside class="blk-callout">${html}</aside>` : m[1] === 'photos' ? `<div class="blk-photos">${html}</div>` : `<figure class="blk-quote">${html}</figure>`);
+      const kind = m[1];
+      if (kind === 'columns') {
+        const cols: string[][] = [[]]; let nest = 0;
+        for (const l of inner) {
+          if (/^:::\s*$/.test(l)) nest--; else if (OPENS.test(l)) nest++;
+          if (nest === 0 && /^\|\|\|\s*$/.test(l)) cols.push([]); else cols[cols.length - 1].push(l);
+        }
+        out.push(`<div class="blk-columns" data-n="${Math.min(cols.length, 4)}">${cols.slice(0, 4).map((c) => `<div class="blk-col">${blocks(c, videos, depth + 1)}</div>`).join('')}</div>`);
+        continue;
+      }
+      const body = blocks(inner, videos, depth + 1);
+      if (kind === 'toggle') { const title = ln.replace(/^:::toggle\s*/, '').trim() || 'More'; out.push(`<details class="blk-toggle"><summary>${esc(title)}</summary>${body}</details>`); }
+      else out.push(kind === 'callout' ? `<aside class="blk-callout">${body}</aside>` : kind === 'photos' ? `<div class="blk-photos">${body}</div>` : `<figure class="blk-quote">${body}</figure>`);
       continue;
     }
     if ((m = /^:::button\s+(.+?)\s*\|\s*(https?:\/\/\S+)\s*$/.exec(ln))) { flush(); out.push(`<p><a class="blk-button" href="${esc(m[2])}">${esc(m[1])}</a></p>`); i++; continue; }
+    if ((m = /^:::video\s+(\S+)\s*$/.exec(ln))) {
+      const embed = videoEmbedUrl(m[1]);
+      if (embed) { flush(); videos.push(embed); out.push(`<p>LKCVIDEO${videos.length - 1}TOKEN</p>`); i++; continue; }
+    }
     buf.push(ln); i++;
   }
   flush();
-  return sanitizeHtml(out.join('\n'), GROUP_OPTIONS);
+  return out.join('\n');
 }

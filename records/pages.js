@@ -8,24 +8,56 @@
   function slug(s, stripCommittee) { s = String(s || '').toLowerCase(); if (stripCommittee) s = s.replace(/ committee$/, ''); return s.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
 
   // Same block syntax as the website (site/src/lib/markdown.ts). Keep the two in step.
-  function renderMd(md) {
-    var lines = String(md || '').replace(/\r/g, '').split('\n'), out = [], buf = [], i = 0, m;
+  var OPENS = /^:::(callout|photos|quote|columns|toggle)(?:\s+.*)?$/;
+  function videoEmbed(raw) {
+    try {
+      var u = new URL(String(raw).trim()); if (u.protocol !== 'https:') return null;
+      var host = u.hostname.replace(/^(www\.|m\.)/, ''), id = null, m;
+      if (host === 'youtu.be') id = u.pathname.slice(1).split('/')[0];
+      else if (host === 'youtube.com') id = u.pathname === '/watch' ? u.searchParams.get('v') : /^\/(embed|shorts|live)\//.test(u.pathname) ? u.pathname.split('/')[2] : null;
+      if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) return 'https://www.youtube-nocookie.com/embed/' + id;
+      if ((host === 'vimeo.com' || host === 'player.vimeo.com') && (m = /\/(?:video\/)?(\d{6,12})(?:\/|$)/.exec(u.pathname))) return 'https://player.vimeo.com/video/' + m[1];
+    } catch (e) { /* not a link */ }
+    return null;
+  }
+  function blocks(lines, videos, depth) {
+    var out = [], buf = [], i = 0, m;
     function flush() { if (buf.length) { out.push(window.marked.parse(buf.join('\n'))); buf = []; } }
     while (i < lines.length) {
       var ln = lines[i];
-      if ((m = /^:::(callout|photos|quote)\s*$/.exec(ln))) {
-        flush(); var inner = []; i++;
-        while (i < lines.length && !/^:::\s*$/.test(lines[i])) { inner.push(lines[i]); i++; }
+      if (depth < 4 && (m = OPENS.exec(ln))) {
+        flush(); var inner = [], open = 1; i++;
+        while (i < lines.length) {
+          if (/^:::\s*$/.test(lines[i])) { open--; if (open === 0) break; } else if (OPENS.test(lines[i])) open++;
+          inner.push(lines[i]); i++;
+        }
         i++;
-        var html = window.marked.parse(inner.join('\n'));
-        out.push(m[1] === 'callout' ? '<aside class="blk-callout">' + html + '</aside>' : m[1] === 'photos' ? '<div class="blk-photos">' + html + '</div>' : '<figure class="blk-quote">' + html + '</figure>');
+        var kind = m[1];
+        if (kind === 'columns') {
+          var cols = [[]], nest = 0;
+          inner.forEach(function (l) {
+            if (/^:::\s*$/.test(l)) nest--; else if (OPENS.test(l)) nest++;
+            if (nest === 0 && /^\|\|\|\s*$/.test(l)) cols.push([]); else cols[cols.length - 1].push(l);
+          });
+          out.push('<div class="blk-columns" data-n="' + Math.min(cols.length, 4) + '">' + cols.slice(0, 4).map(function (c) { return '<div class="blk-col">' + blocks(c, videos, depth + 1) + '</div>'; }).join('') + '</div>');
+          continue;
+        }
+        var html = blocks(inner, videos, depth + 1);
+        if (kind === 'toggle') out.push('<details class="blk-toggle"><summary>' + esc(ln.replace(/^:::toggle\s*/, '').trim() || 'More') + '</summary>' + html + '</details>');
+        else out.push(kind === 'callout' ? '<aside class="blk-callout">' + html + '</aside>' : kind === 'photos' ? '<div class="blk-photos">' + html + '</div>' : '<figure class="blk-quote">' + html + '</figure>');
         continue;
       }
       if ((m = /^:::button\s+(.+?)\s*\|\s*(https?:\/\/\S+)\s*$/.exec(ln))) { flush(); out.push('<p><a class="blk-button" href="' + esc(m[2]) + '">' + esc(m[1]) + '</a></p>'); i++; continue; }
+      if ((m = /^:::video\s+(\S+)\s*$/.exec(ln))) { var emb = videoEmbed(m[1]); if (emb) { flush(); videos.push(emb); out.push('<p>LKCVIDEO' + (videos.length - 1) + 'TOKEN</p>'); i++; continue; } }
       buf.push(ln); i++;
     }
     flush();
-    return window.DOMPurify.sanitize(out.join('\n'), { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote', 'h2', 'h3', 'h4', 'hr', 'img', 'aside', 'div', 'figure', 'code'], ALLOWED_ATTR: ['href', 'src', 'alt', 'class'] });
+    return out.join('\n');
+  }
+  function renderMd(md) {
+    var videos = [], html = blocks(String(md || '').replace(/\r/g, '').split('\n'), videos, 0);
+    var clean = window.DOMPurify.sanitize(html, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote', 'h2', 'h3', 'h4', 'hr', 'img', 'aside', 'div', 'figure', 'code', 'details', 'summary'], ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'data-n'] });
+    return clean.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, function (_m, n) { return videos[+n] ? '<div class="blk-video"><iframe src="' + videos[+n] + '" title="Video" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>' : ''; });
   }
 
   // Shrink a photo in the browser before uploading (smaller, faster pages).
@@ -110,8 +142,50 @@
       tb('Callout', 'A highlighted box', function () { block(':::callout\nImportant note here.\n:::'); }),
       tb('Photo row', 'Several photos side by side', function () { block(':::photos\n![](https://)\n![](https://)\n:::'); }),
       tb('Quote', 'A pull quote', function () { block(':::quote\n“What a memorable experience.”\n— Name, Year 3\n:::'); }),
+      h('span', { class: 'sep' }),
+      tb('2 columns', 'Two columns side by side', function () { block(':::columns\n## Left column\nWrite here.\n|||\n## Right column\nWrite here.\n:::'); }),
+      tb('3 columns', 'Three columns side by side', function () { block(':::columns\n### One\nWrite here.\n|||\n### Two\nWrite here.\n|||\n### Three\nWrite here.\n:::'); }),
+      tb('Toggle', 'A section people can open and close', function () { block(':::toggle Question or title\nThe answer or details go here.\n:::'); }),
+      tb('Video', 'A YouTube or Vimeo video', function () { var u = prompt('Video link (YouTube or Vimeo)'); if (u) block(':::video ' + u.trim()); }),
+      tb('Divider', 'A thin line between sections', function () { block('---'); }),
       toggle);
-    return { get: function () { return ta.value; }, el: h('div', null, toolbar, ta, preview, fileIn, h('p', { class: 'muted' }, 'Blocks start with ::: on their own line; callouts, photo rows and quotes end with a line of just :::. Use Preview to check how it looks.')) };
+    return { get: function () { return ta.value; }, el: h('div', null, toolbar, ta, preview, fileIn, h('p', { class: 'muted' }, 'Blocks start with ::: on their own line and end with a line of just :::. Blocks can sit inside columns and toggles; in columns a line of just ||| starts the next column. Emoji work in headings. Use Preview to check how it looks.')) };
+  }
+
+  // Icon links for the group's page. Instagram, website and the join link have their own boxes above; these are everything else (Telegram, TikTok, email…).
+  // Keep the kinds in step with SOCIAL_KINDS in site/src/lib/group-links.ts and the check in sql/body_socials.sql.
+  var SOCIALS = { instagram: 'Instagram', telegram: 'Telegram', tiktok: 'TikTok', youtube: 'YouTube', facebook: 'Facebook', linkedin: 'LinkedIn', whatsapp: 'WhatsApp', discord: 'Discord', x: 'X', email: 'Email', website: 'Website' };
+  function guessKind(u) {
+    u = String(u || '').trim();
+    if (/^mailto:|^[^@\s]+@[^@\s]+\.[^@\s]+$/i.test(u)) return 'email';
+    var host = ''; try { host = new URL(u).hostname.replace(/^www\./, '').toLowerCase(); } catch (e) { return 'website'; }
+    if (/(^|\.)instagram\.com$/.test(host)) return 'instagram';
+    if (host === 't.me' || /(^|\.)telegram\.(me|org)$/.test(host)) return 'telegram';
+    if (/(^|\.)tiktok\.com$/.test(host)) return 'tiktok';
+    if (/(^|\.)youtube\.com$/.test(host) || host === 'youtu.be') return 'youtube';
+    if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.com') return 'facebook';
+    if (/(^|\.)linkedin\.com$/.test(host)) return 'linkedin';
+    if (host === 'wa.me' || /(^|\.)whatsapp\.com$/.test(host)) return 'whatsapp';
+    if (/(^|\.)discord\.(gg|com)$/.test(host)) return 'discord';
+    if (host === 'x.com' || host === 'twitter.com') return 'x';
+    return 'website';
+  }
+  function socialsField(kit, initial) {
+    var h = kit.h, rows = [], list = h('div', { class: 'socials' });
+    function addRow(kind, url) {
+      var sel = h('select', { 'aria-label': 'Type of link' }, Object.keys(SOCIALS).map(function (k) { return h('option', { value: k }, SOCIALS[k]); }));
+      sel.value = SOCIALS[kind] ? kind : 'website';
+      var inp = h('input', { value: url || '', placeholder: 'Paste the link, e.g. https://t.me/yourgroup', 'aria-label': 'Link' });
+      inp.addEventListener('input', function () { if (inp.value.trim()) sel.value = guessKind(inp.value); });
+      var row = h('div', { class: 'socialrow' }, sel, inp, h('button', { class: 'ghost sm', type: 'button', title: 'Remove', onclick: function () { rows = rows.filter(function (r) { return r.el !== row; }); row.remove(); } }, 'Remove'));
+      rows.push({ el: row, sel: sel, inp: inp }); list.appendChild(row);
+    }
+    (initial || []).forEach(function (x) { addRow(x.kind, x.kind === 'email' ? x.url : x.url); });
+    var add = h('button', { class: 'ghost sm', type: 'button', onclick: function () { if (rows.length < 10) addRow('website', ''); } }, '+ Add a link');
+    return {
+      get: function () { return rows.map(function (r) { return { kind: r.sel.value, url: r.inp.value.trim() }; }).filter(function (x) { return x.url; }); },
+      el: h('div', { class: 'card' }, h('strong', null, 'Social and contact links'), h('p', { class: 'muted' }, 'Shown as small icons on your page, next to your Instagram and website. Add Telegram, TikTok, YouTube, an email address and more; the type is picked for you from the link.'), list, add)
+    };
   }
 
   // The colours a body can choose for its chip, badge and card. None are purple (that is the site's own colour); every one takes white text.
@@ -162,8 +236,12 @@
   async function load(kit, body) {
     var h = kit.h, slot = kit.slot;
     slot.replaceChildren(h('p', { class: 'muted' }, 'Loading…'));
+    var cols = 'id,name,level,parent_committee,description,about_md,logo_url,header_url,instagram,website,recruitment_url,color';
     var r = await kit.run(async function () {
-      return kit.must(await kit.sb.from('bodies').select('id,name,level,parent_committee,description,about_md,logo_url,header_url,instagram,website,recruitment_url,color').eq('id', body.id).single());
+      // socials only exists once sql/body_socials.sql has been run; until then the page still opens, without the icon-links box.
+      var withSocials = await kit.sb.from('bodies').select(cols + ',socials').eq('id', body.id).single();
+      if (!withSocials.error) return withSocials.data;
+      return kit.must(await kit.sb.from('bodies').select(cols).eq('id', body.id).single());
     });
     if (!r) return;
     var logo = imageField(kit, r.id, 'Logo', 'Square works best. Shown as a round badge on your card and page.', r.logo_url, 400, true);
@@ -177,6 +255,8 @@
     var join = h('input', { value: r.recruitment_url || '', placeholder: 'https://forms.gle/…' });
     var ig = h('input', { value: r.instagram || '', placeholder: '@yourgroup' });
     var web = h('input', { value: r.website || '', placeholder: 'https://…' });
+    var hasSocials = Array.isArray(r.socials);
+    var socials = hasSocials ? socialsField(kit, r.socials) : null;
     var about = editor(kit, r.id, r.about_md);
     var view = r.level === 'CCA/Project' && r.parent_committee ? SITE + '/student-groups/' + slug(r.parent_committee, true) + '/' + slug(r.name) : null;
     var save = h('button', { class: 'btn', type: 'button', onclick: async function () {
@@ -184,6 +264,7 @@
       var ok = await kit.run(async function () {
         kit.must(await kit.sb.rpc('save_my_body', { b: r.id, p_description: blurb.value, p_about_md: about.get(), p_logo_url: logo.get(), p_header_url: header.get(), p_instagram: ig.value, p_website: web.value, p_recruitment_url: join.value }));
         kit.must(await kit.sb.rpc('save_my_body_color', { b: r.id, p_color: color.get() || null }));
+        if (socials) kit.must(await kit.sb.rpc('save_my_body_socials', { b: r.id, p_socials: socials.get() }));
         return true;
       }, 'Saved. The website updates within a few minutes.');
       save.disabled = false;
@@ -195,6 +276,7 @@
       color.el,
       h('div', { class: 'card' }, h('strong', null, 'Short description'), h('p', { class: 'muted' }, 'Appears on your card in the Student Groups list.'), blurb, count),
       h('div', { class: 'card' }, h('strong', null, 'Links'), kit.field('Join / sign-up link', join), kit.field('Instagram', ig), kit.field('Website', web)),
+      socials ? socials.el : null,
       h('div', { class: 'card' }, h('strong', null, 'About your group'), h('p', { class: 'muted' }, 'The full write-up on your group’s page. Add photos, links and highlighted blocks.'), about.el),
       h('div', { class: 'row' }, save));
   }

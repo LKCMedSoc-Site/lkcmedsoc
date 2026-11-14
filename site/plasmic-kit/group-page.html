@@ -1,0 +1,92 @@
+<div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#f5eff5; color:#2a0f28; font-family:'DIN', Arial, sans-serif; box-sizing:border-box;">
+
+  <!-- 1. HERO: the group's photo under a see-through wash of the group's colour. Bind the outer background and the wash to [BIND: $ctx.groupPage.color]; the photo to [BIND: $ctx.groupPage.header] (hide the photo when hasHeader is false: the colour alone is then the hero). -->
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#0f766e; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
+    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; pointer-events:none;" />
+    <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#0f766e; opacity:0.82; pointer-events:none;"></div>
+    <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; row-gap:20px; position:relative; box-sizing:border-box;">
+      <a href="/student-groups/careers" style="text-decoration:none; font-size:14px; font-weight:700; color:rgba(255,255,255,0.8);">← <span>[BIND: $ctx.groupPage.committee]</span></a>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-end; column-gap:28px; row-gap:16px;">
+        <img src="https://placehold.co/160x160/ffffff/0f766e?text=Logo" alt="Logo" style="width:112px; height:112px; border-radius:999px; border:4px solid #ffffff; background-color:#ffffff; object-fit:cover; flex:0 0 112px;" />
+        <div style="display:flex; flex-direction:column; row-gap:14px; min-width:0; flex:1 1 320px;">
+          <span style="align-self:flex-start; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ffffff; background-color:rgba(255,255,255,0.2); padding:6px 12px; border-radius:999px;">[BIND: $ctx.groupPage.committeeShort]</span>
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">[BIND: $ctx.groupPage.name]</span>
+        </div>
+      </div>
+      <span style="max-width:640px; font-size:18px; line-height:1.55; color:rgba(255,255,255,0.92);">[BIND: $ctx.groupPage.description]</span>
+      <!-- Join button (visible when $ctx.groupPage.hasJoin; link = $ctx.groupPage.join.url) and the icon row. Repeat ONE icon link over $ctx.groupPage.links (visible when hasLinks): href = currentItem.url, title = currentItem.label, and put a "Group page: social icon" inside it with Which icon = currentItem.kind. -->
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:12px; row-gap:12px;">
+        <a href="#" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:8px; background-color:#ffffff; color:#0f766e; font-size:15px; font-weight:700; padding:12px 24px; border-radius:999px;"><span>[BIND: $ctx.groupPage.join.label]</span><span>→</span></a>
+        <a href="#" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; border:1px solid rgba(255,255,255,0.4); background-color:rgba(255,255,255,0.12); color:#ffffff; box-sizing:border-box;" aria-label="Instagram"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; border:1px solid rgba(255,255,255,0.4); background-color:rgba(255,255,255,0.12); color:#ffffff; box-sizing:border-box;" aria-label="Telegram"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 3 10.5l6.5 2.5L12 20l2.8-5.2L19 18z M9.5 13 21 3"/></svg></a>
+        <a href="#" style="text-decoration:none; display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; border:1px solid rgba(255,255,255,0.4); background-color:rgba(255,255,255,0.12); color:#ffffff; box-sizing:border-box;" aria-label="Email"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5 12 13l8.5-5.5"/></svg></a>
+      </div>
+    </div>
+    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 36' preserveAspectRatio='none'%3E%3Cpolygon points='0,36 1440,0 1440,36' fill='%23f5eff5'/%3E%3C/svg%3E" alt="" style="width:100%; height:36px; object-fit:fill; position:relative;" />
+  </div>
+
+  <!-- 2. BODY: write-up on the left, leaders and committee on the right. Everything in the group colour: bind each #0f766e below to [BIND: $ctx.groupPage.color]. -->
+  <div style="display:flex; flex-direction:row; flex-wrap:wrap; width:100%; max-width:1152px; margin:0 auto; padding:36px 16px 96px; column-gap:48px; row-gap:40px; box-sizing:border-box;">
+
+    <div style="display:flex; flex-direction:column; row-gap:40px; flex:1 1 560px; min-width:0;">
+      <div style="display:flex; flex-direction:column; row-gap:16px;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#0f766e;">About [BIND: $ctx.groupPage.name]</span>
+        <!-- Put a "Group page: write-up" component here (visible when hasAbout). It draws the write-up with the students' columns, toggles, callouts, photos, buttons and videos already styled. -->
+        <span style="font-size:18px; line-height:1.65; color:#2a0f28;">[BIND: Group page: write-up]. The students write this in the Records app. They can add headings with emoji, columns, toggles, callouts, photo rows, quotes, buttons and videos.</span>
+      </div>
+
+      <!-- Coming up (visible when hasEvents). Repeat the row over $ctx.groupPage.events. -->
+      <div style="display:flex; flex-direction:column; row-gap:16px;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#0f766e;">Coming up</span>
+        <a href="/events/1" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:16px; padding:14px 0; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:64px; height:64px; border-radius:12px; background-color:#0f766e; color:#ffffff; flex:0 0 64px;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.08em;">[BIND: currentItem.monthShort]</span>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:30px; line-height:1;">[BIND: currentItem.day]</span>
+          </div>
+          <div style="display:flex; flex-direction:column; row-gap:4px; min-width:0; flex:1 1 auto;">
+            <span style="font-size:18px; font-weight:700;">[BIND: currentItem.title]</span>
+            <span style="font-size:14px; color:#6a5a69;">[BIND: currentItem.whenText] · [BIND: currentItem.venue]</span>
+          </div>
+          <span style="font-size:18px; color:#0f766e;">→</span>
+        </a>
+      </div>
+
+      <!-- From the news (visible when hasPosts). Repeat the card over $ctx.groupPage.posts. -->
+      <div style="display:flex; flex-direction:column; row-gap:16px;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#0f766e;">From the news</span>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:20px; row-gap:20px;">
+          <a href="/gazette/post" style="text-decoration:none; display:flex; flex-direction:column; row-gap:10px; flex:1 1 250px; width:100%; max-width:360px; background-color:#ffffff; border-radius:12px; padding:12px; box-sizing:border-box; color:#2a0f28;">
+            <div style="overflow:hidden; border-radius:8px; width:100%;"><img src="https://placehold.co/640x400/ebe1fa/4d0a49?text=Image" alt="" style="width:100%; object-fit:cover;" /></div>
+            <span style="font-size:12px; color:#6a5a69;">[BIND: currentItem.dateText]</span>
+            <span style="font-size:18px; font-weight:700; line-height:1.25;">[BIND: currentItem.title]</span>
+            <span style="font-size:14px; line-height:1.5; color:#6a5a69;">[BIND: currentItem.summary]</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; row-gap:28px; flex:1 1 340px; max-width:440px; min-width:0;">
+      <!-- Who leads it: a panel in the group colour. Repeat the person row over $ctx.groupPage.leaders (visible when hasLeaders; otherwise show "Leaders for this group are not listed yet."). -->
+      <div style="display:flex; flex-direction:column; row-gap:16px; background-color:#0f766e; color:#ffffff; border-radius:16px; padding:28px; box-sizing:border-box;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:40px; line-height:0.92; text-transform:uppercase; color:#ffffff;">Who leads it</span>
+        <span style="font-size:13px; color:rgba(255,255,255,0.75);">[BIND: $ctx.groupPage.ay]</span>
+        <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
+          <div style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background-color:rgba(255,255,255,0.22); color:#ffffff; font-weight:700; flex:0 0 44px;">[BIND: currentItem.initials]</div>
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:16px; font-weight:700; color:#ffffff;">[BIND: currentItem.name]</span>
+            <span style="font-size:13px; color:rgba(255,255,255,0.75);">[BIND: currentItem.title]</span>
+          </div>
+        </div>
+        <span style="border-top:1px solid rgba(255,255,255,0.25); padding-top:14px; font-size:13px; color:rgba(255,255,255,0.8);">Part of the <a href="/student-groups/careers" style="color:#ffffff; font-weight:700;">[BIND: $ctx.groupPage.committee]</a></span>
+      </div>
+
+      <!-- More from this committee (visible when hasSiblings). Repeat the chip over $ctx.groupPage.siblings; chip background = currentItem.tint, text = currentItem.color. -->
+      <div style="display:flex; flex-direction:column; row-gap:10px;">
+        <span style="font-size:14px; font-weight:700; color:#0f766e;">More from this committee</span>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:8px; row-gap:8px;">
+          <a href="#" style="text-decoration:none; background-color:rgba(15,118,110,0.12); color:#0f766e; font-size:14px; font-weight:500; padding:6px 12px; border-radius:999px;">[BIND: currentItem.name]</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

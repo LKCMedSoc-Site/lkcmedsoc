@@ -18,6 +18,9 @@ Actions: `nextPage()`, `prevPage()`, `goToPage(page)` (clamped, so 99 goes to th
 | Policy hub (documents and search) | `policyHub` |
 | Policy document hub (one document) | `policyDoc` |
 
+## groupPage
+One student group's own page. Settings: `committee` (`$ctx.params.committee`), `body` (`$ctx.params.body`); empty while designing shows a real group. Full field list, the look and the steps are in `GROUP-PAGE.md`. Pieces: **Group page: write-up** (the styled write-up) and **Group page: social icon** (an icon for `currentItem.kind`).
+
 ## groupsHub
 Settings: `limit`, `pageSize`, `defaultCommittee` (name or slug), `order` (a-z / random).
 Fields: `items`, `totalCount` (matches), `shownCount`, `allCount`, `hasMatches`, `countText`, `activeSearch`, `committees`, `selectedCommitteeMap`, `selectedCommitteeCount`, `isRecruitingOnly`, `anyRecruiting`, `isFiltering`, `spotlight` (this week's group, or null), `spotlightLeaders` (`name`, `title`).
