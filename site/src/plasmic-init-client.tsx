@@ -116,7 +116,7 @@ PLASMIC.registerComponent(SiteHeaderBlock, {
       itemType: {
         type: 'object', nameFunc: (i: { menu?: string; title?: string }) => `${i?.menu ?? ''}: ${i?.title ?? ''}`,
         fields: {
-          menu: { type: 'choice', options: ['student-groups', 'about', 'resources', 'apps'], displayName: 'Show on this menu' },
+          menu: { type: 'choice', options: ['student-groups', 'about', 'resources'], displayName: 'Show on this menu' },
           eyebrow: { type: 'string', displayName: 'Small label' }, title: { type: 'string' }, body: { type: 'string' },
           linkText: { type: 'string', displayName: 'Link text' }, url: { type: 'string', displayName: 'Link' },
         },
@@ -129,7 +129,7 @@ PLASMIC.registerComponent(SiteHeaderBlock, {
     signInText: { type: 'string', defaultValue: 'Sign in', displayName: 'Sign in button text' },
     hideOnScrollDown: { type: 'boolean', defaultValue: true, displayName: 'Slide away when scrolling down', description: 'Slides off when scrolling down past 80px and comes straight back on any scroll up. Never hides inside Studio.' },
     pinned: { type: 'choice', options: ['fixed', 'sticky'], defaultValue: 'fixed', displayName: 'Pinned to', description: 'fixed: the window, so it works anywhere on the page. sticky: only works if its parent box is as tall as the page.' },
-    previewOpenMenu: { type: 'choice', options: ['none', 'student-groups', 'about', 'resources', 'apps'], defaultValue: 'none', displayName: 'Show this drop-down open (Studio only)', description: 'Holds a drop-down open on the canvas so you can see it. Has no effect on the live site. The desktop menu shows at 1024px wide or more.' },
+    previewOpenMenu: { type: 'choice', options: ['none', 'student-groups', 'about', 'resources'], defaultValue: 'none', displayName: 'Show this drop-down open (Studio only)', description: 'Holds a drop-down open on the canvas so you can see it. Has no effect on the live site. The desktop menu shows at 1024px wide or more.' },
   },
   importPath: '@/components/SiteHeaderBlock',
 });

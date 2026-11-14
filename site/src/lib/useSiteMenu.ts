@@ -25,9 +25,9 @@ export function useSiteMenu(groups: NavItem[] = [], index: SearchItem[] = [], ov
     }).catch(() => { /* the fallback list in menu.json stays */ });
     return () => { off = true; };
   }, [groups.length]);
-  // Items edited in Plasmic replace the shared menu. A Student Groups item with no sub-items of its own still gets the committees from the database.
+  // Items edited in Plasmic replace the shared menu. Student Groups is a plain link with no drop-down.
   const custom = !!override?.length;
-  const nav = (custom ? override! : NAV).map((n) => ((n.href === '/student-groups' || n.label === 'Student Groups') && data.groups.length && (!custom || !n.children?.length) ? { ...n, children: data.groups } : n));
+  const nav = custom ? override! : NAV;
   const items: SearchItem[] = [
     ...nav.flatMap((n) => [{ label: n.label, href: n.href, kind: 'Page', hint: n.note }, ...(n.children ?? []).map((c) => ({ label: c.label, href: c.href, kind: 'Page', hint: c.note }))]),
     ...data.index,

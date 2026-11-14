@@ -21,7 +21,7 @@ Two parts: what the website serves today, and the structure agreed in discussion
 | `/about/meet-the-team` | Team | Yes |
 | `/about/houses` | House system | Yes |
 | `/about/honour-roll`, `/about/honour-roll/[ay]` | Honour roll, and one MedSoc term | Coded only |
-| `/resources` | Resources and apps | Yes |
+| `/resources` | Resources and apps (one "Resources" menu, apps included) | Yes |
 | `/policy` | Policy contents page (search, documents by tier) | Yes (readers; ExCo keep the coded page unless the design has the editing pieces) |
 | `/policy/[slug]` | One policy document (`?v=N` for an older version) | Yes (same rule); `?v=` always coded |
 | `/policy/[slug]/latest.pdf` | The document as a PDF (`?v=N` for an older version) | Coded only |

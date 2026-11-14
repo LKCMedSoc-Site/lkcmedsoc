@@ -17,7 +17,7 @@ export const APPLY = { label: 'Apply', href: 'https://www.ntu.edu.sg/medicine/ed
 /** Shortcuts shown in the mobile menu. */
 export const QUICK = [tile('Plan an event'), tile('Book a venue'), tile('Send feedback'), tile('My events')];
 
-/** A card shown beside one menu's drop-down (a promo or highlight). `menu` is the menu's name in lower case with dashes: student-groups, about, resources, apps. */
+/** A card shown beside one menu's drop-down (a promo or highlight). `menu` is the menu's name in lower case with dashes: student-groups, about, resources. */
 export type Highlight = { menu: string; eyebrow?: string; title?: string; body?: string; linkText?: string; url?: string };
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 /** Does this top-level item answer to the given menu name? "about" matches "About Us". */

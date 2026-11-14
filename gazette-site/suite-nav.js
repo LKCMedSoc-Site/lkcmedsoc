@@ -68,7 +68,7 @@
     bar.appendChild(el('a', { class: 'lkc-logo', href: site }, [document.createTextNode('LKCMedSoc')]));
     var groupsItem;
     menu.items.forEach(function (it) {
-      var isApps = it.label === 'Apps';
+      var isApps = it.label === 'Resources';
       var item = el('div', { class: 'lkc-item' + (isApps ? ' lkc-apps' : '') });
       if (it.children) {
         var btn = el('button', { type: 'button', 'aria-expanded': 'false' }, [document.createTextNode(it.label), el('span', { class: 'lkc-caret', text: '▾' })]);
