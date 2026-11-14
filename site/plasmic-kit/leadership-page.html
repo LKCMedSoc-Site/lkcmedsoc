@@ -1,0 +1,132 @@
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#f5eff5; color:#2a0f28; font-family:'DIN', Arial, sans-serif; box-sizing:border-box;">
+  
+    <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#2a0628; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
+      <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.18; pointer-events:none;" />
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; column-gap:48px; row-gap:24px; position:relative; box-sizing:border-box;">
+        <div style="display:flex; flex-direction:column; row-gap:12px; min-width:0; flex:1 1 320px;">
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">Leadership</span>
+        </div>
+        <div style="display:flex; flex-direction:column; row-gap:16px; max-width:460px; min-width:0; flex:1 1 300px; padding-bottom:6px;">
+          <span style="font-size:15px; line-height:1.6; color:#ebe1fa;">The students behind MedSoc, <span>[BIND: $ctx.peopleHub.ay]</span>: the executive committee, the committees, year representatives and house representatives.</span>
+          <a href="/about/work-with-us" style="text-decoration:none; align-self:flex-start; display:flex; flex-direction:row; align-items:center; column-gap:8px; background-color:#ff9fe6; color:#2a0628; font-size:15px; font-weight:700; padding:12px 24px; border-radius:999px;"><span>Work with us</span><span>→</span></a>
+        </div>
+      </div>
+      <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 36' preserveAspectRatio='none'%3E%3Cpolygon points='0,36 1440,0 1440,36' fill='%23f5eff5'/%3E%3C/svg%3E" alt="" style="width:100%; height:36px; object-fit:fill; position:relative;" />
+    </div>
+  
+    <div style="display:flex; flex-direction:row; justify-content:center; width:100%; background-color:#f5eff5; border-bottom:1px solid #ddd2dc; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; width:100%; max-width:1152px; margin:0 auto; padding:0 16px; box-sizing:border-box;">
+        <a href="#exco" style="text-decoration:none; padding:12px 14px; border-bottom:3px solid transparent; color:#6a5a69; font-size:14px; font-weight:700;"><span>ExCo</span></a><a href="#committees" style="text-decoration:none; padding:12px 14px; border-bottom:3px solid transparent; color:#6a5a69; font-size:14px; font-weight:700;"><span>Committees</span></a><a href="#year-reps" style="text-decoration:none; padding:12px 14px; border-bottom:3px solid transparent; color:#6a5a69; font-size:14px; font-weight:700;"><span>Year reps</span></a><a href="#house-reps" style="text-decoration:none; padding:12px 14px; border-bottom:3px solid transparent; color:#6a5a69; font-size:14px; font-weight:700;"><span>House reps</span></a>
+      </div>
+    </div>
+  
+    <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:56px 16px 96px; row-gap:72px; box-sizing:border-box;">
+  
+      <!-- EXCO. Repeat the card over $ctx.peopleHub.exco. description = a short line about the role or the person. -->
+      <div id="exco" style="display:flex; flex-direction:column; row-gap:24px;">
+        <div style="display:flex; flex-direction:column; row-gap:8px;">
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">Executive committee</span>
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">ExCo</span>
+          <span style="font-size:15px; line-height:1.55; color:#6a5a69; max-width:620px;">The officers who run MedSoc day to day.</span>
+        </div>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:16px; row-gap:16px;">
+          <div style="display:flex; flex-direction:column; row-gap:14px; flex:1 1 250px; width:100%; max-width:360px; min-width:0; box-sizing:border-box;">
+            <!-- Portrait, no box. The photo shows when hasPhoto; otherwise the initials on the mist block stay. -->
+            <div style="position:relative; width:100%; height:380px; border-radius:8px; background-color:#ebe1fa; overflow:hidden;">
+              <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:120px; line-height:0.9; color:#8e2a88; text-transform:uppercase;">[BIND: currentItem.initials]</span>
+              </div>
+              <img src="https://placehold.co/640x760/ebe1fa/8e2a88?text=Photo" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
+            </div>
+            <div style="display:flex; flex-direction:column; row-gap:4px;">
+              <span style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#8e2a88;">[BIND: currentItem.title]</span>
+              <span style="font-size:20px; font-weight:700; color:#4d0a49;">[BIND: currentItem.name]</span>
+              <span style="font-size:14px; line-height:1.55; color:#2a0f28;">[BIND: currentItem.description (Visibility: !!currentItem.description)]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- COMMITTEES. Repeat the row over $ctx.peopleHub.committees. Colour: [BIND: currentItem.color]. Whole row is one link to currentItem.link (/about/committee/[slug]). -->
+      <div id="committees" style="display:flex; flex-direction:column; row-gap:24px;">
+        <div style="display:flex; flex-direction:column; row-gap:8px;">
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">Committees</span>
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">Committees</span>
+          <span style="font-size:15px; line-height:1.55; color:#6a5a69; max-width:620px;">Each committee looks after a family of groups. Open one to see its groups and what it has been up to.</span>
+        </div>
+        <!-- One row per committee, no boxes: the name is big in the committee colour. Whole row is one link. -->
+        <div style="display:flex; flex-direction:column; width:100%; border-bottom:1px solid #ddd2dc;">
+          <a href="/about/committee/careers" style="text-decoration:none; color:inherit; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; column-gap:32px; row-gap:12px; padding:24px 0; border-top:1px solid #ddd2dc;">
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:56px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#0f766e; flex:2 1 320px; min-width:0;">[BIND: currentItem.short]</span>
+            <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px; flex:1 1 220px; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background-color:#ebe1fa; color:#4d0a49; font-size:16px; font-weight:700; flex:0 0 44px; overflow:hidden;">[BIND: currentItem.head.initials]</div>
+              <div style="display:flex; flex-direction:column;">
+                <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">[BIND: currentItem.head.title]</span>
+                <span style="font-size:15px; font-weight:700; color:#2a0f28;">[BIND: currentItem.head.name]</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:row; align-items:center; column-gap:16px; flex:0 0 auto;">
+              <span style="font-size:14px; font-weight:700; color:#0f766e;">[BIND: currentItem.groupCount] groups</span>
+              <span style="font-size:20px; font-weight:700; color:#0f766e;">→</span>
+            </div>
+          </a>
+        </div>
+      </div>
+  
+      <!-- YEAR REPS. Repeat the panel over $ctx.peopleHub.years (name, reps, streams). Inside, repeat the row over currentItem.reps, then the stream list over currentItem.streams. -->
+      <div id="year-reps" style="display:flex; flex-direction:column; row-gap:24px;">
+        <div style="display:flex; flex-direction:column; row-gap:8px;">
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">Year and stream representatives</span>
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">Year reps</span>
+          <span style="font-size:15px; line-height:1.55; color:#6a5a69; max-width:620px;">Your voice to the committee, one cohort at a time.</span>
+        </div>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:16px; row-gap:16px;">
+          <div style="display:flex; flex-direction:column; row-gap:14px; flex:1 1 200px; min-width:0; border-top:4px solid #4d0a49; padding-top:16px; box-sizing:border-box;">
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:32px; font-weight:400; line-height:0.94; text-transform:uppercase; color:#4d0a49;">[BIND: currentItem.name]</span>
+            <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
+            <div style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:999px; background-color:#ebe1fa; color:#4d0a49; font-size:15px; font-weight:700; flex:0 0 40px; overflow:hidden;">[BIND: currentItem.initials]</div>
+            <div style="display:flex; flex-direction:column;">
+              <span style="font-size:15px; font-weight:700; color:#2a0f28;">[BIND: currentItem.name]</span>
+              <span style="font-size:13px; color:#6a5a69;">[BIND: currentItem.title]</span>
+            </div>
+          </div>
+            <span style="border-top:1px solid #ddd2dc; padding-top:10px; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#8e2a88;">Stream representatives</span>
+            <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
+            <div style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:999px; background-color:#ebe1fa; color:#4d0a49; font-size:15px; font-weight:700; flex:0 0 40px; overflow:hidden;">[BIND: currentItem.initials]</div>
+            <div style="display:flex; flex-direction:column;">
+              <span style="font-size:15px; font-weight:700; color:#2a0f28;">[BIND: currentItem.name]</span>
+              <span style="font-size:13px; color:#6a5a69;">[BIND: currentItem.title]</span>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- HOUSE REPS. One panel per house, repeated over $ctx.peopleHub.houses. Each panel links to that house's page; the button links to the House System page. -->
+      <div id="house-reps" style="display:flex; flex-direction:column; row-gap:24px;">
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; column-gap:24px; row-gap:16px;">
+          <div style="display:flex; flex-direction:column; row-gap:8px;">
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">House representatives</span>
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">House reps</span>
+          <span style="font-size:15px; line-height:1.55; color:#6a5a69; max-width:620px;">The students who look after each house.</span>
+        </div>
+          <a href="/about/house-system" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:8px; background-color:#4d0a49; color:#ffffff; font-size:15px; font-weight:700; padding:12px 24px; border-radius:999px;"><span>About the house system</span><span>→</span></a>
+        </div>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:16px; row-gap:16px;">
+          <a href="/about/house-system/phoenix" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; row-gap:14px; flex:1 1 250px; width:100%; max-width:360px; min-width:0; border-top:6px solid #b91c1c; padding-top:16px; box-sizing:border-box;">
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:32px; font-weight:400; line-height:0.94; text-transform:uppercase; color:#b91c1c;">[BIND: currentItem.name]</span>
+            <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
+            <div style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:999px; background-color:#ebe1fa; color:#b91c1c; font-size:15px; font-weight:700; flex:0 0 40px; overflow:hidden;">[BIND: currentItem.initials]</div>
+            <div style="display:flex; flex-direction:column;">
+              <span style="font-size:15px; font-weight:700; color:#2a0f28;">[BIND: currentItem.name]</span>
+              <span style="font-size:13px; color:#6a5a69;">[BIND: currentItem.title]</span>
+            </div>
+          </div>
+            <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; padding-top:4px; font-size:13px; font-weight:700; color:#b91c1c;"><span>View house</span><span>→</span></div>
+          </a>
+        </div>
+      </div>
+  
+      <span style="font-size:14px; color:#6a5a69;">Looking for past teams? See the <a href="/about/honour-roll" style="color:#8e2a88; font-weight:700;">honour roll</a>.</span>
+    </div>
+  </div>

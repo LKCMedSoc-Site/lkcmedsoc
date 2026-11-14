@@ -4,6 +4,7 @@ import { DataProvider } from '@plasmicapp/loader-nextjs';
 import { fetchBodies, fetchLeaders } from '@/lib/records-client';
 import { committeesOf, slugify, sortLeaders, type Body, type Leader } from '@/lib/records';
 import { useHubSeed } from './HubSeed';
+import { assignTones, toneFor } from '@/lib/tones';
 
 export type PeopleHubRef = { setSearch: (query: string) => void; clearFilters: () => void };
 export type PeopleHubProps = { children?: ReactNode; className?: string; limit?: number };
@@ -11,7 +12,7 @@ export type PeopleHubProps = { children?: ReactNode; className?: string; limit?:
 const isStream = (l: Leader) => /stream/i.test(l.title);
 const initialsOf = (n: string) => n.split(/[\s(]+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
 const person = (l: Leader, slugs: Map<string, string>) => ({
-  name: l.name, title: l.title, photo: l.photo || '', hasPhoto: !!l.photo, initials: initialsOf(l.name),
+  name: l.name, title: l.title, description: '', photo: l.photo || '', hasPhoto: !!l.photo, initials: initialsOf(l.name),
   group: l.level === 'Committee' ? l.body.replace(/ Committee$/, '') : l.body,
   groupSlug: l.level === 'Committee' ? slugs.get(l.body) ?? slugify(l.body) : '',
   link: l.level === 'Committee' ? `/student-groups/${slugs.get(l.body) ?? slugify(l.body)}` : '',
@@ -36,7 +37,7 @@ const PeopleHub = forwardRef<PeopleHubRef, PeopleHubProps>(function PeopleHub({ 
   const hub = useMemo(() => {
     if (!data || data === 'failed') return { isLoading: !data, hasError: data === 'failed' };
     const { bodies, leaders } = data;
-    const committees = committeesOf(bodies); const slugs = new Map(committees.map((c) => [c.name, c.slug]));
+    const committees = committeesOf(bodies); const tones = assignTones(committees); const slugs = new Map(committees.map((c) => [c.name, c.slug]));
     const match = (l: Leader) => !q || `${l.name} ${l.title} ${l.body}`.toLowerCase().includes(q.toLowerCase());
     const cut = <T,>(list: T[]) => (limit > 0 ? list.slice(0, limit) : list);
     const exco = bodies.find((b) => b.level === 'ExCo');
@@ -45,6 +46,7 @@ const PeopleHub = forwardRef<PeopleHubRef, PeopleHubProps>(function PeopleHub({ 
     const yearsB = bodies.filter((b) => b.level === 'Year' && b.status === 'Active').sort((a, b) => a.name.localeCompare(b.name));
     const yearL = sortLeaders(leaders.filter((l) => l.level === 'Year' && !isStream(l))).filter(match);
     const streamL = sortLeaders(leaders.filter(isStream)).filter(match);
+    const houseBodies = bodies.filter((b) => b.level === 'House' && b.status === 'Active').sort((a, b) => a.name.localeCompare(b.name));
     return {
       isLoading: false, hasError: false, ay: data.ay, activeSearch: q, isFiltering: !!q,
       exco: cut(excoL).map((l) => person(l, slugs)), committeeHeads: cut(headsL).map((l) => person(l, slugs)),
@@ -52,11 +54,17 @@ const PeopleHub = forwardRef<PeopleHubRef, PeopleHubProps>(function PeopleHub({ 
       // Structured, for layouts that group people: each committee with its people, each year with its reps.
       committees: committees.map((c) => {
         const ppl = sortLeaders(leaders.filter((l) => l.level === 'Committee' && l.body === c.name)).filter(match).map((l) => person(l, slugs));
-        return { name: c.name, short: c.name.replace(/ Committee$/, ''), slug: c.slug, link: `/student-groups/${c.slug}`, groupCount: c.ccas.length, head: ppl[0] ?? null, people: ppl };
+        const t = tones.get(c.name)!;
+        return { name: c.name, short: c.name.replace(/ Committee$/, ''), slug: c.slug, link: `/about/committee/${c.slug}`, groupCount: c.ccas.length, head: ppl[0] ?? null, people: ppl, color: t.bg, onColor: t.fg, tint: t.tint, overlay: t.overlay };
       }),
       years: yearsB.map((y) => {
         const all = leaders.filter((l) => l.body === y.name && (l.level === 'Year' || isStream(l))).filter(match);
         return { name: y.name, reps: all.filter((l) => !isStream(l)).map((l) => person(l, slugs)), streams: all.filter(isStream).map((l) => person(l, slugs)) };
+      }),
+      // Houses, each with its reps, for the Leadership page's House reps block (links to the house's own page).
+      houses: houseBodies.map((h) => {
+        const t = toneFor(h.color, h.name);
+        return { name: h.name, slug: slugify(h.name), link: `/about/house-system/${slugify(h.name)}`, color: t.bg, onColor: t.fg, tint: t.tint, overlay: t.overlay, reps: sortLeaders(leaders.filter((l) => l.level === 'House' && l.body === h.name)).filter(match).map((l) => person(l, slugs)) };
       }),
       excoCount: excoL.length, committeeHeadCount: headsL.length, yearRepCount: yearL.length, streamRepCount: streamL.length,
     };

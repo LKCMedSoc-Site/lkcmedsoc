@@ -1,0 +1,86 @@
+<div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#f5eff5; color:#2a0f28; font-family:'DIN', Arial, sans-serif; box-sizing:border-box;">
+
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#2a0628; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
+    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.18; pointer-events:none;" />
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; column-gap:48px; row-gap:24px; position:relative; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:column; row-gap:12px; min-width:0; flex:1 1 320px;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">House System</span>
+      </div>
+      <div style="display:flex; flex-direction:column; row-gap:16px; max-width:460px; min-width:0; flex:1 1 300px; padding-bottom:6px;">
+        <span style="font-size:15px; line-height:1.6; color:#ebe1fa;">[BIND: $ctx.housesHub.intro]. Every student belongs to a house, so you have a home across years, streams and groups.</span>
+      </div>
+    </div>
+    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 36' preserveAspectRatio='none'%3E%3Cpolygon points='0,36 1440,0 1440,36' fill='%23f5eff5'/%3E%3C/svg%3E" alt="" style="width:100%; height:36px; object-fit:fill; position:relative;" />
+  </div>
+
+  <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:56px 16px 96px; row-gap:72px; box-sizing:border-box;">
+
+    <!-- HOUSES. Repeat the tile over $ctx.housesHub.items. Colour: [BIND: currentItem.color] (border, name, button). One link per card to currentItem.link. -->
+    <div style="display:flex; flex-direction:column; row-gap:24px;">
+      <div style="display:flex; flex-direction:column; row-gap:8px;">
+        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">The houses</span>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">Pick a side</span>
+        <span style="font-size:15px; line-height:1.55; color:#6a5a69; max-width:620px;">Four houses, one MedSoc. Open one to meet its representatives and see what it has been doing.</span>
+      </div>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:16px; row-gap:16px;">
+        <a href="/about/house-system/phoenix" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; justify-content:space-between; row-gap:20px; flex:1 1 250px; width:100%; max-width:276px; min-width:0; box-sizing:border-box;">
+          <div style="display:flex; flex-direction:column; row-gap:14px;">
+            <div style="position:relative; width:100%; height:160px; border-radius:8px; overflow:hidden; background-color:#b91c1c;">
+              <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:72px; line-height:0.9; color:#ffffff; text-transform:uppercase;">[BIND: currentItem.initials]</span>
+              </div>
+            </div>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:32px; font-weight:400; line-height:0.94; text-transform:uppercase; color:#b91c1c;">[BIND: currentItem.name]</span>
+            <span style="font-size:14px; line-height:1.5; color:#2a0f28;">[BIND: currentItem.description (Visibility: !!currentItem.description)]</span>
+          </div>
+          <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid #ddd2dc; font-size:13px; font-weight:700; color:#b91c1c;"><span>View house</span><span>→</span></div>
+        </a>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS: static explainer (edit the words freely; none is data). -->
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:48px; row-gap:24px; border-top:6px solid #8e2a88; padding-top:28px; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:column; row-gap:10px; flex:1 1 300px; min-width:0;">
+        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">How it works</span>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">One house, many years</span>
+      </div>
+      <span style="flex:2 1 400px; min-width:0; font-size:17px; line-height:1.65; color:#2a0f28;">[BIND: $ctx.housesHub.howItWorks] Houses bring students from every cohort together through games, mentoring and traditions, and compete across the year for the House Cup.</span>
+    </div>
+
+    <!-- HOUSE ACTIVITIES: events and news from all houses. -->
+    <div style="display:flex; flex-direction:column; row-gap:24px;">
+      <div style="display:flex; flex-direction:column; row-gap:8px;">
+        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">Activities</span>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">House activities</span>
+        
+      </div>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; column-gap:48px; row-gap:32px;">
+        <div style="display:flex; flex-direction:column; flex:1 1 420px; min-width:0;">
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">Coming up</span>
+          <!-- Repeat the row over $ctx.housesHub.events (visible when hasEvents; otherwise "Nothing scheduled yet."). Show at most 5. -->
+          <a href="/events/1" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:14px; padding:12px 0; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:52px; height:52px; border-radius:8px; background-color:#8e2a88; color:#ffffff; flex:0 0 52px;">
+            <span style="font-size:10px; font-weight:700; letter-spacing:0.08em;">[BIND: currentItem.monthShort]</span>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:24px; line-height:1;">[BIND: currentItem.day]</span>
+          </div>
+          <div style="display:flex; flex-direction:column; row-gap:2px; min-width:0; flex:1 1 auto;">
+            <span style="font-size:15px; font-weight:700;">[BIND: currentItem.title]</span>
+            <span style="font-size:13px; color:#6a5a69;">[BIND: currentItem.whenText] · [BIND: currentItem.venue]</span>
+          </div>
+          <span style="color:#8e2a88; font-size:18px; font-weight:700;">→</span>
+        </a>
+        </div>
+        <div style="display:flex; flex-direction:column; flex:1 1 420px; min-width:0;">
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">From the news</span>
+          <!-- Repeat the row over $ctx.housesHub.posts (visible when hasPosts). Show at most 5. -->
+          <a href="/gazette/post" style="text-decoration:none; display:flex; flex-direction:column; row-gap:2px; padding:12px 0; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
+          <span style="font-size:12px; color:#6a5a69;">[BIND: currentItem.dateText] · [BIND: currentItem.categoryLabel]</span>
+          <span style="font-size:15px; font-weight:700; line-height:1.3;">[BIND: currentItem.title]</span>
+        </a>
+        </div>
+      </div>
+    </div>
+
+    <span style="font-size:14px; color:#6a5a69;">Meet the house reps on the <a href="/about/leadership#house-reps" style="color:#8e2a88; font-weight:700;">leadership page</a>.</span>
+  </div>
+</div>
