@@ -1,0 +1,177 @@
+<div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#f5eff5; color:#2a0f28; font-family:'DIN', Arial, sans-serif; box-sizing:border-box;">
+
+  <!-- 1. HERO: photo overlay, decorative graphic, 36px slant -->
+  <div style="display:flex; flex-direction:column; align-items:center; justify-content:space-between; width:100%; background-color:#2a0628; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
+    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="Hero Background" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.18; pointer-events:none;" />
+    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' fill='none'%3E%3Cpath d='M200 20C215 95 255 135 330 110C275 165 290 215 365 245C285 250 260 295 295 365C230 315 170 315 105 365C140 295 115 250 35 245C110 215 125 165 70 110C145 135 185 95 200 20Z' stroke='%238e2a88' stroke-width='6' fill='%234d0a49' fill-opacity='0.35'/%3E%3Ccircle cx='200' cy='200' r='48' stroke='%23c3a1f2' stroke-width='4' stroke-dasharray='8 8'/%3E%3C/svg%3E" alt="Decorative Graphic" style="position:absolute; right:-40px; top:20px; width:380px; height:380px; opacity:0.55; pointer-events:none;" />
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; column-gap:48px; row-gap:24px; position:relative; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:column; row-gap:12px; min-width:0; flex:1 1 320px;">
+        <div style="display:flex; flex-direction:row; align-items:center; column-gap:10px;">
+          <div style="width:8px; height:8px; border-radius:999px; background-color:#ff9fe6;"></div>
+          <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#c3a1f2;">What we do</span>
+        </div>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">Events</span>
+      </div>
+      <div style="display:flex; flex-direction:column; max-width:460px; min-width:0; flex:1 1 300px; padding-bottom:6px;">
+        <span style="font-size:15px; line-height:1.6; color:#ebe1fa;">What is coming up across MedSoc. Open to everyone unless marked NTU students; you only sign in when you RSVP.</span>
+      </div>
+    </div>
+    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 36' preserveAspectRatio='none'%3E%3Cpolygon points='0,36 1440,0 1440,36' fill='%23f5eff5'/%3E%3C/svg%3E" alt="" style="width:100%; height:36px; object-fit:fill; position:relative;" />
+  </div>
+
+  <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:36px 16px 96px; row-gap:36px; box-sizing:border-box;">
+
+    <!-- 2. NOTICE STRIP (shown only when [BIND: $ctx.eventsHub.notice.show]). Pink, since yellow is retired: colour still to be confirmed. -->
+    <a href="/events" style="text-decoration:none; display:flex; flex-direction:row; justify-content:space-between; align-items:center; width:100%; background-color:#ff9fe6; color:#2a0628; padding:12px 20px; border-radius:8px; column-gap:16px; row-gap:6px; flex-wrap:wrap; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:row; align-items:center; column-gap:10px; row-gap:6px; min-width:0; flex-wrap:wrap;">
+        <span style="background-color:#2a0628; color:#ffffff; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px;">Notice</span>
+        <span style="font-size:14px; font-weight:700; color:#2a0628; min-width:0;">[BIND: $ctx.eventsHub.notice.text]</span>
+      </div>
+      <span style="font-size:14px; font-weight:700; color:#2a0628;">→</span>
+    </a>
+
+    <!-- 3. NEXT EVENT SPOTLIGHT: one link. Uses $ctx.eventsHub.next -->
+    <a href="/events" style="text-decoration:none; color:inherit; display:flex; flex-direction:row; flex-wrap:wrap; width:100%; background-color:#2a0628; border-radius:12px; overflow:hidden; box-sizing:border-box;">
+      <div style="position:relative; flex:1 1 360px; min-height:300px; background-color:#4d0a49;">
+        <img src="https://placehold.co/960x640/4d0a49/ffffff?text=next.cover" alt="Next event cover" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
+        <div style="position:absolute; top:20px; left:20px; display:flex; flex-direction:column; align-items:center; background-color:#ffffff; border-radius:8px; padding:8px 14px;">
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:40px; line-height:0.9; color:#4d0a49; text-transform:uppercase;">[BIND: $ctx.eventsHub.next.day]</span>
+          <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; color:#8e2a88; text-transform:uppercase;">[BIND: $ctx.eventsHub.next.monthShort]</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; justify-content:center; row-gap:14px; flex:1 1 360px; min-width:0; padding:32px;">
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#c3a1f2;">Next up</span>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:56px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">[BIND: $ctx.eventsHub.next.title]</span>
+        <span style="font-size:14px; font-weight:700; letter-spacing:0.04em; color:#ebe1fa; text-transform:uppercase;">[BIND: $ctx.eventsHub.next.whenText]</span>
+        <span style="font-size:14px; font-weight:700; letter-spacing:0.04em; color:#d3a6cf; text-transform:uppercase;">[BIND: $ctx.eventsHub.next.venue]</span>
+        <span style="font-size:15px; line-height:1.6; color:#ebe1fa;">[BIND: $ctx.eventsHub.next.summary (Visibility: !!$ctx.eventsHub.next.summary)]</span>
+        <div style="display:flex; flex-direction:row; align-items:center; column-gap:8px; align-self:flex-start; background-color:#ff9fe6; color:#2a0628; padding:10px 22px; border-radius:999px; font-size:13px; font-weight:700;">
+          <span>View details</span>
+          <span>→</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- 4. TOOLBAR (reference: search, Show filters, List/Month tabs; then Upcoming plus month pills) -->
+    <div style="display:flex; flex-direction:column; width:100%; row-gap:16px; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:12px; row-gap:12px; width:100%;">
+        <div style="flex:1 1 280px; min-width:0; height:48px; background-color:#ebe1fa; border:1px solid #ddd2dc; border-radius:999px; display:flex; flex-direction:row; align-items:center; padding:0 20px; box-sizing:border-box;">
+          <span style="font-size:14px; color:#6a5a69;">Search events</span>
+        </div>
+        <button style="display:flex; flex-direction:row; align-items:center; justify-content:center; column-gap:8px; height:48px; padding:0 22px; background-color:#ffffff; color:#4d0a49; border:1px solid #ddd2dc; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+          <span>Show filters</span>
+        </button>
+        <div style="display:flex; flex-direction:row; align-items:flex-end; column-gap:4px; height:48px;">
+          <div style="display:flex; flex-direction:row; align-items:center; height:48px; padding:0 14px; border-bottom:3px solid #8e2a88; box-sizing:border-box;">
+            <span style="font-size:14px; font-weight:700; color:#2a0628;">List</span>
+          </div>
+          <div style="display:flex; flex-direction:row; align-items:center; height:48px; padding:0 14px; border-bottom:3px solid transparent; box-sizing:border-box;">
+            <span style="font-size:14px; font-weight:700; color:#6a5a69;">Month</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:10px; row-gap:10px; width:100%;">
+        <!-- "Upcoming" is solid when no month is chosen (clearFilters / setMonth empty) -->
+        <button style="display:flex; flex-direction:row; align-items:center; height:40px; padding:0 18px; background-color:#4d0a49; color:#ffffff; border:1px solid #4d0a49; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:12px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+          <span>Upcoming</span>
+        </button>
+        <!-- MONTH PILL: repeat for $ctx.eventsHub.months. Light at rest, solid when [BIND: currentItem.isSelected] -->
+        <button style="display:flex; flex-direction:row; align-items:center; column-gap:8px; height:40px; padding:0 16px; background-color:#4d0a491f; color:#4d0a49; border:1px solid #4d0a49; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:12px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+            <span>[BIND: currentItem.label]</span>
+            <span style="font-size:11px; font-weight:600; opacity:0.75;">[BIND: currentItem.count]</span>
+          </button>
+        <div style="flex:1 1 20px;"></div>
+        <span style="font-size:13px; font-weight:700; color:#2a0f28;">[BIND: $ctx.eventsHub.countText]</span>
+        <button style="display:flex; flex-direction:row; align-items:center; justify-content:center; height:40px; padding:0 18px; background-color:#ffffff; color:#4d0a49; border:1px solid #ddd2dc; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:12px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+          <span>Clear filters</span>
+        </button>
+      </div>
+
+      <!-- FILTER PANEL: shown when Show filters is on -->
+      <div style="display:flex; flex-direction:column; width:100%; row-gap:14px; background-color:#ffffff; border:1px solid #ddd2dc; border-radius:12px; padding:20px; box-sizing:border-box;">
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#8e2a88;">Committee</span>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:10px; row-gap:10px;">
+          <!-- COMMITTEE CHIP: repeat for $ctx.eventsHub.committees. Light at rest, solid when selected. No dot. -->
+          <button style="display:flex; flex-direction:row; align-items:center; column-gap:8px; height:40px; padding:0 16px; background-color:#4d0a491f; color:#4d0a49; border:1px solid #4d0a49; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:12px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+            <span>[BIND: currentItem.short]</span>
+            <span style="font-size:11px; font-weight:600; opacity:0.75;">[BIND: currentItem.count]</span>
+          </button>
+        </div>
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#8e2a88;">Show only</span>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:10px; row-gap:10px;">
+          <button style="display:flex; flex-direction:row; align-items:center; height:40px; padding:0 16px; background-color:#4d0a491f; color:#4d0a49; border:1px solid #4d0a49; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:12px; font-weight:700; cursor:pointer; box-sizing:border-box;"><span>RSVP open</span></button>
+          <button style="display:flex; flex-direction:row; align-items:center; height:40px; padding:0 16px; background-color:#4d0a491f; color:#4d0a49; border:1px solid #4d0a49; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:12px; font-weight:700; cursor:pointer; box-sizing:border-box;"><span>Open to everyone</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. EVENT CARDS: ONE card, repeated for $ctx.eventsHub.items. The link is the card surface: white, 12px radius, 12px padding. -->
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; width:100%; column-gap:24px; row-gap:36px; align-items:stretch; box-sizing:border-box;">
+      <a href="/events" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; flex:1 1 250px; width:100%; max-width:360px; min-width:0; background-color:#ffffff; border-radius:12px; padding:12px; box-sizing:border-box;">
+        <div style="display:flex; flex-direction:column; justify-content:space-between; width:100%; height:100%; row-gap:16px; min-width:0;">
+          <div style="display:flex; flex-direction:column; row-gap:12px; min-width:0;">
+            <!-- Picture block works both ways: plum box with the date badge, and the cover photo over it when [BIND: currentItem.hasCover] -->
+            <div style="position:relative; width:100%; height:200px; border-radius:8px; overflow:hidden; background-color:#4d0a49;">
+              <img src="https://placehold.co/640x400/4d0a49/ffffff?text=currentItem.cover" alt="Event cover" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
+              <div style="position:absolute; top:12px; left:12px; display:flex; flex-direction:column; align-items:center; background-color:#ffffff; border-radius:8px; padding:6px 12px;">
+                <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:30px; line-height:0.9; color:#4d0a49; text-transform:uppercase;">[BIND: currentItem.day]</span>
+                <span style="font-size:11px; font-weight:700; letter-spacing:0.12em; color:#8e2a88; text-transform:uppercase;">[BIND: currentItem.monthShort]</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:center; column-gap:8px; row-gap:6px;">
+              <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:6px; row-gap:6px;">
+                <!-- Committee pill: placeholder plum. Events do not have committee colours yet; when they do, use tint and color. -->
+                <span style="background-color:#4d0a491f; color:#4d0a49; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">[BIND: currentItem.committeeShort]</span>
+                <span style="border:1px solid #4d0a49; color:#4d0a49; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">[BIND: "NTU students" (Visibility: currentItem.ntuOnly)]</span>
+              </div>
+              <span style="font-size:11px; font-weight:700; color:#8e2a88; letter-spacing:0.04em; text-transform:uppercase;">[BIND: currentItem.spotsText]</span>
+            </div>
+            <span style="font-size:12px; font-weight:700; color:#6a5a69; letter-spacing:0.04em; text-transform:uppercase;">[BIND: currentItem.whenText]</span>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:32px; font-weight:400; line-height:0.94; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: currentItem.title]</span>
+            <span style="font-size:12px; font-weight:700; color:#8e2a88; letter-spacing:0.04em; text-transform:uppercase;">[BIND: currentItem.venue]</span>
+            <span style="font-size:14px; line-height:1.5; color:#2a0f28;">[BIND: currentItem.summary (Visibility: !!currentItem.summary)]</span>
+          </div>
+          <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid #ddd2dc; font-size:13px; font-weight:700; color:#4d0a49;">
+            <span>View details</span>
+            <span>→</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 6. CALLOUT -->
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; width:100%; background-color:#ebe1fa; border:1px solid #d3a6cf; border-radius:12px; padding:36px 40px; column-gap:32px; row-gap:24px; position:relative; overflow:hidden; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:column; align-items:flex-start; row-gap:12px; max-width:540px; min-width:0; flex:1 1 300px; position:relative;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#2a0628;">Organising an event?</span>
+        <span style="font-size:15px; line-height:1.55; color:#4d0a49;">Plan it, send it for approval and book a venue from the Activities app, with one sign-in across all MedSoc tools.</span>
+        <a href="/resources" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:8px; background-color:#2a0628; color:#ffffff; padding:10px 22px; border-radius:999px; font-size:13px; font-weight:700;">
+          <span>Event resources</span>
+          <span>→</span>
+        </a>
+      </div>
+      <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220' fill='none'%3E%3Cpath d='M160 195C160 195 160 105 215 60C255 28 300 35 300 35C300 35 295 85 255 115C215 145 160 135 160 135' stroke='%234d0a49' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M160 195C160 195 155 120 95 75C45 38 15 50 15 50C15 50 20 105 65 135C110 165 160 150 160 150' stroke='%238e2a88' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M215 95L255 65M95 110L55 80' stroke='%234d0a49' stroke-width='10' stroke-linecap='round'/%3E%3C/svg%3E" alt="Line Art Graphic" style="width:240px; height:165px; object-fit:contain; position:relative;" />
+    </div>
+
+    <!-- 7. PAGINATION: current page solid plum, others white (draw both; bind the variant to currentItem.isCurrent) -->
+    <div style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:center; width:100%; padding-top:24px; border-top:1px solid #ddd2dc; column-gap:16px; row-gap:12px; box-sizing:border-box;">
+      <span style="font-size:13px; font-weight:700; color:#6a5a69;">[BIND: $ctx.eventsHub.pageText]</span>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:8px; row-gap:8px;">
+        <button style="display:flex; flex-direction:row; align-items:center; justify-content:center; column-gap:8px; height:40px; padding:0 18px; background-color:#ffffff; color:#4d0a49; border:1px solid #ddd2dc; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+          <span>←</span>
+          <span>Previous</span>
+        </button>
+        <button style="display:flex; flex-direction:row; align-items:center; justify-content:center; width:40px; height:40px; background-color:#ffffff; color:#4d0a49; border:1px solid #ddd2dc; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+          <span>[BIND: currentItem.number]</span>
+        </button>
+        <button style="display:flex; flex-direction:row; align-items:center; justify-content:center; width:40px; height:40px; background-color:#4d0a49; color:#ffffff; border:1px solid #4d0a49; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+          <span>[BIND: currentItem.number]</span>
+        </button>
+        <button style="display:flex; flex-direction:row; align-items:center; justify-content:center; column-gap:8px; height:40px; padding:0 18px; background-color:#ffffff; color:#4d0a49; border:1px solid #ddd2dc; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+          <span>Next</span>
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

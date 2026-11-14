@@ -1,0 +1,64 @@
+<div style="display:flex; flex-direction:column; width:100%; row-gap:16px; box-sizing:border-box;">
+
+  <!-- MONTH BAR: previous / next, month name (opens the picker), count. No Upcoming button in Month view. -->
+  <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:10px; row-gap:10px; width:100%; position:relative;">
+    <!-- PREVIOUS: onClick -> Events hub > prevMonth -->
+    <button aria-label="Previous month" style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; background-color:#ffffff; border:1px solid #ddd2dc; border-radius:999px; cursor:pointer; padding:0; box-sizing:border-box;"><img alt="" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234d0a49' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E" style="width:18px; height:18px;" /></button>
+    <!-- NEXT: onClick -> Events hub > nextMonth -->
+    <button aria-label="Next month" style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; background-color:#ffffff; border:1px solid #ddd2dc; border-radius:999px; cursor:pointer; padding:0; box-sizing:border-box;"><img alt="" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234d0a49' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E" style="width:18px; height:18px;" /></button>
+    <!-- MONTH NAME: onClick -> flip page state showMonthPicker -->
+    <button style="display:flex; flex-direction:row; align-items:center; column-gap:10px; height:44px; padding:0 20px; background-color:#4d0a49; color:#ffffff; border:1px solid #4d0a49; border-radius:999px; font-family:'DIN', Arial, sans-serif; font-size:14px; font-weight:700; cursor:pointer; box-sizing:border-box;">
+      <img alt="" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E" style="width:16px; height:16px;" />
+      <span>[BIND: $ctx.eventsHub.calendar.label]</span>
+    </button>
+    <div style="flex:1 1 20px;"></div>
+    <span style="font-size:13px; font-weight:700; color:#2a0f28;">[BIND: $ctx.eventsHub.calendar.eventCount] events this month</span>
+
+    <!-- MONTH PICKER (shown when showMonthPicker) -->
+    <div style="position:absolute; top:52px; left:108px; z-index:5; display:flex; flex-direction:column; row-gap:8px; width:320px; max-width:100%; background-color:#ffffff; border:1px solid #ddd2dc; border-radius:12px; padding:16px; box-shadow:0 12px 32px rgba(42,6,40,0.16); box-sizing:border-box;">
+      <div style="display:flex; flex-direction:row; align-items:center; justify-content:space-between;">
+        <!-- onClick -> setCalendarMonth(($ctx.eventsHub.calendar.year - 1) + "-01") -->
+        <button aria-label="Previous year" style="width:32px; height:32px; background-color:transparent; border:0; border-radius:999px; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center;"><img alt="" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234d0a49' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 5l-7 7 7 7'/%3E%3C/svg%3E" style="width:16px; height:16px;" /></button>
+        <span style="font-size:14px; font-weight:700; color:#2a0628;">[BIND: $ctx.eventsHub.calendar.year]</span>
+        <!-- onClick -> setCalendarMonth(($ctx.eventsHub.calendar.year + 1) + "-01") -->
+        <button aria-label="Next year" style="width:32px; height:32px; background-color:transparent; border:0; border-radius:999px; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center;"><img alt="" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234d0a49' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E" style="width:16px; height:16px;" /></button>
+      </div>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; width:100%;">
+        <!-- MONTH CELL: repeat for $ctx.eventsHub.calendar.months (12). onClick -> setCalendarMonth(currentItem.key). Solid when isSelected, bold when hasEvents. -->
+        <button style="flex:0 0 25%; height:44px; background-color:#4d0a49; color:#ffffff; border:0; border-radius:8px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer; box-sizing:border-box;">[BIND: currentItem.short]</button>
+        <button style="flex:0 0 25%; height:44px; background-color:transparent; color:#2a0628; border:0; border-radius:8px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:700; cursor:pointer; box-sizing:border-box;">Dec</button>
+        <button style="flex:0 0 25%; height:44px; background-color:transparent; color:#6a5a69; border:0; border-radius:8px; font-family:'DIN', Arial, sans-serif; font-size:13px; font-weight:400; cursor:pointer; box-sizing:border-box;">Jan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEEKDAY HEADER: repeat for $ctx.eventsHub.calendar.weekdays (currentItem is the text) -->
+  <div style="display:flex; flex-direction:row; width:100%;">
+    <span style="flex:1 1 0; min-width:0; padding:0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">Sun</span>
+    <span style="flex:1 1 0; min-width:0; padding:0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">Mon</span>
+    <span style="flex:1 1 0; min-width:0; padding:0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">Tue</span>
+    <span style="flex:1 1 0; min-width:0; padding:0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">Wed</span>
+    <span style="flex:1 1 0; min-width:0; padding:0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">Thu</span>
+    <span style="flex:1 1 0; min-width:0; padding:0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">Fri</span>
+    <span style="flex:1 1 0; min-width:0; padding:0 8px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">Sat</span>
+  </div>
+
+  <!-- GRID. WEEK ROW repeats for calendar.weeks; DAY CELL repeats for currentItem.days (7). Out-of-month cells: page colour, muted number. -->
+  <div style="display:flex; flex-direction:column; width:100%; background-color:#ffffff; border:1px solid #ddd2dc; border-radius:12px; overflow:hidden; box-sizing:border-box;">
+    <!-- WEEK ROW -->
+    <div style="display:flex; flex-direction:row; width:100%; border-bottom:1px solid #ddd2dc;">
+      <!-- DAY CELL -->
+      <div style="display:flex; flex-direction:column; row-gap:6px; flex:1 1 0; min-width:0; min-height:124px; padding:8px; border-right:1px solid #ddd2dc; box-sizing:border-box; background-color:#ffffff;">
+        <span style="display:flex; align-items:center; justify-content:center; align-self:flex-start; min-width:28px; height:28px; padding:0 8px; border-radius:999px; font-size:13px; font-weight:700; color:#8e2a88; box-sizing:border-box;">[BIND: currentItem.day]</span>
+        <!-- EVENT: repeat for currentItem.events; link to currentItem.link -->
+        <a href="/events" style="display:flex; flex-direction:column; row-gap:2px; min-width:0; background-color:#ebe1fa; border-radius:6px; padding:6px 8px; text-decoration:none; box-sizing:border-box;">
+          <span style="font-size:11px; font-weight:600; color:#6a5a69;">[BIND: currentItem.startTime]</span>
+          <span style="font-size:12px; font-weight:700; line-height:1.2; color:#4d0a49; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">[BIND: currentItem.title]</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPTY MONTH: shown when calendar.eventCount is 0 -->
+  <span style="font-size:14px; color:#6a5a69;">No events this month. Try the arrows, or clear the filters.</span>
+</div>
