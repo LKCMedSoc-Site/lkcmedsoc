@@ -19,11 +19,11 @@ export function EventTag({ event, look = 'pill', className = '' }: Common & { lo
   return <span className={`inline-block text-xs font-bold uppercase tracking-wider ${look === 'bar' ? 'w-full px-4 py-2' : 'rounded-full px-3 py-1'} ${className}`} style={{ background: solid ? e.color : e.tint, color: solid ? e.onColor : e.color }}>{e.committeeShort}</span>;
 }
 
-/** A white date badge (day over month) with the day and month in the committee colour. */
+/** A white date badge (day over month) with the day and month in the committee colour. It sits above a Cover fill; give it a margin to inset it. */
 export function EventDateBadge({ event, className = '' }: Common) {
   const e = useEv(event);
   return (
-    <span className={`inline-flex flex-col items-center rounded-lg bg-white px-3 py-1.5 ${className}`} style={{ color: e.color }}>
+    <span className={`relative z-[1] inline-flex flex-col items-center self-start rounded-lg bg-white px-3 py-1.5 ${className}`} style={{ color: e.color }}>
       <span className="display text-3xl leading-[0.9] uppercase">{e.day}</span>
       <span className="text-[11px] font-bold uppercase tracking-[0.12em]">{e.monthShort}</span>
     </span>
