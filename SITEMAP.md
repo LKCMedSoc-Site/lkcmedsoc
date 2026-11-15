@@ -43,3 +43,6 @@ Old Wix and renamed addresses redirect (see `site/next.config.ts`): `/news` and 
 - Back links: Leadership, House system and Honour roll go "← About"; a committee goes "← Leadership"; a house goes "← House system"; a term goes "← Honour roll".
 - Still to do: Plasmic pages at the new paths (the HTML is in `site/plasmic-kit`: `about-page.html`, `leadership-page.html`, `house-system-page.html`, `house-page.html`, `committee-page.html`), the hubs they need (`committeePage`, `housesHub`, `housePage`), and a body filter so committee and house pages can show their own events and news.
 - The plain text pages (`/president-message`, `/about/work-with-us`, `/about/alumni`) are unchanged.
+
+## House Cup (to build)
+House points and ranking are not in the schema yet. The house page has a placing block and the house system page has a `#house-cup` placeholder. The build list is in `site/plasmic-kit/ABOUT-PAGES.md`, section "To do: House Cup".
