@@ -5,6 +5,7 @@ import type { Post } from './posts';
 import { fmtTime, postDate, whenText, ymd } from './dates';
 import { photoUrl, storageUrl } from './supabase';
 import { assignTones, toneFor, type Tone } from './tones';
+import { currentYear, EMPTY_PLACING, placingOf, pointsText, rankLabel, updatedText, type HouseCupYear, type Placing } from './house-cup';
 
 const SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const img = (v: string | null) => (v ? storageUrl('body-images', v) : '');
@@ -24,10 +25,12 @@ type GroupItem = { name: string; description: string; initials: string; link: st
 type Colours = { color: string; onColor: string; tint: string; overlay: string };
 
 const DEFAULT = toneFor(null, 'LKCMedSoc');
-const BASE_EMPTY = { isLoading: false, notFound: false, name: '', short: '', description: '', initials: '', link: '', logo: '', hasLogo: false, header: '', hasHeader: false, ...colours(DEFAULT), aboutHtml: '', hasAbout: false, ay: '', leaders: [] as Person[], hasLeaders: false, groups: [] as GroupItem[], hasGroups: false, events: [] as EventItem[], hasEvents: false, posts: [] as PostItem[], hasPosts: false };
+const BASE_EMPTY = { isLoading: false, notFound: false, name: '', short: '', description: '', initials: '', link: '', logo: '', hasLogo: false, header: '', hasHeader: false, ...colours(DEFAULT), aboutHtml: '', hasAbout: false, ay: '', leaders: [] as Person[], hasLeaders: false, groups: [] as GroupItem[], hasGroups: false, events: [] as EventItem[], hasEvents: false, posts: [] as PostItem[], hasPosts: false,
+  // House pages only (empty on committee pages): the house's place in the House Cup. See house-cup.ts and plasmic-kit/ABOUT-PAGES.md.
+  currentPlacing: EMPTY_PLACING as Placing, hasCurrentPlacing: false, placings: [] as Placing[], hasPlacings: false, hasPastPlacings: false };
 export type BodyPageData = typeof BASE_EMPTY;
 
-type Src = { bodies: Body[]; leaders: Leader[]; ay: string; events: PublicEvent[]; posts: Post[]; renderAbout: (md: string) => string; loading?: boolean };
+type Src = { bodies: Body[]; leaders: Leader[]; ay: string; events: PublicEvent[]; posts: Post[]; cups?: HouseCupYear[]; renderAbout: (md: string) => string; loading?: boolean };
 
 /** One committee ($ctx.committeePage) or one house ($ctx.housePage). A committee's events and news include those of its groups. */
 export function buildBodyPage(o: Src & { kind: 'committee' | 'house'; slug: string }): BodyPageData {
@@ -47,6 +50,11 @@ export function buildBodyPage(o: Src & { kind: 'committee' | 'house'; slug: stri
   const events = o.events.filter((e) => names.has(e.body ?? '')).slice(0, 6).map(eventItem);
   const posts = o.posts.filter((p) => names.has(p.bodyName)).slice(0, 6).map(postItem);
   const aboutHtml = b.about ? o.renderAbout(b.about) : '';
+  // House Cup: this year's place (only if this year has results) and the places in earlier years, newest first.
+  const cups = o.kind === 'house' ? o.cups ?? [] : [];
+  const cur = currentYear(cups, o.ay);
+  const currentPlacing = cur ? placingOf(cur, b.name) : null;
+  const placings = cups.filter((y) => y !== cur).map((y) => placingOf(y, b.name)).filter((p): p is Placing => !!p);
   return {
     ...BASE_EMPTY,
     name: b.name, short: b.name.replace(/ Committee$/, ''), description: b.description ?? '', initials: initialsOf(b.name),
@@ -54,6 +62,7 @@ export function buildBodyPage(o: Src & { kind: 'committee' | 'house'; slug: stri
     logo: img(b.logo), hasLogo: !!b.logo, header: img(b.header), hasHeader: !!b.header, ...colours(tone),
     aboutHtml, hasAbout: !!aboutHtml, ay: o.ay, leaders: people.map(personOf), hasLeaders: people.length > 0,
     groups, hasGroups: groups.length > 0, events, hasEvents: events.length > 0, posts, hasPosts: posts.length > 0,
+    currentPlacing: currentPlacing ?? EMPTY_PLACING, hasCurrentPlacing: !!currentPlacing, placings, hasPlacings: !!currentPlacing || placings.length > 0, hasPastPlacings: placings.length > 0,
   };
 }
 
@@ -71,9 +80,19 @@ export function buildHousesHub(o: Src & { intro?: string; howItWorks?: string })
   });
   const events = o.events.filter((e) => names.has(e.body ?? '')).slice(0, 6).map(eventItem);
   const posts = o.posts.filter((p) => names.has(p.bodyName)).slice(0, 6).map(postItem);
+  // House Cup table for the current year: houses in rank order, and the reasons with their weights.
+  const cup = currentYear(o.cups ?? [], o.ay);
+  const linkOf = (name: string) => items.find((i) => i.name === name)?.link ?? '';
+  const itemOf = (name: string) => items.find((i) => i.name === name);
+  const cupData = {
+    ay: cup?.ay ?? '', isFinal: !!cup?.is_final, statusText: cup ? (cup.is_final ? 'Final results' : 'Results so far') : '', updatedText: cup ? updatedText(cup) : '',
+    rows: (cup?.houses ?? []).map((h) => ({ rank: h.rank, rankLabel: rankLabel(h.rank), name: h.name, link: linkOf(h.name), points: pointsText(h.total), color: itemOf(h.name)?.color ?? '', onColor: itemOf(h.name)?.onColor ?? '', tint: itemOf(h.name)?.tint ?? '', initials: itemOf(h.name)?.initials ?? '' })),
+    reasons: (cup?.reasons ?? []).map((r) => ({ name: r.name, weight: r.weight, weightText: `${pointsText(r.effective_weight)}%` })),
+  };
   return {
     isLoading: !!o.loading, hasError: false, intro: o.intro || HOUSES_INTRO, howItWorks: o.howItWorks || HOUSES_HOW, ay: o.ay,
     items, count: items.length, countText: `${items.length} house${items.length === 1 ? '' : 's'}`,
     events, hasEvents: events.length > 0, posts, hasPosts: posts.length > 0,
+    cup: cupData, hasCup: cupData.rows.length > 0,
   };
 }

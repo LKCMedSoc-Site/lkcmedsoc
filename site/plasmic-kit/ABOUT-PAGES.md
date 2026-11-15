@@ -27,21 +27,39 @@ Four pages from the agreed structure in `SITEMAP.md`. The HTML is the look only;
 - **Side column:** "Who leads it" (`$ctx.housePage.leaders`, already supplied by `buildBodyPage`), "Coming up" (`events`) and "From the news" (`posts`).
 - The old "Meet the house" portrait block and "House activities" section were removed; their content lives in the side column.
 
-## To do: House Cup (house points and ranking)
-**Status: schema and the entry page are built (steps 1, 2, 7 as redesigned); the Plasmic lookups (3-5) and Studio bindings (8) are still to do.**
-Design as built: `sql/house_cup.sql` (run). Each AY has its own reasons, each with ONE entry (points per house) and a weight %. A house's score for a reason is its share of the pool times the weight; totals are out of 100; ties share a rank; the public never gets raw points. Read it with `activities.house_cup(ay)` (anon) and `house_cup_years()`. ExCo edits on the activities site at `#/house-cup` (`activities-site/housecup.js`); a year can be marked final to lock it. The older plan below (`house_points` table) is superseded.
-Nothing exists yet: the schema has no house points or ranking. The house page and house system page HTML already have places waiting for it. Build:
+## House Cup data (built: lookups are live, Studio bindings still to do)
+House points are entered by ExCo on the activities site (`#/house-cup`, built in `activities-site/housecup.js`). Database: `sql/house_cup.sql`.
 
-1. **Schema (SQL in `sql/`, same style as `honour_roll.sql`).** Suggested: `house_points(id, house_id, ay, points, reason, awarded_on, event_id null)`, plus a view `house_cup_totals(house_id, ay, points, rank)` that sums per house per AY and ranks them (ties share a rank). Houses are rows in `bodies` with `level = 'House'`. Decide and record whether AY results are "final" once the year closes (e.g. `house_cup_years(ay, is_final)`).
-2. **Public read access.** Anonymous read on the totals view (and on `house_points` if a breakdown is shown), as with `stream_reps_public.sql` / `vice_chairs_public.sql`. Check RLS.
-3. **Data loader.** A function in `site/src/lib/` (like `honour.ts`) returning per-house totals and ranks for every AY, using `ay_layer.sql` for AY labels and current AY.
-4. **Extend `buildBodyPage` (kind `house`) in `site/src/lib/body-page.ts`** with:
-   - `currentPlacing`: `{ ay, rank, rankLabel ("1st", "2nd"…), points, isFinal }`
-   - `placings`: list of `{ ay, rank, rankLabel, points }`, newest first, past years only
-   - `hasPlacings`: true when there is any current or past placing
-   Add the same empty values to `BASE_EMPTY`. `HousePageHub` (`components/hubs/BodyHubs.tsx`) passes them through; re-register if props change (`plasmic-init-client.tsx`) and use the "props refresh" in Studio.
-5. **Extend `buildHousesHub`** with the current AY's ranked list: `cup: { ay, isFinal, updatedText, rows: [{ rank, rankLabel, name, color, link, points }] }` and `hasCup`.
-6. **House system page (`house-system-page.html`).** Replace the `id="house-cup"` placeholder with the ranked table (keep the id). Each row links to the house. Show the AY, a "final / so far" note and the last-updated date.
-7. **Write path.** Decide who records points and where (a form in `records/`, or an import). Use the policy for who may award points, and log `awarded_on` and `reason`.
-8. **Bind in Studio** once the data is live: house page (`currentPlacing`, `placings` repeat, empty state, `hasPlacings` visibility) and house system page (cup table). The house colour styling is already in the HTML.
-9. **Follow-ups.** Add the House Cup to `SITEMAP.md` if it gets its own page or menu entry; add a House Cup figure to the Leadership page's house panels if wanted.
+**How the score works (so the copy is right).** Each academic year (AY) has its own list of *reasons* (Sports Day, Quiz Night...). A reason has one entry: points for every house, and a weight (%). A house's score for a reason is its **share** of the points all houses earned for that reason, times the weight. A house's `points` below is its **total score out of 100**, not raw points. Ties share a rank. The public never receives raw points. Weights are scaled to 100 if they do not add up yet, and a year is `isFinal` once ExCo locks it.
+
+**Where the data comes from.** `src/lib/house-cup.ts` loads `activities.house_cup(ay)` for every year that has results. It is seeded on the server like the other hubs (`hub-seed.ts`, only when the page uses `HousePageHub` or `HousesHub`) and falls back to loading in the browser. Plasmic registration did not change, so no props refresh is needed in Studio.
+
+### `$ctx.housePage` (HousePageHub), new fields
+| Field | Type | Meaning |
+|---|---|---|
+| `currentPlacing` | object | This house's place in the **current AY** (the year in `$ctx.housePage.ay`). Fields below. Empty strings when the year has no results yet. |
+| `hasCurrentPlacing` | bool | Use for visibility of the "current placing" figure. |
+| `placings` | list | Places in **every other year** that has results, newest first. Each item has the same fields as `currentPlacing`. |
+| `hasPastPlacings` | bool | Visibility of the "Over the years" strip; show the empty state when false. |
+| `hasPlacings` | bool | True if there is a current or any past placing. Visibility of the whole House Cup block (`id="house-cup"`). |
+
+Fields of `currentPlacing` and of each `placings` item (`currentItem.` inside the repeat): `ay` ("AY26/27"), `rank` (number), `rankLabel` ("1st", "2nd"), `points` (text, score out of 100, e.g. "55.5"), `isFinal` (bool), `statusText` ("Final" or "So far"). On committee pages these are all empty.
+
+### `$ctx.housesHub` (HousesHub), new fields
+| Field | Type | Meaning |
+|---|---|---|
+| `cup` | object | The current AY's table. |
+| `hasCup` | bool | Visibility of the ranked table; show a "no results yet" line when false. Keep `id="house-cup"` on the block either way. |
+
+`cup.ay` ("AY26/27"), `cup.isFinal`, `cup.statusText` ("Final results" or "Results so far"), `cup.updatedText` ("Updated 12 Nov"). `cup.rows`: houses in rank order (repeat over this), each with `rank`, `rankLabel`, `name`, `link` (the house page), `points` (score out of 100), and the house colours `color`, `onColor`, `tint`, `initials`. `cup.reasons`: the year's reasons for a "how it is scored" list, each with `name` and `weightText` ("20%").
+
+Rows tie on rank (two houses can both be "2nd"), so show `rankLabel`, not the row position.
+
+### Where it goes in the HTML
+- `house-page.html`: the `id="house-cup"` block (current placing, "Over the years").
+- `house-system-page.html`: the `id="house-cup"` block (ranked table).
+
+### Still to do
+- Bind the two HTML pages in Studio (use `plasmic-kit/STUDIO-BROWSER-GUIDE.md`).
+- Optional: a House Cup figure on the Leadership page's house panels; a menu entry if it gets its own page.
+- Who edits: only ExCo today (`activities.is_exco()` in `house_cup_guard`).

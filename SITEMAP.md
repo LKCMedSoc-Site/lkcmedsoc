@@ -44,5 +44,5 @@ Old Wix and renamed addresses redirect (see `site/next.config.ts`): `/news` and 
 - Still to do: Plasmic pages at the new paths (the HTML is in `site/plasmic-kit`: `about-page.html`, `leadership-page.html`, `house-system-page.html`, `house-page.html`, `committee-page.html`), the hubs they need (`committeePage`, `housesHub`, `housePage`), and a body filter so committee and house pages can show their own events and news.
 - The plain text pages (`/president-message`, `/about/work-with-us`, `/about/alumni`) are unchanged.
 
-## House Cup (to build)
-House points are built (`sql/house_cup.sql`; editing page at activities site `#/house-cup`); the public lookups and Studio bindings are not. The house page has a placing block and the house system page has a `#house-cup` placeholder. The build list is in `site/plasmic-kit/ABOUT-PAGES.md`, section "To do: House Cup".
+## House Cup
+House points are built (`sql/house_cup.sql`; editing page at activities site `#/house-cup`) and the lookups are live (`housePage.currentPlacing`, `housesHub.cup`). Studio bindings are not done. The house page has a placing block and the house system page has a `#house-cup` block, both waiting for the Studio bindings. Fields and where they go are in `site/plasmic-kit/ABOUT-PAGES.md`, section "House Cup data".

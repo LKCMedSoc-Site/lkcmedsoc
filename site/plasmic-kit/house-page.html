@@ -19,7 +19,7 @@
       <!-- Main column: the write-up (if the house has one) and the House Cup placing. -->
       <div style="display:flex; flex-direction:column; row-gap:56px; flex:1 1 560px; min-width:0;">
         <span style="font-size:18px; line-height:1.65; color:#1a1a1a;">[BIND: Group page: write-up] (visible when hasAbout). Optional. Houses can have a write-up like groups do.</span>
-      <!-- HOUSE CUP: current placing, and placing over the years. Needs housePage.currentPlacing {rankLabel, points, ay, isFinal} and housePage.placings (list: ay, rankLabel, rank, points; newest first). Visible when hasPlacings. Data comes from the house points work (another agent). -->
+      <!-- HOUSE CUP: data is live, see ABOUT-PAGES.md "House Cup data". Visible when $ctx.housePage.hasPlacings. Current placing: $ctx.housePage.currentPlacing {rankLabel, points (score out of 100), ay, isFinal, statusText}, visible when hasCurrentPlacing. "Over the years": repeat over $ctx.housePage.placings (ay, rankLabel, points), visible when hasPastPlacings; otherwise show the empty line. -->
       <div id="house-cup" style="display:flex; flex-direction:column; row-gap:28px;">
         <div style="display:flex; flex-direction:column; row-gap:8px;">
           <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b91c1c;">House Cup</span>
@@ -30,7 +30,7 @@
           <div style="display:flex; flex-direction:column; row-gap:6px; flex:0 0 auto;">
             <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#666666;">[BIND: $ctx.housePage.currentPlacing.ay] · current placing</span>
             <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:140px; line-height:0.85; text-transform:uppercase; color:#b91c1c;">[BIND: $ctx.housePage.currentPlacing.rankLabel]</span>
-            <span style="font-size:15px; color:#666666;">[BIND: $ctx.housePage.currentPlacing.points] points so far</span>
+            <span style="font-size:15px; color:#666666;">[BIND: $ctx.housePage.currentPlacing.points] out of 100 · [BIND: $ctx.housePage.currentPlacing.statusText]</span>
           </div>
           <!-- Nav to this AY's results on the house system page -->
           <a href="/about/house-system#house-cup" style="text-decoration:none; align-self:flex-end; font-size:15px; font-weight:700; color:#b91c1c; border-bottom:2px solid #b91c1c; padding-bottom:2px;">See this year's House Cup results →</a>
