@@ -42,7 +42,28 @@ export function updatedText(y: HouseCupYear): string {
 export function placingOf(y: HouseCupYear, houseName: string) {
   const h = y.houses.find((x) => x.name === houseName);
   if (!h) return null;
-  return { ay: y.ay, rank: h.rank, rankLabel: rankLabel(h.rank), points: pointsText(h.total), isFinal: y.is_final, statusText: y.is_final ? 'Final' : 'So far' };
+  return { ay: y.ay, rank: h.rank, rankLabel: rankLabel(h.rank), points: pointsText(h.total), isFinal: y.is_final, statusText: y.is_final ? 'Final' : 'So far', isChampion: y.is_final && h.rank === 1 };
 }
 export type Placing = NonNullable<ReturnType<typeof placingOf>>;
-export const EMPTY_PLACING: Placing = { ay: '', rank: 0, rankLabel: '', points: '', isFinal: false, statusText: '' };
+export const EMPTY_PLACING: Placing = { ay: '', rank: 0, rankLabel: '', points: '', isFinal: false, statusText: '', isChampion: false };
+
+/** Where one house earned its score this year: one row per reason, "weighted of max" (e.g. 14.2 of 20). */
+export function breakdownOf(y: HouseCupYear, houseName: string) {
+  const h = y.houses.find((x) => x.name === houseName);
+  if (!h) return [];
+  return y.reasons.map((r) => {
+    const cell = r.cells.find((c) => c.house_id === h.id);
+    return { name: r.name, weightText: `${pointsText(r.effective_weight)}%`, scoreText: pointsText(cell?.weighted ?? 0), maxText: pointsText(r.effective_weight) };
+  });
+}
+
+/** "3.4 points behind Phoenix" or "Ahead of Phoenix by 1.2 points"; empty when it is a lone house or an exact tie at the top. */
+export function gapTextOf(y: HouseCupYear, houseName: string): string {
+  const sorted = y.houses.slice().sort((a, b) => b.total - a.total);
+  const me = sorted.find((x) => x.name === houseName);
+  if (!me || sorted.length < 2) return '';
+  const best = sorted[0];
+  if (best.name !== me.name) { const d = best.total - me.total; return d > 0 ? `${pointsText(d)} points behind ${best.name}` : ''; }
+  const next = sorted[1], d = me.total - next.total;
+  return d > 0 ? `Ahead of ${next.name} by ${pointsText(d)} points` : '';
+}

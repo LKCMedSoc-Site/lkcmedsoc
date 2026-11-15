@@ -49,10 +49,37 @@
     </div>
 
     <!-- HOUSE CUP: data is live, see ABOUT-PAGES.md "House Cup data". Keep id="house-cup": each house page links to /about/house-system#house-cup. Repeat a row over $ctx.housesHub.cup.rows (rankLabel, name, link, points out of 100, colour fields), visible when $ctx.housesHub.hasCup, else a "no results yet" line. Heading uses cup.ay; also cup.statusText and cup.updatedText. cup.reasons lists the weights. -->
-    <div id="house-cup" style="display:flex; flex-direction:column; row-gap:16px;">
-      <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b91c1c;">House Cup</span>
-      <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: $ctx.housesHub.cup.ay] results</span>
-      <span style="font-size:16px; color:#6a5a69;">[BIND: $ctx.housesHub.cup.statusText] · [BIND: $ctx.housesHub.cup.updatedText]. Ranked houses go here: repeat over $ctx.housesHub.cup.rows.</span>
+    <div id="house-cup" style="display:flex; flex-direction:column; row-gap:28px;">
+      <div style="display:flex; flex-direction:column; row-gap:8px;">
+        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">House Cup</span>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: $ctx.housesHub.cup.ay] results</span>
+        <span style="font-size:14px; color:#6a5a69;">[BIND: $ctx.housesHub.cup.statusText] · [BIND: $ctx.housesHub.cup.updatedText]</span>
+      </div>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; column-gap:48px; row-gap:32px;">
+        <!-- Ranked houses. Repeat the row over $ctx.housesHub.cup.rows (visible when hasCup; otherwise "No results yet this year."). No boxes: a hairline between rows. One link per row to currentItem.link. Bar width = points as a percent: style ({ width: currentItem.points + '%', backgroundColor: currentItem.color }). Show rankLabel, never the row number (ties share a rank). -->
+        <div style="display:flex; flex-direction:column; flex:2 1 460px; min-width:0;">
+          <a href="/about/house-system/phoenix" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:20px; padding:18px 0; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:56px; line-height:0.9; text-transform:uppercase; color:#0f766e; flex:0 0 96px;">[BIND: currentItem.rankLabel]</span>
+            <div style="display:flex; flex-direction:column; row-gap:8px; flex:1 1 auto; min-width:0;">
+              <div style="display:flex; flex-direction:row; align-items:baseline; justify-content:space-between; column-gap:12px;">
+                <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:30px; line-height:1; text-transform:uppercase; color:#0f766e;">[BIND: currentItem.name]</span>
+                <span style="font-size:15px; font-weight:700; color:#2a0f28;">[BIND: currentItem.points] <span style="font-weight:400; color:#6a5a69;">/ 100</span></span>
+              </div>
+              <div style="width:100%; height:8px; border-radius:999px; background-color:#ebe1fa; overflow:hidden;">
+                <div style="width:55%; height:8px; border-radius:999px; background-color:#0f766e;"></div>
+              </div>
+            </div>
+          </a>
+        </div>
+        <!-- How it is scored. Repeat the row over $ctx.housesHub.cup.reasons (name, weightText). -->
+        <div style="display:flex; flex-direction:column; row-gap:10px; flex:1 1 260px; min-width:0;">
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">How it is scored</span>
+          <span style="font-size:14px; line-height:1.5; color:#6a5a69;">Each event is worth a share of 100. A house earns its share of the points all houses won in that event.</span>
+          <div style="display:flex; flex-direction:row; justify-content:space-between; column-gap:12px; padding:8px 0; border-bottom:1px solid #ddd2dc; font-size:15px; color:#2a0f28;">
+            <span>[BIND: currentItem.name]</span><span style="font-weight:700;">[BIND: currentItem.weightText]</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- HOUSE ACTIVITIES: events and news from all houses. -->

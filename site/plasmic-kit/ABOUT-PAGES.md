@@ -45,6 +45,8 @@ House points are entered by ExCo on the activities site (`#/house-cup`, built in
 
 Fields of `currentPlacing` and of each `placings` item (`currentItem.` inside the repeat): `ay` ("AY26/27"), `rank` (number), `rankLabel` ("1st", "2nd"), `points` (text, score out of 100, e.g. "55.5"), `isFinal` (bool), `statusText` ("Final" or "So far"). On committee pages these are all empty.
 
+**Added later:** `breakdown` (list: `name`, `weightText`, `scoreText`, `maxText`) and `hasBreakdown` for the "How we got here" rows (this year's weighted score per event); `gapText` ("3.4 points behind Phoenix" / "Ahead of Phoenix by 1.2 points", empty on a tie at the top); and `isChampion` on every placing (final year, 1st) for the "Champions" pill in "Over the years".
+
 ### `$ctx.housesHub` (HousesHub), new fields
 | Field | Type | Meaning |
 |---|---|---|

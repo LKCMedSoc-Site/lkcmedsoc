@@ -5,7 +5,7 @@ import type { Post } from './posts';
 import { fmtTime, postDate, whenText, ymd } from './dates';
 import { photoUrl, storageUrl } from './supabase';
 import { assignTones, toneFor, type Tone } from './tones';
-import { currentYear, EMPTY_PLACING, placingOf, pointsText, rankLabel, updatedText, type HouseCupYear, type Placing } from './house-cup';
+import { breakdownOf, currentYear, EMPTY_PLACING, gapTextOf, placingOf, pointsText, rankLabel, updatedText, type HouseCupYear, type Placing } from './house-cup';
 
 const SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const img = (v: string | null) => (v ? storageUrl('body-images', v) : '');
@@ -27,7 +27,7 @@ type Colours = { color: string; onColor: string; tint: string; overlay: string }
 const DEFAULT = toneFor(null, 'LKCMedSoc');
 const BASE_EMPTY = { isLoading: false, notFound: false, name: '', short: '', description: '', initials: '', link: '', logo: '', hasLogo: false, header: '', hasHeader: false, ...colours(DEFAULT), aboutHtml: '', hasAbout: false, ay: '', leaders: [] as Person[], hasLeaders: false, groups: [] as GroupItem[], hasGroups: false, events: [] as EventItem[], hasEvents: false, posts: [] as PostItem[], hasPosts: false,
   // House pages only (empty on committee pages): the house's place in the House Cup. See house-cup.ts and plasmic-kit/ABOUT-PAGES.md.
-  currentPlacing: EMPTY_PLACING as Placing, hasCurrentPlacing: false, placings: [] as Placing[], hasPlacings: false, hasPastPlacings: false };
+  currentPlacing: EMPTY_PLACING as Placing, hasCurrentPlacing: false, placings: [] as Placing[], hasPlacings: false, hasPastPlacings: false, breakdown: [] as { name: string; weightText: string; scoreText: string; maxText: string }[], hasBreakdown: false, gapText: '' };
 export type BodyPageData = typeof BASE_EMPTY;
 
 type Src = { bodies: Body[]; leaders: Leader[]; ay: string; events: PublicEvent[]; posts: Post[]; cups?: HouseCupYear[]; renderAbout: (md: string) => string; loading?: boolean };
@@ -63,6 +63,7 @@ export function buildBodyPage(o: Src & { kind: 'committee' | 'house'; slug: stri
     aboutHtml, hasAbout: !!aboutHtml, ay: o.ay, leaders: people.map(personOf), hasLeaders: people.length > 0,
     groups, hasGroups: groups.length > 0, events, hasEvents: events.length > 0, posts, hasPosts: posts.length > 0,
     currentPlacing: currentPlacing ?? EMPTY_PLACING, hasCurrentPlacing: !!currentPlacing, placings, hasPlacings: !!currentPlacing || placings.length > 0, hasPastPlacings: placings.length > 0,
+    breakdown: cur ? breakdownOf(cur, b.name) : [], hasBreakdown: !!cur && cur.reasons.length > 0 && cur.houses.some((x) => x.name === b.name), gapText: cur ? gapTextOf(cur, b.name) : '',
   };
 }
 
