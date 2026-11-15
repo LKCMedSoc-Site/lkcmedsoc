@@ -17,7 +17,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Committees become the Student Groups menu; every CCA becomes a search result with its own page.
   const bodies = await getBodies().catch(() => []);
   const gs = groupsOf(bodies);
-  const groups = gs.map((g) => ({ label: g.title, href: `/student-groups/${g.slug}` }));
+  const groups = gs.map((g) => ({ label: g.title, href: `/about/committee/${g.slug}` }));
   const index = gs.flatMap((g) => g.ccas.map((c) => ({ label: c.name, href: `/student-groups/${g.slug}/${slugify(c.name)}`, kind: 'CCA', hint: g.title })));
   return (
     <html lang="en">

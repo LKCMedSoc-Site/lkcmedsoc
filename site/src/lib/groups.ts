@@ -9,9 +9,9 @@ const img = (v: string | null) => (v ? storageUrl('body-images', v) : '');
 export function groupItems(bodies: Body[], leaders: Leader[]) {
   const groups = groupsOf(bodies);
   const items: GroupItem[] = groups.flatMap((g) => g.ccas.map((c) => ({
-    name: c.name, href: `/student-groups/${g.slug}/${slugify(c.name)}`, committee: g.title, committeeHref: `/student-groups/${g.slug}`,
+    name: c.name, href: `/student-groups/${g.slug}/${slugify(c.name)}`, committee: g.title, committeeHref: `/about/committee/${g.slug}`,
     chair: sortLeaders(leaders.filter((l) => l.level === 'CCA/Project' && l.body === c.name && !/vice/i.test(l.title)))[0]?.name ?? '',
     description: c.description, logo: img(c.logo), header: img(c.header), recruiting: !!c.recruitment, color: c.color, committeeColor: g.color,
   })));
-  return { groups, items, committees: groups.map((g) => ({ name: g.title, href: `/student-groups/${g.slug}`, color: g.color })) };
+  return { groups, items, committees: groups.map((g) => ({ name: g.title, href: `/about/committee/${g.slug}`, color: g.color })) };
 }

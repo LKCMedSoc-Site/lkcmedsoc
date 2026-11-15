@@ -65,7 +65,7 @@ PLASMIC.registerComponent(Hero, {
     title: { type: 'string', defaultValue: 'We are LKCMedSoc' }, tagline: { type: 'string' },
     image: { type: 'imageUrl', displayName: 'Photo' },
     primaryLabel: { type: 'string', defaultValue: 'See events' }, primaryHref: { type: 'string', defaultValue: '/events' },
-    secondaryLabel: { type: 'string', defaultValue: 'Meet the team' }, secondaryHref: { type: 'string', defaultValue: '/about/meet-the-team' },
+    secondaryLabel: { type: 'string', defaultValue: 'Meet the team' }, secondaryHref: { type: 'string', defaultValue: '/about/leadership' },
   },
   importPath: '@/components/blocks/Hero',
 });
@@ -177,7 +177,7 @@ PLASMIC.registerComponent(SafeImage, {
 
 // ---------------------------------------------------------------------------------------------------------------------------
 // Everything below is for designing whole pages in Plasmic Studio.
-//  - Create pages at the real paths (/, /events, /gazette, /student-groups, /resources, /about/meet-the-team, /about/houses): when one is
+//  - Create pages at the real paths (/, /events, /gazette, /student-groups, /resources, /about, /about/leadership, /about/house-system): when one is
 //    published it replaces the coded page; otherwise the coded page shows.
 //  - Create Plasmic components named exactly "Header" and "Footer" to replace the site header and footer the same way.
 //  - Build them from the blocks below plus Plasmic's own boxes, text and images. The blocks that show live data load it themselves.
@@ -717,7 +717,7 @@ PLASMIC.registerComponent(HeroLayout, {
           { type: 'text', value: 'A short line about this page. Click to edit it, or delete it.' },
           { type: 'hbox', styles: { display: 'flex', gap: '12px', flexWrap: 'wrap' }, children: [
             { type: 'component', name: 'PillButton', props: { label: 'See events', href: '/events', look: 'pink' } },
-            { type: 'component', name: 'PillButton', props: { label: 'Meet the team', href: '/about/meet-the-team', look: 'outline-light' } },
+            { type: 'component', name: 'PillButton', props: { label: 'Meet the team', href: '/about/leadership', look: 'outline-light' } },
           ] },
         ],
       }],

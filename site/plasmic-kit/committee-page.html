@@ -1,97 +1,91 @@
 <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#f5eff5; color:#2a0f28; font-family:'DIN', Arial, sans-serif; box-sizing:border-box;">
 
-  <!-- HERO: photo under a see-through wash of the colour (outer background and wash: [BIND: color]). No photo: the colour alone is the hero. -->
-  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#0f766e; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
-    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; pointer-events:none;" />
-    <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#0f766e; opacity:0.82; pointer-events:none;"></div>
+  <!-- 1. HERO: brand plum over a photo. The committee colour is only the accent: the tag pill and the underline bar. -->
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#2a0628; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
+    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.18; pointer-events:none;" />
     <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; row-gap:20px; position:relative; box-sizing:border-box;">
-      <a href="/about/leadership" style="text-decoration:none; font-size:14px; font-weight:700; color:rgba(255,255,255,0.8);">← <span>Leadership</span></a>
-      <span style="align-self:flex-start; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ffffff; background-color:rgba(255,255,255,0.2); padding:6px 12px; border-radius:999px;"><span>[BIND: $ctx.committeePage.short]</span> committee</span>
+      <a href="/about/leadership" style="text-decoration:none; font-size:14px; font-weight:700; color:#d3a6cf;">← Leadership</a>
+      <span style="align-self:flex-start; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ffffff; background-color:#0f766e; padding:6px 12px; border-radius:999px;">Committee</span>
       <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">[BIND: $ctx.committeePage.name]</span>
-      <span style="max-width:640px; font-size:18px; line-height:1.55; color:rgba(255,255,255,0.92);">[BIND: $ctx.committeePage.description]</span>
+      <div style="width:96px; height:6px; border-radius:999px; background-color:#0f766e;"></div>
+      <span style="max-width:640px; font-size:18px; line-height:1.55; color:#ebe1fa;">[BIND: $ctx.committeePage.description]</span>
     </div>
     <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 36' preserveAspectRatio='none'%3E%3Cpolygon points='0,36 1440,0 1440,36' fill='%23f5eff5'/%3E%3C/svg%3E" alt="" style="width:100%; height:36px; object-fit:fill; position:relative;" />
   </div>
 
-  <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:36px 16px 96px; row-gap:64px; box-sizing:border-box;">
+  <!-- 2. BODY: write-up and groups on the left, a sticky side column on the right, like a group page. Purple leads; the committee colour only picks out labels, rules, tiles and dates. -->
+  <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; width:100%; max-width:1152px; margin:0 auto; padding:36px 16px 96px; column-gap:48px; row-gap:40px; box-sizing:border-box;">
 
-    <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; column-gap:48px; row-gap:40px;">
-      <!-- Main column: this committee's groups. Repeat the tile over $ctx.committeePage.groups. -->
-      <div style="display:flex; flex-direction:column; row-gap:24px; flex:2 1 560px; min-width:0;">
-        <div style="display:flex; flex-direction:column; row-gap:8px;">
-        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#0f766e;">Groups</span>
-        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#0f766e;">Our groups</span>
-        
-      </div>
-        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:16px; row-gap:16px;">
-          <a href="/student-groups/careers/psychiatry-sig" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; flex:1 1 250px; width:100%; max-width:360px; min-width:0; box-sizing:border-box;">
-          <div style="display:flex; flex-direction:column; justify-content:space-between; width:100%; height:100%; row-gap:16px; min-width:0;">
-            <div style="display:flex; flex-direction:column; row-gap:12px; min-width:0;">
-              <div style="position:relative; width:100%; height:140px; border-radius:8px; overflow:hidden; background-color:#0f766e;">
-                <img src="https://placehold.co/640x360/0f766e/ffffff?text=header" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
-                <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#0f766e8c;"></div>
-                <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                  <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:56px; line-height:0.9; color:#ffffff; text-transform:uppercase;">[BIND: currentItem.initials]</span>
+    <div style="display:flex; flex-direction:column; row-gap:48px; flex:2 1 560px; min-width:0;">
+      <!-- The committee's write-up (visible when hasAbout). Put a "Group page: write-up" here. No heading above it. -->
+      <span style="font-size:18px; line-height:1.65; color:#2a0f28;">[BIND: Group page: write-up]. The committee writes this in the Records app, with the same blocks as a group page: columns, toggles, callouts, photos and videos.</span>
+
+      <!-- Our groups. Repeat the tile over $ctx.committeePage.groups. -->
+      <div style="display:flex; flex-direction:column; row-gap:20px;">
+        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#0f766e;">Our groups</span>
+        <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:20px; row-gap:28px;">
+          <a href="/student-groups/careers/psychiatry-sig" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; flex:1 1 220px; width:100%; max-width:260px; min-width:0; box-sizing:border-box;">
+            <div style="display:flex; flex-direction:column; justify-content:space-between; width:100%; height:100%; row-gap:14px; min-width:0;">
+              <div style="display:flex; flex-direction:column; row-gap:12px; min-width:0;">
+                <div style="position:relative; width:100%; height:130px; border-radius:8px; overflow:hidden; background-color:#0f766e;">
+                  <img src="https://placehold.co/520x260/0f766e/ffffff?text=header" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
+                  <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#0f766e8c;"></div>
+                  <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:52px; line-height:0.9; color:#ffffff; text-transform:uppercase;">[BIND: currentItem.initials]</span>
+                  </div>
                 </div>
+                <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:26px; font-weight:400; line-height:0.94; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: currentItem.name]</span>
+                <span style="font-size:14px; line-height:1.5; color:#2a0f28;">[BIND: currentItem.description (Visibility: !!currentItem.description)]</span>
               </div>
-              <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:28px; font-weight:400; line-height:0.94; letter-spacing:0.01em; text-transform:uppercase; color:#0f766e;">[BIND: currentItem.name]</span>
-              <span style="font-size:14px; line-height:1.5; color:#2a0f28;">[BIND: currentItem.description (Visibility: !!currentItem.description)]</span>
+              <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid #ddd2dc; font-size:13px; font-weight:700; color:#4d0a49;">
+                <span>View group</span>
+                <span style="color:#0f766e;">→</span>
+              </div>
             </div>
-            <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid #ddd2dc; font-size:13px; font-weight:700; color:#0f766e;">
-              <span>View group</span>
-              <span>→</span>
-            </div>
-          </div>
-        </a>
-        </div>
-      </div>
-
-      <!-- Side column: who leads the committee. Sticky: in Studio check Position is sticky, Top 96px, Align self start. -->
-      <div style="display:flex; flex-direction:column; row-gap:14px; flex:1 1 300px; max-width:380px; min-width:0; position:sticky; top:96px; align-self:flex-start; border-top:6px solid #0f766e; padding-top:20px; box-sizing:border-box;">
-        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:34px; line-height:0.92; text-transform:uppercase; color:#0f766e;">Who leads it</span>
-        <span style="font-size:13px; color:#6a5a69;">[BIND: $ctx.committeePage.ay]</span>
-        <!-- Repeat the row over $ctx.committeePage.leaders (visible when hasLeaders). -->
-        <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
-          <div style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:999px; background-color:#ebe1fa; color:#0f766e; font-size:15px; font-weight:700; flex:0 0 40px; overflow:hidden;">[BIND: currentItem.initials]</div>
-          <div style="display:flex; flex-direction:column;">
-            <span style="font-size:15px; font-weight:700; color:#2a0f28;">[BIND: currentItem.name]</span>
-            <span style="font-size:13px; color:#6a5a69;">[BIND: currentItem.title]</span>
-          </div>
+          </a>
         </div>
       </div>
     </div>
 
-    <!-- ACTIVITIES: everything this committee and its groups have run or posted. -->
-    <div style="display:flex; flex-direction:column; row-gap:24px;">
-      <div style="display:flex; flex-direction:column; row-gap:8px;">
-        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#0f766e;">Activities</span>
-        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#0f766e;">What we have been up to</span>
-        
+    <!-- Side column. In Studio, check Position is sticky, Top 96px, Align self start. -->
+    <div style="display:flex; flex-direction:column; row-gap:28px; flex:1 1 300px; max-width:380px; min-width:0; position:sticky; top:96px; align-self:flex-start;">
+
+      <!-- Who leads it: a plum panel, the committee colour only as the top rule. Repeat the row over $ctx.committeePage.leaders (visible when hasLeaders). -->
+      <div style="display:flex; flex-direction:column; row-gap:14px; background-color:#4d0a49; color:#ffffff; border-top:6px solid #0f766e; border-radius:16px; padding:24px; box-sizing:border-box;">
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:34px; line-height:0.92; text-transform:uppercase; color:#ffffff;">Who leads it</span>
+        <span style="font-size:13px; color:#d3a6cf;">[BIND: $ctx.committeePage.ay]</span>
+        <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
+          <div style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:999px; background-color:rgba(255,255,255,0.18); color:#ffffff; font-size:14px; font-weight:700; flex:0 0 40px;">[BIND: currentItem.initials]</div>
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:15px; font-weight:700; color:#ffffff;">[BIND: currentItem.name]</span>
+            <span style="font-size:13px; color:#d3a6cf;">[BIND: currentItem.title]</span>
+          </div>
+        </div>
+        <span style="border-top:1px solid rgba(255,255,255,0.2); padding-top:12px; font-size:13px; color:#d3a6cf;">Part of <a href="/about/leadership" style="color:#ffffff; font-weight:700;">Leadership</a></span>
       </div>
-      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; column-gap:48px; row-gap:32px;">
-        <div style="display:flex; flex-direction:column; flex:1 1 420px; min-width:0;">
-          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#0f766e;">Coming up</span>
-          <!-- Repeat the row over $ctx.committeePage.events (visible when hasEvents; otherwise "Nothing scheduled yet."). Show at most 5. -->
-          <a href="/events/1" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:14px; padding:12px 0; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:52px; height:52px; border-radius:8px; background-color:#0f766e; color:#ffffff; flex:0 0 52px;">
+
+      <!-- Coming up, three at most. Repeat over $ctx.committeePage.events (visible when hasEvents). The date tile takes the committee colour. -->
+      <div style="display:flex; flex-direction:column; row-gap:8px;">
+        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#0f766e;">Coming up</span>
+        <a href="/events/1" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:12px; padding:10px 0; border-top:1px solid #ddd2dc; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:44px; height:44px; border-radius:8px; background-color:#0f766e; color:#ffffff; flex:0 0 44px;">
             <span style="font-size:10px; font-weight:700; letter-spacing:0.08em;">[BIND: currentItem.monthShort]</span>
-            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:24px; line-height:1;">[BIND: currentItem.day]</span>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:20px; line-height:1;">[BIND: currentItem.day]</span>
           </div>
           <div style="display:flex; flex-direction:column; row-gap:2px; min-width:0; flex:1 1 auto;">
-            <span style="font-size:15px; font-weight:700;">[BIND: currentItem.title]</span>
-            <span style="font-size:13px; color:#6a5a69;">[BIND: currentItem.whenText] · [BIND: currentItem.venue]</span>
+            <span style="font-size:14px; font-weight:700;">[BIND: currentItem.title]</span>
+            <span style="font-size:12px; color:#6a5a69;">[BIND: currentItem.whenText]</span>
           </div>
-          <span style="color:#0f766e; font-size:18px; font-weight:700;">→</span>
         </a>
-        </div>
-        <div style="display:flex; flex-direction:column; flex:1 1 420px; min-width:0;">
-          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#0f766e;">From the news</span>
-          <!-- Repeat the row over $ctx.committeePage.posts (visible when hasPosts). Show at most 5. -->
-          <a href="/gazette/post" style="text-decoration:none; display:flex; flex-direction:column; row-gap:2px; padding:12px 0; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
-          <span style="font-size:12px; color:#6a5a69;">[BIND: currentItem.dateText] · [BIND: currentItem.categoryLabel]</span>
-          <span style="font-size:15px; font-weight:700; line-height:1.3;">[BIND: currentItem.title]</span>
+      </div>
+
+      <!-- From the news, three at most. Repeat over $ctx.committeePage.posts (visible when hasPosts). -->
+      <div style="display:flex; flex-direction:column; row-gap:8px;">
+        <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#0f766e;">From the news</span>
+        <a href="/gazette/post" style="text-decoration:none; display:flex; flex-direction:column; row-gap:2px; padding:10px 0; border-top:1px solid #ddd2dc; border-bottom:1px solid #ddd2dc; color:#2a0f28;">
+          <span style="font-size:12px; color:#6a5a69;">[BIND: currentItem.dateText]</span>
+          <span style="font-size:14px; font-weight:700; line-height:1.3;">[BIND: currentItem.title]</span>
         </a>
-        </div>
       </div>
     </div>
   </div>

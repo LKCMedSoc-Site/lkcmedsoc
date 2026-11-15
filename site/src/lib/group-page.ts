@@ -58,7 +58,7 @@ export function buildGroupPage(o: { bodies: Body[]; leaders: Leader[]; ay: strin
   return {
     ...EMPTY,
     name: b.name, description: b.description ?? '', initials: initialsOf(b.name),
-    committee: committee.name, committeeShort: committee.name.replace(/ Committee$/, ''), committeeLink: `/student-groups/${committee.slug}`, link: `/student-groups/${committee.slug}/${slugify(b.name)}`,
+    committee: committee.name, committeeShort: committee.name.replace(/ Committee$/, ''), committeeLink: `/about/committee/${committee.slug}`, link: `/student-groups/${committee.slug}/${slugify(b.name)}`,
     logo: img(b.logo), hasLogo: !!b.logo, header: img(b.header), hasHeader: !!b.header,
     color: tone.bg, onColor: tone.fg, tint: tone.tint, overlay: tone.overlay,
     aboutHtml, hasAbout: !!aboutHtml,

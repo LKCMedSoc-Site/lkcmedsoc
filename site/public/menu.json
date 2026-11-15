@@ -4,12 +4,13 @@
     { "label": "Events", "href": "/events" },
     { "label": "Student Groups", "href": "/student-groups" },
     {
-      "label": "About Us", "href": "/about/meet-the-team", "note": "Who we are and how to join us.",
+      "label": "About", "href": "/about", "note": "Who we are, how we are organised and how to join us.",
       "children": [
-        { "label": "Meet the Team", "href": "/about/meet-the-team", "note": "ExCo, committees, year and stream reps" },
-        { "label": "House System", "href": "/about/houses", "note": "The houses and their representatives" },
-        { "label": "Work With Us", "href": "/about/work-with-us", "note": "Join a committee or CCA" },
+        { "label": "About", "href": "/about", "note": "Our mission, structure and history" },
+        { "label": "Leadership", "href": "/about/leadership", "note": "ExCo, committees, year and house reps" },
+        { "label": "House System", "href": "/about/house-system", "note": "The houses and their representatives" },
         { "label": "Honour Roll", "href": "/about/honour-roll", "note": "Past leaders, year by year" },
+        { "label": "Work With Us", "href": "/about/work-with-us", "note": "Join a committee or CCA" },
         { "label": "Alumni Association", "href": "/about/alumni", "note": "Staying connected after graduation" }
       ]
     },

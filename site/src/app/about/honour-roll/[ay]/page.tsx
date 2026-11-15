@@ -26,7 +26,7 @@ export default async function TermPage({ params }: Props) {
   if (teams && !team.length && !writeup && !posts?.total) notFound();
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <p className="text-sm"><Link className="underline" href="/about/honour-roll">Honour roll</Link></p>
+      <p className="text-sm"><Link className="underline" href="/about/honour-roll">← Honour roll</Link></p>
       <div className="mt-1 text-sm font-medium uppercase tracking-wide text-p500">{ay}</div>
       <h1 className="display text-5xl">{exco(ay)}</h1>
 

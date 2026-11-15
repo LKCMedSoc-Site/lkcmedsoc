@@ -13,7 +13,8 @@ export default async function HonourRoll() {
   const current = years[0];
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="display text-5xl">Honour roll</h1>
+      <p className="text-sm"><Link className="underline" href="/about">← About</Link></p>
+      <h1 className="mt-1 display text-5xl">Honour roll</h1>
       <p className="mt-2 max-w-2xl text-muted">Every Executive Committee of the Students&rsquo; Medical Society, newest first. Open a year to see the team, what they achieved, and the news from that year.</p>
       {failed ? <p className="mt-6 rounded-lg bg-red-100 px-3 py-2 text-bad">The honour roll could not be loaded right now. Please try again in a minute.</p>
         : !years.length ? <p className="mt-6 text-muted">The honour roll is being updated. Check back soon.</p> : null}

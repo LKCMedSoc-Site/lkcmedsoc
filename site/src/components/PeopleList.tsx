@@ -42,7 +42,7 @@ export default function PeopleList({ part = 'exco', columns = 3, gap = 16, child
         <DataProvider key={`${l.body}-${l.title}-${l.name}-${i}`} name="person" data={{
           name: l.name, title: l.title, photo: l.photo || '', hasPhoto: !!l.photo, initials: initialsOf(l.name),
           group: l.level === 'Committee' ? l.body.replace(/ Committee$/, '') : l.body,
-          link: l.level === 'Committee' ? `/student-groups/${committeeSlug.get(l.body) ?? slugify(l.body)}` : '',
+          link: l.level === 'Committee' ? `/about/committee/${committeeSlug.get(l.body) ?? slugify(l.body)}` : '',
         }}>
           {repeatedElement(i, children)}
         </DataProvider>

@@ -19,7 +19,7 @@ export function useSiteMenu(groups: NavItem[] = [], index: SearchItem[] = [], ov
       if (off) return;
       const gs = groupsOf(bodies);
       setData({
-        groups: gs.map((g) => ({ label: g.title, href: `/student-groups/${g.slug}` })),
+        groups: gs.map((g) => ({ label: g.title, href: `/about/committee/${g.slug}` })),
         index: gs.flatMap((g) => g.ccas.map((c) => ({ label: c.name, href: `/student-groups/${g.slug}/${slugify(c.name)}`, kind: 'CCA', hint: g.title }))),
       });
     }).catch(() => { /* the fallback list in menu.json stays */ });

@@ -5,6 +5,7 @@ import { committeesOf, getBodies, getLeaders, slugify, sortLeaders } from '@/lib
 import Leaders from '@/components/Leaders';
 import Avatar from '@/components/Avatar';
 import PageHero from '@/components/blocks/PageHero';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const revalidate = 300;
 type Props = { params: Promise<{ committee: string }> };
@@ -17,6 +18,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CommitteePage({ params }: Props) {
   const slug = (await params).committee;
+  // A page designed in Plasmic at /about/committee/[committee] replaces the coded one below.
+  const designed = await plasmicData(`/about/committee/${slug}`);
+  if (designed) return <PlasmicView data={designed} />;
   const bodies = await getBodies().catch(() => null);
   const c = bodies ? committeesOf(bodies).find((x) => x.slug === slug) : undefined;
   if (!c) notFound();
@@ -24,7 +28,7 @@ export default async function CommitteePage({ params }: Props) {
   const head = leaders.filter((l) => l.level === 'Committee' && l.body === c.name);
   return (
     <>
-      <PageHero title={c.name} back={{ label: 'Student Groups', href: '/student-groups' }} intro={ay ? `Leadership for ${ay}` : undefined} />
+      <PageHero title={c.name} back={{ label: 'Leadership', href: '/about/leadership' }} intro={ay ? `Leadership for ${ay}` : undefined} />
       <section className="band band-pale band-last" style={{ zIndex: 20 }}>
         <div className="mx-auto max-w-6xl px-4">
           {head.length ? <div className="mb-10"><h2 className="h-xl">Committee</h2><div className="mt-4 flex items-center gap-4"><Avatar name={head[0].name} photo={head[0].photo} size={80} /><Leaders className="text-base" list={head} /></div></div> : null}

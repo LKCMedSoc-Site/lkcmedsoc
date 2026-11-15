@@ -5,7 +5,7 @@ import SafeImage from '@/components/SafeImage';
 // In Plasmic: change the words, the photo address and the two buttons.
 export default function Hero({
   title = 'We are LKCMedSoc', tagline = '', image = '', primaryLabel = 'See events', primaryHref = '/events',
-  secondaryLabel = 'Meet the team', secondaryHref = '/about/meet-the-team', className = '',
+  secondaryLabel = 'Meet the team', secondaryHref = '/about/leadership', className = '',
 }: {
   title?: string; tagline?: string; image?: string; primaryLabel?: string; primaryHref?: string;
   secondaryLabel?: string; secondaryHref?: string; className?: string;

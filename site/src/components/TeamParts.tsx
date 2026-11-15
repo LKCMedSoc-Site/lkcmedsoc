@@ -33,7 +33,7 @@ export function CommitteesPart({ bodies, leaders, heading = true }: { bodies: Bo
       <ul className={`${heading ? 'mt-6 ' : ''}grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
         {committees.map((c) => (
           <li key={c.name}>
-            <Link href={`/student-groups/${c.slug}`} className="row-link press group block h-full rounded-xl bg-p950 p-5 text-mist no-underline transition-colors hover:bg-p900">
+            <Link href={`/about/committee/${c.slug}`} className="row-link press group block h-full rounded-xl bg-p950 p-5 text-mist no-underline transition-colors hover:bg-p900">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="display text-3xl leading-[.95] text-white"><span className="row-title">{c.name.replace(/ Committee$/, '')}</span></h3>

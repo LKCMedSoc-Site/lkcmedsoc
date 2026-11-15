@@ -26,14 +26,14 @@ export default function CcaSpotlight({ spot, spotLeaders, groups, ccaCount }: { 
         <ul className="mt-2 border-b border-p300">
           {groups.map((g) => (
             <li key={g.slug} className="border-t border-p300">
-              <Link href={`/student-groups/${g.slug}`} className="row-link group flex items-center justify-between gap-4 py-4 no-underline">
+              <Link href={`/about/committee/${g.slug}`} className="row-link group flex items-center justify-between gap-4 py-4 no-underline">
                 <span><span className="display row-title text-3xl text-white md:text-4xl">{g.title}</span><span className="block text-sm text-lilac">{g.ccas.length} CCA{g.ccas.length === 1 ? '' : 's'}</span></span>
                 <ArrowRight aria-hidden className="row-arrow h-6 w-6 text-pink" />
               </Link>
             </li>
           ))}
           <li className="border-t border-p300">
-            <Link href="/about/houses" className="row-link group flex items-center justify-between gap-4 py-4 no-underline">
+            <Link href="/about/house-system" className="row-link group flex items-center justify-between gap-4 py-4 no-underline">
               <span><span className="display row-title text-3xl text-white md:text-4xl">House system</span><span className="block text-sm text-lilac">Your house and its reps</span></span>
               <ArrowRight aria-hidden className="row-arrow h-6 w-6 text-pink" />
             </Link>

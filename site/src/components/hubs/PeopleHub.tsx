@@ -15,7 +15,7 @@ const person = (l: Leader, slugs: Map<string, string>) => ({
   name: l.name, title: l.title, description: '', photo: l.photo || '', hasPhoto: !!l.photo, initials: initialsOf(l.name),
   group: l.level === 'Committee' ? l.body.replace(/ Committee$/, '') : l.body,
   groupSlug: l.level === 'Committee' ? slugs.get(l.body) ?? slugify(l.body) : '',
-  link: l.level === 'Committee' ? `/student-groups/${slugs.get(l.body) ?? slugify(l.body)}` : '',
+  link: l.level === 'Committee' ? `/about/committee/${slugs.get(l.body) ?? slugify(l.body)}` : '',
 });
 
 // Loads the team and keeps a search. It draws nothing itself: Studio gets the data ($ctx.peopleHub) to build any layout.
