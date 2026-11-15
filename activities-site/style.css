@@ -138,3 +138,26 @@ a.btn-link.solid { background: var(--p700); color: #fff; }
 /* An empty new line must keep its height so the caret can move down onto it */
 .ProseMirror p > br:only-child, .ProseMirror br.ProseMirror-trailingBreak { display: inline !important; }
 .ProseMirror p { min-height: 1.5em; }
+
+/* ---- House Cup ---- */
+.cup-head { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 0 0 8px; }
+.cup-year { text-align: center; min-width: 140px; }
+.cup-year h2 { margin: 0; }
+.cup-ay { font-size: 22px; font-weight: 700; color: var(--p700); }
+button.cup-arrow { font-size: 18px; line-height: 1; padding: 10px 14px; }
+button.cup-arrow:disabled { opacity: .35; cursor: default; }
+.cup-table th, .cup-table td { vertical-align: middle; }
+.cup-table th.num { white-space: nowrap; }
+.cup-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: baseline; }
+.cup-v { font-weight: 700; font-size: 16px; }
+.cup-total td { font-weight: 700; border-top: 2px solid var(--p700); font-size: 16px; }
+.cup-rank td { border-bottom: 0; }
+.cup-place { display: inline-block; min-width: 38px; text-align: center; padding: 2px 8px; border-radius: 999px; background: var(--p100); color: var(--p700); font-weight: 700; font-size: 13px; }
+.cup-place.first { background: var(--p700); color: #fff; }
+button.cup-reason { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--p700); text-decoration: underline; cursor: pointer; text-align: left; }
+input.cup-w { width: 72px; text-align: right; padding: 5px 6px; }
+.cup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin: 10px 0; }
+.cup-grid input { width: 100%; box-sizing: border-box; }
+.cup-table td:first-child { min-width: 150px; }
+.cup-table td:first-child .sub { white-space: nowrap; }
+.cup-table td:nth-child(2) { white-space: nowrap; }

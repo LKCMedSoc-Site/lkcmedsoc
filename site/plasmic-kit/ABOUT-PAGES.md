@@ -28,6 +28,8 @@ Four pages from the agreed structure in `SITEMAP.md`. The HTML is the look only;
 - The old "Meet the house" portrait block and "House activities" section were removed; their content lives in the side column.
 
 ## To do: House Cup (house points and ranking)
+**Status: schema and the entry page are built (steps 1, 2, 7 as redesigned); the Plasmic lookups (3-5) and Studio bindings (8) are still to do.**
+Design as built: `sql/house_cup.sql` (run). Each AY has its own reasons, each with ONE entry (points per house) and a weight %. A house's score for a reason is its share of the pool times the weight; totals are out of 100; ties share a rank; the public never gets raw points. Read it with `activities.house_cup(ay)` (anon) and `house_cup_years()`. ExCo edits on the activities site at `#/house-cup` (`activities-site/housecup.js`); a year can be marked final to lock it. The older plan below (`house_points` table) is superseded.
 Nothing exists yet: the schema has no house points or ranking. The house page and house system page HTML already have places waiting for it. Build:
 
 1. **Schema (SQL in `sql/`, same style as `honour_roll.sql`).** Suggested: `house_points(id, house_id, ay, points, reason, awarded_on, event_id null)`, plus a view `house_cup_totals(house_id, ay, points, rank)` that sums per house per AY and ranks them (ties share a rank). Houses are rows in `bodies` with `level = 'House'`. Decide and record whether AY results are "final" once the year closes (e.g. `house_cup_years(ay, is_final)`).

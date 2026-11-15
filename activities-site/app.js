@@ -94,6 +94,7 @@
     var tabs = [];
     if (P.me && (P.me.can_manage || P.me.is_admin || P.exco || P.filer)) tabs.push(['activities', 'Activities', '#/']);
     tabs.push(['events', 'Events', '#/events']);
+    tabs.push(['housecup', 'House Cup', '#/house-cup']);
     if (P.me && (P.me.can_manage || P.exco || P.approver)) tabs.push(['todo', 'To do' + (P.badge ? ' (' + P.badge + ')' : ''), '#/todo']);
     if (P.me) tabs.push(['mine', 'My events', '#/mine']);
     if (P.me) tabs.push(['posts', 'Write-ups', '#/posts']);

@@ -45,4 +45,4 @@ Old Wix and renamed addresses redirect (see `site/next.config.ts`): `/news` and 
 - The plain text pages (`/president-message`, `/about/work-with-us`, `/about/alumni`) are unchanged.
 
 ## House Cup (to build)
-House points and ranking are not in the schema yet. The house page has a placing block and the house system page has a `#house-cup` placeholder. The build list is in `site/plasmic-kit/ABOUT-PAGES.md`, section "To do: House Cup".
+House points are built (`sql/house_cup.sql`; editing page at activities site `#/house-cup`); the public lookups and Studio bindings are not. The house page has a placing block and the house system page has a `#house-cup` placeholder. The build list is in `site/plasmic-kit/ABOUT-PAGES.md`, section "To do: House Cup".
