@@ -2,11 +2,15 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getExcoTeams, sortLeaders, type Leader } from '@/lib/records';
 import { ayNumber, ayToSlug, exco, ordinal } from '@/lib/ay';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const metadata: Metadata = { title: 'Honour Roll' };
 export const revalidate = 300;
 
 export default async function HonourRoll() {
+  // A page designed in Plasmic at this path replaces the coded one below.
+  const designed = await plasmicData('/about/honour-roll');
+  if (designed) return <PlasmicView data={designed} />;
   let teams = new Map<string, Leader[]>(); let failed = false;
   try { teams = await getExcoTeams(); } catch { failed = true; }
   const years = [...teams.keys()].sort().reverse();

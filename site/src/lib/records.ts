@@ -86,7 +86,7 @@ export async function getExcoTeams(): Promise<Map<string, Leader[]>> {
   if (error) throw error;
   const out = new Map<string, Leader[]>();
   (data as any[]).forEach((r) => {
-    const l: Leader = { ay: String(r.ay), level: 'ExCo', body: r.body ?? '', parent: '', title: r.title ?? '', name: nameCase(String(r.full_name ?? '')) };
+    const l: Leader = { ay: String(r.ay), level: 'ExCo', body: r.body ?? '', parent: '', title: r.title ?? '', name: nameCase(String(r.full_name ?? '')), photo: clean(r.photo_url) };
     out.set(l.ay, [...(out.get(l.ay) ?? []), l]);
   });
   return out;

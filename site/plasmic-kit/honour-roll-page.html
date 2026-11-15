@@ -1,0 +1,50 @@
+<div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#f5eff5; color:#2a0f28; font-family:'DIN', Arial, sans-serif; box-sizing:border-box;">
+
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#2a0628; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
+    <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.18; pointer-events:none;" />
+    <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; row-gap:18px; position:relative; box-sizing:border-box;">
+      <a href="/about" style="text-decoration:none; font-size:14px; font-weight:700; color:#d3a6cf;">← About</a>
+      <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#c3a1f2;">Honour roll</span>
+      <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">Honour roll</span>
+      <span style="max-width:640px; font-size:18px; line-height:1.55; color:#ebe1fa;">Every Executive Committee of the Students’ Medical Society, newest first. Open a term to see the team, what they achieved and the news from that year.</span>
+    </div>
+    <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 36' preserveAspectRatio='none'%3E%3Cpolygon points='0,36 1440,0 1440,36' fill='%23f5eff5'/%3E%3C/svg%3E" alt="" style="width:100%; height:36px; object-fit:fill; position:relative;" />
+  </div>
+
+  <!-- Wrap the page in the Honour roll hub (no Term address). The list repeats the row over $ctx.honourHub.terms. The newest term shows its row bigger: give the first row the large title and hide the "Current" pill when !currentItem.isCurrent. -->
+  <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:24px 16px 96px; box-sizing:border-box;">
+    <div style="display:flex; flex-direction:column; border-bottom:1px solid #ddd2dc;">
+        <a href="/about/honour-roll/ay26-27" style="text-decoration:none; color:inherit; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; column-gap:32px; row-gap:12px; padding:36px 0; border-top:1px solid #ddd2dc;">
+          <div style="display:flex; flex-direction:column; row-gap:8px; flex:2 1 360px; min-width:0;">
+            <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
+              <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">[BIND: currentItem.ay]</span>
+              <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#2a0628; background-color:#ff9fe6; padding:4px 10px; border-radius:999px;">Current</span>
+            </div>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:120px; font-weight:400; line-height:0.9; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: currentItem.exco]</span>
+          </div>
+          <div style="display:flex; flex-direction:column; row-gap:2px; flex:1 1 200px; min-width:0;">
+            <span style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">President</span>
+            <span style="font-size:18px; font-weight:700; color:#2a0f28;">[BIND: currentItem.president.name]</span>
+            <span style="font-size:14px; color:#6a5a69;">[BIND: currentItem.countText]</span>
+          </div>
+          <span style="font-size:28px; font-weight:700; color:#8e2a88;">→</span>
+        </a>
+        <a href="/about/honour-roll/ay26-27" style="text-decoration:none; color:inherit; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:space-between; column-gap:32px; row-gap:12px; padding:24px 0; border-top:1px solid #ddd2dc;">
+          <div style="display:flex; flex-direction:column; row-gap:8px; flex:2 1 360px; min-width:0;">
+            <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
+              <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#8e2a88;">[BIND: currentItem.ay]</span>
+              <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#2a0628; background-color:#ff9fe6; padding:4px 10px; border-radius:999px;">Current</span>
+            </div>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:72px; font-weight:400; line-height:0.9; letter-spacing:0.01em; text-transform:uppercase; color:#4d0a49;">[BIND: currentItem.exco]</span>
+          </div>
+          <div style="display:flex; flex-direction:column; row-gap:2px; flex:1 1 200px; min-width:0;">
+            <span style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#6a5a69;">President</span>
+            <span style="font-size:18px; font-weight:700; color:#2a0f28;">[BIND: currentItem.president.name]</span>
+            <span style="font-size:14px; color:#6a5a69;">[BIND: currentItem.countText]</span>
+          </div>
+          <span style="font-size:28px; font-weight:700; color:#8e2a88;">→</span>
+        </a>
+    </div>
+    <span style="padding-top:20px; font-size:13px; color:#6a5a69;">Counted from the 1st ExCo in AY13/14. [BIND: $ctx.honourHub.termCount] terms so far.</span>
+  </div>
+</div>

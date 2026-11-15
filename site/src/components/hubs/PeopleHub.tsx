@@ -47,6 +47,7 @@ const PeopleHub = forwardRef<PeopleHubRef, PeopleHubProps>(function PeopleHub({ 
     const yearL = sortLeaders(leaders.filter((l) => l.level === 'Year' && !isStream(l))).filter(match);
     const streamL = sortLeaders(leaders.filter(isStream)).filter(match);
     const houseBodies = bodies.filter((b) => b.level === 'House' && b.status === 'Active').sort((a, b) => a.name.localeCompare(b.name));
+    const houseTones = assignTones(houseBodies);
     return {
       isLoading: false, hasError: false, ay: data.ay, activeSearch: q, isFiltering: !!q,
       exco: cut(excoL).map((l) => person(l, slugs)), committeeHeads: cut(headsL).map((l) => person(l, slugs)),
@@ -63,7 +64,7 @@ const PeopleHub = forwardRef<PeopleHubRef, PeopleHubProps>(function PeopleHub({ 
       }),
       // Houses, each with its reps, for the Leadership page's House reps block (links to the house's own page).
       houses: houseBodies.map((h) => {
-        const t = toneFor(h.color, h.name);
+        const t = houseTones.get(h.name)!;
         return { name: h.name, slug: slugify(h.name), link: `/about/house-system/${slugify(h.name)}`, color: t.bg, onColor: t.fg, tint: t.tint, overlay: t.overlay, reps: sortLeaders(leaders.filter((l) => l.level === 'House' && l.body === h.name)).filter(match).map((l) => person(l, slugs)) };
       }),
       excoCount: excoL.length, committeeHeadCount: headsL.length, yearRepCount: yearL.length, streamRepCount: streamL.length,

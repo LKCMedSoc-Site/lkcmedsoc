@@ -5,13 +5,14 @@ import type { PublicEvent } from './events';
 import { policyChangelog, policyDoc, policyIndex, type PolicyDoc } from './policy';
 import { sessionToken } from './policy-auth';
 import type { DocBundle } from './policy-hub';
+import { getHonour, type HonourData } from './honour';
 
 /**
  * The public data the Plasmic hubs start with, fetched on the server so a page designed in Plasmic is rendered with live content in its
  * first HTML (no loading state, and search engines see it). Each part is only fetched when the page actually uses a hub that needs it, and a
  * part that fails is simply left out: that hub then loads its own data in the browser as before.
  */
-export type HubSeed = { bodies?: Body[]; leaders?: Leader[]; ay?: string; events?: PublicEvent[]; posts?: Post[]; categories?: Category[]; policyDocs?: PolicyDoc[]; policyDoc?: DocBundle; rand: number };
+export type HubSeed = { bodies?: Body[]; leaders?: Leader[]; ay?: string; events?: PublicEvent[]; posts?: Post[]; categories?: Category[]; policyDocs?: PolicyDoc[]; policyDoc?: DocBundle; honour?: HonourData; rand: number };
 
 async function fetchEvents(): Promise<PublicEvent[] | undefined> {
   try {
@@ -38,21 +39,22 @@ async function fetchPolicyDoc(slug: string): Promise<DocBundle | undefined> {
 export async function getHubSeed(designJson: string): Promise<HubSeed | null> {
   const uses = (name: string) => designJson.includes(name);
   const groups = uses('GroupsHub'), events = uses('EventsHub'), news = uses('NewsHub'), people = uses('PeopleHub');
-  const policyIdx = uses('PolicyHub'), policyOne = uses('PolicyDocHub'), groupOne = uses('GroupPageHub');
-  if (!groups && !events && !news && !people && !policyIdx && !policyOne && !groupOne) return null;
+  const policyIdx = uses('PolicyHub'), policyOne = uses('PolicyDocHub'), groupOne = uses('GroupPageHub'), honourUse = uses('HonourHub'), bodyUse = uses('CommitteePageHub') || uses('HousePageHub') || uses('HousesHub');
+  if (!groups && !events && !news && !people && !policyIdx && !policyOne && !groupOne && !honourUse && !bodyUse) return null;
   const slug = policyOne ? pageSlug(designJson) : '';
-  const [bodies, lead, ev, posts, categories, policyDocs, policyOneBundle] = await Promise.all([
+  const [bodies, lead, ev, posts, categories, policyDocs, policyOneBundle, honour] = await Promise.all([
     getBodies().catch(() => undefined),
-    groups || people || groupOne ? getLeaders().catch(() => undefined) : undefined,
-    events || groupOne ? fetchEvents() : undefined,
-    news || groupOne ? listPosts({ limit: 60 }).then((r) => r.items).catch(() => undefined) : undefined,
+    groups || people || groupOne || bodyUse ? getLeaders().catch(() => undefined) : undefined,
+    events || groupOne || bodyUse ? fetchEvents() : undefined,
+    news || groupOne || bodyUse ? listPosts({ limit: 60 }).then((r) => r.items).catch(() => undefined) : undefined,
     news ? getCategories().catch(() => undefined) : undefined,
     policyIdx || policyOne ? policyIndex().catch(() => undefined) : undefined,
     policyOne && slug ? fetchPolicyDoc(slug) : undefined,
+    honourUse ? getHonour(pageParam(designJson, 'ay')).catch(() => undefined) : undefined,
   ]);
   return {
     // The long write-ups are not needed by the hubs; keep the page light. A single group's page keeps its own write-up.
-    bodies: bodies?.map((b) => (groupOne && slugify(b.name) === pageParam(designJson, 'body') ? b : { ...b, about: null })),
-    leaders: lead?.leaders, ay: lead?.ay, events: ev, posts, categories, policyDocs, policyDoc: policyOneBundle, rand: Math.random(),
+    bodies: bodies?.map((b) => ((groupOne && slugify(b.name) === pageParam(designJson, 'body')) || (bodyUse && [pageParam(designJson, 'committee'), pageParam(designJson, 'house')].includes(slugify(b.name))) ? b : { ...b, about: null })),
+    leaders: lead?.leaders, ay: lead?.ay, events: ev, posts, categories, policyDocs, policyDoc: policyOneBundle, honour, rand: Math.random(),
   };
 }

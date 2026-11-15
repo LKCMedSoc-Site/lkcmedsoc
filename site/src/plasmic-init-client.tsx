@@ -12,6 +12,9 @@ import EventActions from '@/components/hubs/EventActions';
 import { EventTag, EventDateBadge, EventAccent, EventCover } from '@/components/hubs/EventParts';
 import NewsHub from '@/components/hubs/NewsHub';
 import PeopleHub from '@/components/hubs/PeopleHub';
+import HonourHub from '@/components/hubs/HonourHub';
+import { HonourWriteup, BodyAbout } from '@/components/hubs/HonourParts';
+import { CommitteePageHub, HousePageHub, HousesHub } from '@/components/hubs/BodyHubs';
 import PolicyHub from '@/components/hubs/PolicyHub';
 import PolicyDocHub from '@/components/hubs/PolicyDocHub';
 import { PolicyEditRoot, PolicyModeSwitch, PolicyProposals, PolicyAddProvision, PolicyEditable, PolicyExcoDocuments, PolicyProvisionText } from '@/components/policy/PolicyEditParts';
@@ -616,6 +619,53 @@ PLASMIC.registerComponent(PeopleHub, {
     clearFilters: { description: 'Clear the search', argTypes: [] },
   },
   importPath: '@/components/hubs/PeopleHub',
+});
+
+// The honour roll: every past ExCo term, and one term's team, write-up and news. Used on /about/honour-roll and /about/honour-roll/[ay].
+PLASMIC.registerComponent(HonourHub, {
+  name: 'HonourHub', displayName: 'Honour roll hub (terms and one term)',
+  description: 'Loads every past ExCo term and the detail of one term (team, write-up, news). Draws nothing: use Studio elements with $ctx.honourHub.',
+  props: {
+    children: hubSlot('$ctx.honourHub'),
+    term: { type: 'string', displayName: 'Term address', helpText: 'On a page at /about/honour-roll/[ay], set this to $ctx.params.ay. Leave empty while designing: the newest term is shown.' },
+  },
+  providesData: true,
+  importPath: '@/components/hubs/HonourHub',
+});
+PLASMIC.registerComponent(HonourWriteup, {
+  name: 'HonourWriteup', displayName: 'Honour roll: term write-up',
+  description: "The term's write-up, styled. Put it inside the Honour roll hub (visible when $ctx.honourHub.term.hasWriteup).",
+  props: {}, importPath: '@/components/hubs/HonourParts', importName: 'HonourWriteup',
+});
+
+// About pages: one committee, one house, and the house system overview.
+PLASMIC.registerComponent(CommitteePageHub, {
+  name: 'CommitteePageHub', displayName: 'Committee page hub (one committee)',
+  description: 'Loads one committee with its colour, write-up, leaders, groups, and the events and news of the committee and its groups. Draws nothing: use Studio elements with $ctx.committeePage.',
+  props: { children: hubSlot('$ctx.committeePage'), committee: { type: 'string', displayName: 'Committee address', helpText: 'On /about/committee/[committee] set this to $ctx.params.committee. Empty shows the first committee.' } },
+  providesData: true, importPath: '@/components/hubs/BodyHubs', importName: 'CommitteePageHub',
+});
+PLASMIC.registerComponent(HousePageHub, {
+  name: 'HousePageHub', displayName: 'House page hub (one house)',
+  description: 'Loads one house with its colour, write-up, reps, events and news. Draws nothing: use Studio elements with $ctx.housePage.',
+  props: { children: hubSlot('$ctx.housePage'), house: { type: 'string', displayName: 'House address', helpText: 'On /about/house-system/[house] set this to $ctx.params.house. Empty shows the first house.' } },
+  providesData: true, importPath: '@/components/hubs/BodyHubs', importName: 'HousePageHub',
+});
+PLASMIC.registerComponent(HousesHub, {
+  name: 'HousesHub', displayName: 'House system hub (all houses)',
+  description: 'Loads every house with its colour and reps, and the events and news of all houses. Draws nothing: use Studio elements with $ctx.housesHub.',
+  props: {
+    children: hubSlot('$ctx.housesHub'),
+    intro: { type: 'string', displayName: 'Intro line', helpText: 'Shown as $ctx.housesHub.intro. Empty uses the default.' },
+    howItWorks: { type: 'string', displayName: 'How it works text', helpText: 'Shown as $ctx.housesHub.howItWorks. Empty uses the default.' },
+  },
+  providesData: true, importPath: '@/components/hubs/BodyHubs', importName: 'HousesHub',
+});
+PLASMIC.registerComponent(BodyAbout, {
+  name: 'BodyAbout', displayName: 'Committee or house: write-up',
+  description: "The write-up of the committee or house the page shows, styled in its colour. Put it inside the Committee page hub or House page hub, and set Source.",
+  props: { source: { type: 'choice', options: ['committeePage', 'housePage'], defaultValue: 'committeePage', displayName: 'Source' } },
+  importPath: '@/components/hubs/HonourParts', importName: 'BodyAbout',
 });
 
 PLASMIC.registerComponent(PersonText, {

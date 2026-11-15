@@ -7,6 +7,7 @@ import { getPageRendered } from '@/lib/content';
 import { exco, slugToAy } from '@/lib/ay';
 import Leaders from '@/components/Leaders';
 import PostCard from '@/components/PostCard';
+import { plasmicData, PlasmicView } from '@/lib/plasmic-page';
 
 export const revalidate = 300;
 type Props = { params: Promise<{ ay: string }> };
@@ -20,6 +21,9 @@ export default async function TermPage({ params }: Props) {
   const slug = (await params).ay;
   const ay = slugToAy(slug);
   if (!ay) notFound();
+  // A page designed in Plasmic at /about/honour-roll/[ay] replaces the coded one below.
+  const designed = await plasmicData(`/about/honour-roll/${slug}`);
+  if (designed) return <PlasmicView data={designed} />;
   const [teams, posts] = await Promise.all([getExcoTeams().catch(() => null), listPosts({ ay, limit: 6 }).catch(() => null)]);
   const team = teams?.get(ay) ?? [];
   const writeup = await getPageRendered(`exco/${slug}`);       // content/exco/ay26-27.md, edited with the site's text editor
