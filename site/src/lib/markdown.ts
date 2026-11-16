@@ -30,6 +30,18 @@ export function videoEmbedUrl(raw: string): string | null {
   return null;
 }
 
+/**
+ * Image size: `![alt](url){w=60}` shows the picture at 60% of the column width; `{w=60 align=right}` (left, center or right) also places it.
+ * No size means full width, as before. Runs on already-sanitised HTML and builds the style itself from digits only, so it cannot be abused.
+ * records/pages.js has the same rule for its preview; keep the two in step.
+ */
+export function sizeImages(html: string): string {
+  return html.replace(/<img ([^>]*?)\s*\/?>\{w=(\d{1,3})(?:\s+align=(left|center|right))?\}/g, (_m, attrs: string, w: string, align?: string) => {
+    const pct = Math.min(100, Math.max(10, Number(w)));
+    return `<img ${attrs} class="blk-img${align ? ` blk-img-${align}` : ''}" style="width:${pct}%" />`;
+  });
+}
+
 /** Post text is Markdown. A line `:::video <YouTube or Vimeo link>` becomes a responsive video; anything else with ::: stays plain text. */
 export function renderMarkdown(md: string): string {
   const videos: string[] = [];
@@ -39,7 +51,7 @@ export function renderMarkdown(md: string): string {
     videos.push(embed);
     return `\nLKCVIDEO${videos.length - 1}TOKEN\n`;
   });
-  const html = sanitizeHtml(marked.parse(src, { async: false, gfm: true, breaks: false }) as string, OPTIONS);
+  const html = sizeImages(sanitizeHtml(marked.parse(src, { async: false, gfm: true, breaks: false }) as string, OPTIONS));
   return html.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, (_m, i: string) => {
     const embed = videos[Number(i)];
     return embed ? `<div class="blk-video"><iframe src="${embed}" title="Video" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>` : '';
@@ -55,6 +67,7 @@ export function sanitizeBody(html: string): string {
 const GROUP_OPTIONS: sanitizeHtml.IOptions = {
   ...OPTIONS,
   allowedTags: [...(OPTIONS.allowedTags as string[]), 'aside', 'div', 'figure', 'details', 'summary'],
+  allowedAttributes: { ...(OPTIONS.allowedAttributes as Record<string, string[]>), div: ['data-n', 'data-cols', 'data-shape'] },
   allowedClasses: { aside: ['blk-callout'], div: ['blk-photos', 'blk-columns', 'blk-col'], figure: ['blk-quote'], a: ['blk-button'], details: ['blk-toggle'] },
 };
 const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -66,7 +79,7 @@ const OPENS = /^:::(callout|photos|quote|columns|toggle)(?:\s+.*)?$/;
 /**
  * Markdown plus these blocks (each closes with a line of just :::, and they can sit inside each other):
  *   :::callout ... :::      a highlighted box
- *   :::photos ... :::       photos side by side
+ *   :::photos ... :::       photos side by side; `:::photos cols=3 shape=round` sets how many per row (2 to 4) and the crop (square, round, wide)
  *   :::quote ... :::        a pull quote
  *   :::columns ... :::      two to four columns; a line of just ||| starts the next column
  *   :::toggle Title ... ::: a section that opens and closes
@@ -76,11 +89,17 @@ const OPENS = /^:::(callout|photos|quote|columns|toggle)(?:\s+.*)?$/;
 export function renderGroupMarkdown(md: string): string {
   const videos: string[] = [];
   const html = blocks((md ?? '').replace(/\r/g, '').split('\n'), videos, 0);
-  const clean = sanitizeHtml(html, GROUP_OPTIONS);
+  const clean = sizeImages(sanitizeHtml(html, GROUP_OPTIONS));
   return clean.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, (_m, i: string) => {
     const embed = videos[Number(i)];
     return embed ? `<div class="blk-video"><iframe src="${embed}" title="Video" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>` : '';
   });
+}
+
+/** The optional `cols=3 shape=round` on a `:::photos` line, as data attributes (values are checked against a short list). records/pages.js has the same rule. */
+function photoOpts(line: string): string {
+  const cols = /\bcols=([234])\b/.exec(line), shape = /\bshape=(square|round|wide)\b/.exec(line);
+  return (cols ? ` data-cols="${cols[1]}"` : '') + (shape ? ` data-shape="${shape[1]}"` : '');
 }
 
 function blocks(lines: string[], videos: string[], depth: number): string {
@@ -108,7 +127,7 @@ function blocks(lines: string[], videos: string[], depth: number): string {
       }
       const body = blocks(inner, videos, depth + 1);
       if (kind === 'toggle') { const title = ln.replace(/^:::toggle\s*/, '').trim() || 'More'; out.push(`<details class="blk-toggle"><summary>${esc(title)}</summary>${body}</details>`); }
-      else out.push(kind === 'callout' ? `<aside class="blk-callout">${body}</aside>` : kind === 'photos' ? `<div class="blk-photos">${body}</div>` : `<figure class="blk-quote">${body}</figure>`);
+      else out.push(kind === 'callout' ? `<aside class="blk-callout">${body}</aside>` : kind === 'photos' ? `<div class="blk-photos"${photoOpts(ln)}>${body}</div>` : `<figure class="blk-quote">${body}</figure>`);
       continue;
     }
     if ((m = /^:::button\s+(.+?)\s*\|\s*(https?:\/\/\S+)\s*$/.exec(ln))) { flush(); out.push(`<p><a class="blk-button" href="${esc(m[2])}">${esc(m[1])}</a></p>`); i++; continue; }

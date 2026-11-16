@@ -197,15 +197,58 @@
   }
 
 
-  // ---------- my photo (ExCo members and committee heads only) ----------
+  // ---------- my photo (ExCo, committee heads, year and house reps, group chairs and vice-chairs; who is allowed is decided in sql/photo_access.sql) ----------
   var PHOTO_BUCKET = 'leader-photos';
-  // Crop to a centred square and shrink, so every photo is small and the same shape.
-  async function squarePhoto(file) {
-    var bmp = await createImageBitmap(file);
-    var side = Math.min(bmp.width, bmp.height), size = Math.min(600, side);
-    var c = document.createElement('canvas'); c.width = size; c.height = size;
-    c.getContext('2d').drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size);
-    return await new Promise(function (resolve) { c.toBlob(function (b) { resolve(b); }, 'image/webp', 0.88); });
+  // Crop picker: the chosen photo sits in the round frame; drag to move it, slide or scroll to zoom. What is inside the circle is exactly what is saved
+  // (a square of it, shrunk to at most 600 px, since the website shows it round or square).
+  function cropPhoto(file) {
+    return new Promise(function (resolve, reject) {
+      createImageBitmap(file).then(function (bmp) {
+        var F = 280, D = Math.round(F * (window.devicePixelRatio > 1 ? 2 : 1));
+        var base = F / Math.min(bmp.width, bmp.height), zoom = 1, cx = bmp.width / 2, cy = bmp.height / 2;
+        var canvas = h('canvas', { class: 'cropcanvas', width: D, height: D, tabindex: 0, 'aria-label': 'Photo crop. Drag to move, plus and minus to zoom.' });
+        canvas.style.width = F + 'px'; canvas.style.height = F + 'px';
+        var ctx = canvas.getContext('2d');
+        var slider = h('input', { type: 'range', min: 1, max: 4, step: 0.01, value: 1, 'aria-label': 'Zoom' });
+        function half() { return F / (2 * base * zoom); }
+        function clamp() { var k = half(); cx = Math.min(bmp.width - k, Math.max(k, cx)); cy = Math.min(bmp.height - k, Math.max(k, cy)); }
+        function draw() { clamp(); var k = half(); ctx.clearRect(0, 0, D, D); ctx.drawImage(bmp, cx - k, cy - k, 2 * k, 2 * k, 0, 0, D, D); }
+        function setZoom(z) { zoom = Math.min(4, Math.max(1, z)); slider.value = zoom; draw(); }
+        slider.addEventListener('input', function () { setZoom(parseFloat(slider.value)); });
+        canvas.addEventListener('wheel', function (e) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08)); }, { passive: false });
+        var pts = {}, pinch = 0;
+        canvas.addEventListener('pointerdown', function (e) { canvas.setPointerCapture(e.pointerId); pts[e.pointerId] = [e.clientX, e.clientY]; pinch = 0; });
+        canvas.addEventListener('pointermove', function (e) {
+          var p = pts[e.pointerId]; if (!p) return;
+          var ids = Object.keys(pts);
+          if (ids.length === 2) {
+            var o = pts[ids.filter(function (i) { return +i !== e.pointerId; })[0]]; pts[e.pointerId] = [e.clientX, e.clientY];
+            var d = Math.hypot(e.clientX - o[0], e.clientY - o[1]); if (pinch) setZoom(zoom * d / pinch); pinch = d; return;
+          }
+          var s = base * zoom; cx -= (e.clientX - p[0]) / s; cy -= (e.clientY - p[1]) / s; pts[e.pointerId] = [e.clientX, e.clientY]; draw();
+        });
+        function up(e) { delete pts[e.pointerId]; pinch = 0; }
+        canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
+        canvas.addEventListener('keydown', function (e) {
+          var step = 12 / (base * zoom), moved = true;
+          if (e.key === 'ArrowLeft') cx -= step; else if (e.key === 'ArrowRight') cx += step; else if (e.key === 'ArrowUp') cy -= step; else if (e.key === 'ArrowDown') cy += step;
+          else if (e.key === '+' || e.key === '=') setZoom(zoom * 1.1); else if (e.key === '-') setZoom(zoom / 1.1); else moved = false;
+          if (moved) { e.preventDefault(); draw(); }
+        });
+        function close(v, err) { bg.remove(); document.removeEventListener('keydown', esc); if (err) reject(err); else resolve(v); }
+        function esc(e) { if (e.key === 'Escape') close(null); }
+        var ok = h('button', { class: 'btn', type: 'button', onclick: function () {
+          clamp(); var k = half(), size = Math.max(1, Math.min(600, Math.floor(2 * k))), c = document.createElement('canvas'); c.width = size; c.height = size;
+          c.getContext('2d').drawImage(bmp, cx - k, cy - k, 2 * k, 2 * k, 0, 0, size, size);
+          c.toBlob(function (b) { b ? close(b) : close(null, new Error('Could not prepare the photo.')); }, 'image/webp', 0.88);
+        } }, 'Use this crop');
+        var bg = h('div', { class: 'cropbg', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Crop your photo' },
+          h('div', { class: 'cropbox' }, h('strong', null, 'Crop your photo'), h('p', { class: 'muted' }, 'Drag the photo to move it. Slide or scroll to zoom. What you see in the circle is what is saved.'),
+            h('div', { class: 'cropframe' }, canvas), h('div', { class: 'row' }, h('span', { class: 'muted' }, 'Zoom'), slider),
+            h('div', { class: 'row' }, ok, h('button', { class: 'ghost', type: 'button', onclick: function () { close(null); } }, 'Cancel'))));
+        document.body.appendChild(bg); document.addEventListener('keydown', esc); draw(); canvas.focus();
+      }).catch(reject);
+    });
   }
   function photoPath(url) { var i = url ? url.indexOf('/' + PHOTO_BUCKET + '/') : -1; return i < 0 ? null : url.slice(i + PHOTO_BUCKET.length + 2); }
   async function photoCard() {
@@ -231,9 +274,11 @@
     file.addEventListener('change', async function () {
       var f = file.files[0]; if (!f) return;
       if (!/^image\//.test(f.type)) { toast('Please choose an image file', true); file.value = ''; return; }
-      pick.disabled = true; msg.textContent = 'Uploading…';
+      pick.disabled = true; msg.textContent = 'Choose how it is cropped…';
       try {
-        var blob = await squarePhoto(f);
+        var blob = await cropPhoto(f);
+        if (!blob) { msg.textContent = ''; pick.disabled = false; file.value = ''; return; }
+        msg.textContent = 'Uploading…';
         var path = me.matric + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '.webp';
         var up = await sb.storage.from(PHOTO_BUCKET).upload(path, blob, { contentType: 'image/webp', cacheControl: '31536000' });
         if (up.error) throw up.error;
@@ -252,7 +297,7 @@
     } }, 'Save');
     paint();
     return h('div', { class: 'card' }, h('strong', null, 'My photo'),
-      h('p', { class: 'muted' }, 'Photos are for ExCo members and committee heads. Yours appears on the LKCMedSoc website (Meet the Team and your committee page) only if you tick the box below. You can change or remove it any time.'),
+      h('p', { class: 'muted' }, 'Photos are for ExCo members, committee heads, year and house representatives, and chairs and vice-chairs of student groups. Yours appears on the LKCMedSoc website (Meet the Team and your committee page) only if you tick the box below. You can change or remove it any time.'),
       prev, h('div', { class: 'row' }, pick, rm, msg), file,
       h('label', { class: 'check' }, show, ' Show my photo on the LKCMedSoc website'),
       h('div', { class: 'row' }, save));
