@@ -77,7 +77,7 @@ textarea.md { font-family: ui-monospace, Menlo, monospace; font-size: 14px; min-
 .md-preview { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px; max-width: 68ch; }
 .prose img { max-width: 100%; border-radius: 10px; } .prose img.blk-img { display: block; height: auto; } .prose img.blk-img-center { margin-left: auto; margin-right: auto; } .prose img.blk-img-right { margin-left: auto; } .blk-photos img { width: 100% !important; } .prose a { color: var(--p700); }
 .blk-callout { background: var(--p100); border-radius: 12px; padding: 4px 16px; margin: 14px 0; }
-.blk-photos { column-width: 200px; column-gap: 8px; margin: 14px 0; } .blk-photos p { display: contents; } .blk-photos img { display: block; width: 100%; height: auto; margin: 0 0 8px; break-inside: avoid; border-radius: 0; }
+.blk-photos { column-width: 180px; column-gap: 8px; margin: 14px 0; white-space: normal; } .blk-photos p { display: contents; } .blk-photos img { display: block; width: 100%; height: auto; margin: 0 0 8px; break-inside: avoid; border-radius: 0; }
 .blk-photos[data-cols="2"] { column-count: 2; column-width: auto; } .blk-photos[data-cols="3"] { column-count: 3; column-width: auto; } .blk-photos[data-cols="4"] { column-count: 4; column-width: auto; }
 .blk-quote { margin: 16px 0; font-size: 20px; font-weight: 700; color: var(--p700); } .blk-quote p:last-child { font-size: 14px; font-weight: 400; color: var(--muted); }
 a.blk-button { display: inline-block; background: var(--p700); color: #fff !important; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: 700; }
@@ -169,7 +169,7 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 15px; col
 .ve-columns { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 18px; }
 .ve-col { border: 1px dashed transparent; border-radius: 8px; padding: 2px 10px; min-width: 0; } .ve-blk:hover .ve-col, .ve-blk:focus-within .ve-col { border-color: var(--p300); } .ve-col > :first-child { margin-top: 4px; }
 /* Gallery: masonry, so every picture keeps its own shape */
-.ve-photos { column-width: 160px; column-gap: 8px; padding: 6px; border: 1px dashed transparent; border-radius: 8px; } .ve-blk:hover .ve-photos, .ve-blk:focus-within .ve-photos { border-color: var(--p300); }
+.ve-photos { column-width: 180px; column-gap: 8px; padding: 6px; border: 1px dashed transparent; border-radius: 8px; } .ve-blk:hover .ve-photos, .ve-blk:focus-within .ve-photos { border-color: var(--p300); }
 .ve-photos[data-cols="2"] { column-count: 2; column-width: auto; } .ve-photos[data-cols="3"] { column-count: 3; column-width: auto; } .ve-photos[data-cols="4"] { column-count: 4; column-width: auto; }
 .ve-photos-handle { position: absolute; right: -6px; bottom: -6px; width: 16px; height: 16px; border-radius: 50%; background: var(--p700); border: 2px solid #fff; cursor: nwse-resize; touch-action: none; display: none; z-index: 2; } .ve-k-photos[data-align="right"] .ve-photos-handle { right: auto; left: -6px; cursor: nesw-resize; }
 .ve-k-photos:hover .ve-photos-handle, .ve-k-photos:focus-within .ve-photos-handle, .ve-k-photos.ProseMirror-selectednode .ve-photos-handle { display: block; }

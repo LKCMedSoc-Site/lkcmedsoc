@@ -19,7 +19,7 @@ create or replace function records.save_my_body(
 language plpgsql security definer set search_path = records, public as $$
 begin
   if not can_edit_body(b) then raise exception 'You cannot edit this group.'; end if;
-  if length(coalesce(p_description, '')) > 400 then raise exception 'The short description is too long (400 characters at most).'; end if;
+  if length(coalesce(p_description, '')) > 3000 then raise exception 'The short description is far too long (3000 characters at most). Put the rest in the write-up.'; end if;
   if length(coalesce(p_about_md, '')) > 30000 then raise exception 'The write-up is too long.'; end if;
   if nullif(trim(p_logo_url), '') is not null and trim(p_logo_url) !~* '^https://' then raise exception 'The logo must be a web link or an upload.'; end if;
   if nullif(trim(p_header_url), '') is not null and trim(p_header_url) !~* '^https://' then raise exception 'The header image must be a web link or an upload.'; end if;

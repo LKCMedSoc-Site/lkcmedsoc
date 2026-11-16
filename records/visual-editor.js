@@ -281,7 +281,7 @@ function makeExtensions(opts) {
         bar.append(
           sz(btn('Left', 'Align left', () => set({ align: null }))), sz(btn('Centre', 'Centre', () => set({ align: 'center' }))), sz(btn('Right', 'Align right', () => set({ align: 'right' }))),
           sz(btn('Full width', 'Back to full width', () => set({ width: null, align: null }))),
-          btn('Alt text', 'Describe the picture for people who cannot see it', () => { const t = prompt('Describe the picture (read aloud for people who cannot see it)', current.attrs.alt || ''); if (t !== null) set({ alt: t }); }),
+          btn('Caption / alt text', 'Add a caption. It is also read aloud for people who cannot see the picture', () => { const t = prompt('Caption / alt text: describe the picture. It is shown as the caption and read aloud for people who cannot see it.', current.attrs.alt || ''); if (t !== null) set({ alt: t }); }),
           btn('Remove', 'Delete this picture', () => removeNode(editor, getPos, current)));
         box.append(img, handle, bar); dom.append(box);
         function paint() {

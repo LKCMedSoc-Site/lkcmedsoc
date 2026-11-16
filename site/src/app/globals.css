@@ -55,7 +55,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .prose-lkc blockquote { background: var(--color-p50); border-radius: .75rem; padding: 1em 1.25em; color: var(--color-ink); }
 .prose-lkc .blk-callout { background: var(--color-mist); border-radius: 1rem; padding: .25rem 1.25rem; }
 /* Gallery: a masonry wall. Each picture keeps its own shape (nothing is cropped). `w=` sets the whole gallery's width and `align=` where it sits. */
-.prose-lkc .blk-photos { column-width: 220px; column-gap: .5rem; }
+.prose-lkc .blk-photos { column-width: 180px; column-gap: .5rem; white-space: normal; } /* normal: the page text style keeps line breaks, which would put a blank line between pictures */
 .prose-lkc .blk-photos p { display: contents; margin: 0; }
 .prose-lkc .blk-photos[data-cols="2"] { column-count: 2; column-width: auto; } .prose-lkc .blk-photos[data-cols="3"] { column-count: 3; column-width: auto; } .prose-lkc .blk-photos[data-cols="4"] { column-count: 4; column-width: auto; }
 @media (max-width: 560px) { .prose-lkc .blk-photos[data-cols="3"], .prose-lkc .blk-photos[data-cols="4"] { column-count: 2; } .prose-lkc .blk-photos[style] { width: 100% !important; } }

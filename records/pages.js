@@ -131,7 +131,7 @@
     function tb(label, title, fn) { return h('button', { class: 'ghost sm', type: 'button', title: title, onclick: fn }, label); }
     fileIn.addEventListener('change', async function () {
       var f = fileIn.files[0]; if (!f) return;
-      try { var u = await upload(kit, bodyId, f, 1600); wrap('![', '](' + u + ')', 'describe the photo'); }
+      try { var u = await upload(kit, bodyId, f, 1600); wrap('![', '](' + u + ')', 'caption / alt text'); }
       catch (e) { kit.toast(kit.friendly ? kit.friendly(e) : e.message, true); }
       fileIn.value = '';
     });
@@ -334,10 +334,10 @@
     var logo = imageField(kit, r.id, 'Logo', 'Square works best. Shown as a round badge on your card and page.', r.logo_url, 400, true);
     var header = imageField(kit, r.id, 'Header image', 'A wide photo (landscape). Shown at the top of your card and your page.', r.header_url, 1800, false);
     var color = colorField(kit, r.color, r.name);
-    var blurb = h('textarea', { rows: 3, maxlength: 400, placeholder: 'One or two lines for your card, e.g. “Weekly visits to cheer up paediatric patients.”' });
+    var blurb = h('textarea', { rows: 3, placeholder: 'One or two lines for your card, e.g. “Weekly visits to cheer up paediatric patients.”' });
     blurb.value = r.description || '';
     var count = h('span', { class: 'muted' }, '');
-    function cnt() { count.textContent = blurb.value.length + ' / 400'; }
+    function cnt() { var n = blurb.value.length; count.textContent = n + ' / 400 recommended' + (n > 400 ? '. The website shows the first 400 characters followed by …' : ''); count.style.color = n > 400 ? '#a3321f' : ''; }
     blurb.addEventListener('input', cnt); cnt();
     var join = h('input', { value: r.recruitment_url || '', placeholder: 'https://forms.gle/…' });
     var ig = h('input', { value: r.instagram || '', placeholder: '@yourgroup' });
