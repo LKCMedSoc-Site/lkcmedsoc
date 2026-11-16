@@ -24,7 +24,8 @@ One student group's own page. Settings: `committee` (`$ctx.params.committee`), `
 ## groupsHub
 Settings: `limit`, `pageSize`, `defaultCommittee` (name or slug), `order` (a-z / random).
 Fields: `items`, `totalCount` (matches), `shownCount`, `allCount`, `hasMatches`, `countText`, `activeSearch`, `committees`, `selectedCommitteeMap`, `selectedCommitteeCount`, `isRecruitingOnly`, `anyRecruiting`, `isFiltering`, `spotlight` (this week's group, or null), `spotlightLeaders` (`name`, `title`).
-Group: `name, committee, committeeShort, committeeSlug, description, chair, logo, header, recruiting, link, committeeLink, color, onColor, tint, overlay, initials`.
+Group: `name, committee, committeeShort, committeeSlug, description, chair, logo, header, recruiting, link, committeeLink, color, onColor, tint, overlay, committeeColor, committeeOnColor, committeeTint, committeeOverlay, initials`.
+(Use the `committee…` colours for the committee tag on a card: it keeps the committee's colour even when the group has its own.)
 (`color` is the body's own colour, or its committee's if it has none. `onColor` is the text colour on it, always white. `tint` is a light, see-through version for resting chips and pills; `overlay` is a stronger see-through version to wash over a photo. Colours come from each body's stored colour, see `src/lib/tones.ts`.)
 Committee: `name, short, slug, href, color, onColor, tint, overlay, isSelected, count`.
 Actions: `setSearch(query)`, `toggleCommittee(slug)`, `nextPage()`, `prevPage()`, `goToPage(page)`, `clearFilters()`. (The recruiting actions still exist but are not used.)

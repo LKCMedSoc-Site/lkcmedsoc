@@ -119,11 +119,11 @@ const GroupsHub = forwardRef<GroupsHubRef, GroupsHubProps>(function GroupsHub({ 
   const spotItem = data && data !== 'failed' && data.spotName ? items.find((i) => i.name === data.spotName) : undefined;
   const hub = {
     isLoading: loading, hasError: failed,
-    items: shown.map((it) => ({ ...toGroupData(it, toneOfItem(it)), committeeSlug: slugOf(it.committeeHref) })),
+    items: shown.map((it) => ({ ...toGroupData(it, toneOfItem(it), toneOf(it.committee)), committeeSlug: slugOf(it.committeeHref) })),
     totalCount: matches.length, shownCount: shown.length, allCount: items.length, hasMatches: shown.length > 0,
     countText: `${matches.length} group${matches.length === 1 ? '' : 's'}${dirty ? ' match' : ''}`,
     // This week's featured group (the site rotates one each week among groups that have named leaders). There is no "featured" flag in the data.
-    spotlight: spotItem ? { ...toGroupData(spotItem, toneOfItem(spotItem)), committeeSlug: slugOf(spotItem.committeeHref) } : null,
+    spotlight: spotItem ? { ...toGroupData(spotItem, toneOfItem(spotItem), toneOf(spotItem.committee)), committeeSlug: slugOf(spotItem.committeeHref) } : null,
     spotlightLeaders: data && data !== 'failed' ? data.spotLeaders : [],
     activeSearch: q, ...paging.fields, committees: committeeData,
     selectedCommitteeMap: Object.fromEntries(committeeData.map((c) => [c.slug, c.isSelected])),

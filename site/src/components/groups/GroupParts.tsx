@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { GroupData } from './GroupsList';
 
-const SAMPLE: GroupData = { name: 'Sample Group', committee: 'Sample Committee', committeeShort: 'Sample', description: 'A short description of what this group does.', chair: 'Alex Tan', logo: '', header: '', recruiting: true, link: '', committeeLink: '', color: '#0f766e', onColor: '#ffffff', tint: '#0f766e1f', overlay: '#0f766e8c', initials: 'SG' };
+const SAMPLE: GroupData = { name: 'Sample Group', committee: 'Sample Committee', committeeShort: 'Sample', description: 'A short description of what this group does.', chair: 'Alex Tan', logo: '', header: '', recruiting: true, link: '', committeeLink: '', color: '#0f766e', onColor: '#ffffff', tint: '#0f766e1f', overlay: '#0f766e8c', committeeColor: '#0f766e', committeeOnColor: '#ffffff', committeeTint: '#0f766e1f', committeeOverlay: '#0f766e8c', initials: 'SG' };
 // Inside a groups list these read the group being shown. Anywhere else they show a sample, so a card can still be designed.
 const useGroup = (): GroupData => (useSelector('group') as GroupData | undefined) ?? SAMPLE;
 
@@ -25,11 +25,11 @@ export function GroupImage({ source = 'header', shape = 'rounded', ratio = '16/9
     : <span aria-hidden style={{ ...box, background: g.color, color: g.onColor }} className={`display grid place-items-center text-4xl ${className}`}>{g.initials}</span>;
 }
 
-// The committee name on its own colour, like a tag. “Dot” shows only the colour.
+// The committee name on the committee's colour (never the group's own), like a tag. “Dot” shows only the colour.
 export function GroupBadge({ look = 'pill', className = '' }: { look?: 'pill' | 'bar' | 'dot'; className?: string }) {
   const g = useGroup();
-  if (look === 'dot') return <span aria-hidden className={`inline-block h-3 w-3 rounded-full ${className}`} style={{ background: g.color }} />;
-  return <span className={`inline-block text-xs font-bold uppercase tracking-wider ${look === 'pill' ? 'rounded-full px-3 py-1' : 'w-full px-4 py-2'} ${className}`} style={{ background: g.color, color: g.onColor }}>{g.committeeShort}</span>;
+  if (look === 'dot') return <span aria-hidden className={`inline-block h-3 w-3 rounded-full ${className}`} style={{ background: g.committeeColor }} />;
+  return <span className={`inline-block text-xs font-bold uppercase tracking-wider ${look === 'pill' ? 'rounded-full px-3 py-1' : 'w-full px-4 py-2'} ${className}`} style={{ background: g.committeeColor, color: g.committeeOnColor }}>{g.committeeShort}</span>;
 }
 
 export function GroupRecruiting({ label = 'Recruiting', className = '' }: { label?: string; className?: string }) {
