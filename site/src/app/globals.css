@@ -45,7 +45,8 @@ h1, h2, h3 { text-wrap: balance; }
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--color-p500); outline-offset: 2px; }
 
 /* Rendered markdown (news posts, content pages) */
-.prose-lkc { max-width: 68ch; }
+.prose-lkc { max-width: 68ch; white-space: normal; } /* normal: Plasmic's text style keeps line breaks, which turned every newline between blocks into a blank line */
+.prose-lkc pre { white-space: pre-wrap; }
 .prose-lkc > * + * { margin-top: 1em; }
 .prose-lkc h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.6em; }
 .prose-lkc h3 { font-size: 1.2rem; font-weight: 700; margin-top: 1.4em; }
@@ -59,7 +60,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .prose-lkc .blk-photos p { display: contents; margin: 0; }
 .prose-lkc .blk-photos[data-cols="2"] { column-count: 2; column-width: auto; } .prose-lkc .blk-photos[data-cols="3"] { column-count: 3; column-width: auto; } .prose-lkc .blk-photos[data-cols="4"] { column-count: 4; column-width: auto; }
 @media (max-width: 560px) { .prose-lkc .blk-photos[data-cols="3"], .prose-lkc .blk-photos[data-cols="4"] { column-count: 2; } .prose-lkc .blk-photos[style] { width: 100% !important; } }
-.prose-lkc img.blk-img { display: block; height: auto; border-radius: .75rem; }
+.prose-lkc img.blk-img { display: block; height: auto; }
 .prose-lkc img.blk-img-center { margin-left: auto; margin-right: auto; }
 .prose-lkc img.blk-img-right { margin-left: auto; }
 @media (max-width: 480px) { .prose-lkc img.blk-img { width: 100% !important; } }
@@ -69,7 +70,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .prose-lkc a.blk-button { display: inline-block; background: var(--color-pink); color: var(--color-p950); padding: .75rem 1.5rem; border-radius: 999px; font-weight: 700; text-decoration: none; transition: background-color .2s ease, transform .16s cubic-bezier(.23,1,.32,1); }
 .prose-lkc a.blk-button:hover { background: var(--color-p900); color: #fff; }
 .prose-lkc a.blk-button:active { transform: scale(.97); }
-.prose-lkc img { border-radius: .75rem; max-width: 100%; height: auto; }
+.prose-lkc img { border-radius: 0; max-width: 100%; height: auto; }
 /* Pictures in write-ups open large when clicked (components/ProseLightbox.tsx): a pointer, a gentle lift on hover, a visible focus ring for the keyboard */
 .prose-lkc img { cursor: zoom-in; transition: transform .25s cubic-bezier(.23, 1, .32, 1), box-shadow .25s ease, filter .25s ease; }
 .prose-lkc a img { cursor: pointer; }
