@@ -174,3 +174,6 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 15px; col
 
 .ve-k-callout > .ve-blk-body { background: var(--p100); border-radius: 0 0 10px 10px; padding: 4px 16px; }
 .ve-k-quote > .ve-blk-body { font-size: 18px; font-weight: 700; color: var(--p700); } .ve-k-quote > .ve-blk-body p:last-child { font-size: 14px; font-weight: 400; color: var(--muted); }
+
+/* Elements the scripts hide with the hidden attribute must stay hidden even when a rule above sets display */
+.toolbar[hidden], .ve[hidden], .md-preview[hidden], .ve-page[hidden] { display: none; }

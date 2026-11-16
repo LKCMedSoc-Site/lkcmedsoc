@@ -403,7 +403,8 @@ export function create(opts) {
   });
   /** A block only becomes editor blocks if writing it back gives the same text (ignoring blank lines). */
   const verify = (html, text) => { try { return norm(toMarkdown(createDocument(html, editor.schema).toJSON())) === norm(text); } catch (e) { return false; } };
-  const load = (md) => editor.commands.setContent(toHtml(md, marked, verify), false);
+  // Loading is not an undo step: Undo right after opening must not empty the page.
+  const load = (md) => editor.chain().setMeta('addToHistory', false).setContent(toHtml(md, marked, verify), false).run();
   load(original);
 
   const run = () => editor.chain().focus();
