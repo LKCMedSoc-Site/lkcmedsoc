@@ -1,13 +1,20 @@
+<!-- ROOT: bind its style attribute to ({ '--house': $ctx.housePage.color }). Every house-colour below is var(--house, ...), so nothing else needs a colour binding. -->
 <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#ffffff; color:#1a1a1a; font-family:'DIN', Arial, sans-serif; box-sizing:border-box;">
 
   <!-- HERO: photo under a see-through wash of the colour (outer background and wash: [BIND: color]). No photo: the colour alone is the hero. -->
-  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:#b91c1c; color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%; background-color:var(--house, #b91c1c); color:#ffffff; position:relative; overflow:hidden; padding:136px 0 0; box-sizing:border-box;">
     <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; pointer-events:none;" />
-    <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#b91c1c; opacity:0.82; pointer-events:none;"></div>
+    <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:var(--house, #b91c1c); opacity:0.82; pointer-events:none;"></div>
     <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; row-gap:20px; position:relative; box-sizing:border-box;">
       <a href="/about/house-system" style="text-decoration:none; font-size:14px; font-weight:700; color:rgba(255,255,255,0.8);">← <span>House system</span></a>
-      <span style="align-self:flex-start; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ffffff; background-color:rgba(255,255,255,0.2); padding:6px 12px; border-radius:999px;">House</span>
-      <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">[BIND: $ctx.housePage.name]</span>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-end; column-gap:28px; row-gap:16px;">
+        <!-- Logo: visible when $ctx.housePage.hasLogo; src = $ctx.housePage.logo. Round, white ring, like the group page. Disc colour: Style attribute { backgroundColor: $ctx.housePage.logoBg || "#ffffff" } (white; house colour for a white crest). -->
+        <img src="https://placehold.co/160x160/ffffff/b91c1c?text=Logo" alt="Logo" style="width:112px; height:112px; border-radius:999px; border:4px solid #ffffff; background-color:#ffffff; object-fit:cover; flex:0 0 112px;" />
+        <div style="display:flex; flex-direction:column; row-gap:14px; min-width:0; flex:1 1 320px;">
+        <span style="align-self:flex-start; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ffffff; background-color:rgba(255,255,255,0.2); padding:6px 12px; border-radius:999px;">House</span>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">[BIND: $ctx.housePage.name]</span>
+        </div>
+      </div>
       <span style="max-width:640px; font-size:18px; line-height:1.55; color:rgba(255,255,255,0.92);">[BIND: $ctx.housePage.description]</span>
     </div>
     <img src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 36' preserveAspectRatio='none'%3E%3Cpolygon points='0,36 1440,0 1440,36' fill='%23ffffff'/%3E%3C/svg%3E" alt="" style="width:100%; height:36px; object-fit:fill; position:relative;" />
@@ -18,47 +25,47 @@
     <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; column-gap:48px; row-gap:40px;">
       <!-- Main column: the write-up (if the house has one) and the House Cup placing. -->
       <div style="display:flex; flex-direction:column; row-gap:56px; flex:1 1 560px; min-width:0;">
-        <span style="font-size:18px; line-height:1.65; color:#1a1a1a;">[BIND: Group page: write-up] (visible when hasAbout). Optional. Houses can have a write-up like groups do.</span>
+        <span style="font-size:18px; line-height:1.65; color:#1a1a1a;">[INSERT: component &quot;Committee or house: write-up&quot;, set Source = housePage] (visible when $ctx.housePage.hasAbout). Do NOT bind aboutHtml to a plain text: the photo rows, columns and paragraph spacing are only styled inside this component.</span>
       <!-- HOUSE CUP: data is live, see ABOUT-PAGES.md "House Cup data". Visible when $ctx.housePage.hasPlacings. Current placing: $ctx.housePage.currentPlacing {rankLabel, points (score out of 100), ay, isFinal, statusText}, visible when hasCurrentPlacing. "Over the years": repeat over $ctx.housePage.placings (ay, rankLabel, points), visible when hasPastPlacings; otherwise show the empty line. -->
       <div id="house-cup" style="display:flex; flex-direction:column; row-gap:28px;">
         <div style="display:flex; flex-direction:column; row-gap:8px;">
-          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b91c1c;">House Cup</span>
-          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:#b91c1c;">Where we stand</span>
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--house, #b91c1c);">House Cup</span>
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:44px; font-weight:400; line-height:0.92; letter-spacing:0.01em; text-transform:uppercase; color:var(--house, #b91c1c);">Where we stand</span>
         </div>
         <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-end; column-gap:48px; row-gap:24px;">
           <!-- Current placing -->
           <div style="display:flex; flex-direction:column; row-gap:6px; flex:0 0 auto;">
             <span style="font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#666666;">[BIND: $ctx.housePage.currentPlacing.ay] · current placing</span>
-            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:140px; line-height:0.85; text-transform:uppercase; color:#b91c1c;">[BIND: $ctx.housePage.currentPlacing.rankLabel]</span>
+            <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:140px; line-height:0.85; text-transform:uppercase; color:var(--house, #b91c1c);">[BIND: $ctx.housePage.currentPlacing.rankLabel]</span>
             <span style="font-size:15px; color:#666666;">[BIND: $ctx.housePage.currentPlacing.points] out of 100 · [BIND: $ctx.housePage.currentPlacing.statusText]</span>
-            <span style="font-size:15px; font-weight:700; color:#b91c1c;">[BIND: $ctx.housePage.gapText] (visible when gapText is not empty)</span>
+            <span style="font-size:15px; font-weight:700; color:var(--house, #b91c1c);">[BIND: $ctx.housePage.gapText] (visible when gapText is not empty)</span>
           </div>
           <!-- Nav to this AY's results on the house system page -->
-          <a href="/about/house-system#house-cup" style="text-decoration:none; align-self:flex-end; font-size:15px; font-weight:700; color:#b91c1c; border-bottom:2px solid #b91c1c; padding-bottom:2px;">See this year's House Cup results →</a>
+          <a href="/about/house-system#house-cup" style="text-decoration:none; align-self:flex-end; font-size:15px; font-weight:700; color:var(--house, #b91c1c); border-bottom:2px solid var(--house, #b91c1c); padding-bottom:2px;">See this year's House Cup results →</a>
         </div>
         <!-- HOW WE GOT HERE: this year's score by event. Visible when $ctx.housePage.hasBreakdown. Repeat the row over $ctx.housePage.breakdown (name, weightText, scoreText, maxText). Bar width = score as a share of the event's max: style ({ width: (parseFloat(currentItem.scoreText) / parseFloat(currentItem.maxText) * 100) + '%' }) (guard against a max of 0). No boxes. -->
         <div style="display:flex; flex-direction:column; row-gap:12px;">
-          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b91c1c;">How we got here</span>
-          <span style="font-size:14px; line-height:1.5; color:#666666;">Scores are out of 100. Each event is worth a share of that, and a house earns its share of the points all houses won in the event. <a href="/about/house-system#house-cup" style="color:#b91c1c; font-weight:700;">How the Cup works</a></span>
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--house, #b91c1c);">How we got here</span>
+          <span style="font-size:14px; line-height:1.5; color:#666666;">Scores are out of 100. Each event is worth a share of that, and a house earns its share of the points all houses won in the event. <a href="/about/house-system#house-cup" style="color:var(--house, #b91c1c); font-weight:700;">How the Cup works</a></span>
           <div style="display:flex; flex-direction:column; row-gap:6px; padding:12px 0; border-bottom:1px solid #dddddd;">
             <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:baseline; column-gap:12px;">
               <span style="font-size:15px; font-weight:700; color:#1a1a1a;">[BIND: currentItem.name] <span style="font-weight:400; color:#666666;">· [BIND: currentItem.weightText]</span></span>
-              <span style="font-size:15px; font-weight:700; color:#b91c1c;">[BIND: currentItem.scoreText] <span style="font-weight:400; color:#666666;">of [BIND: currentItem.maxText]</span></span>
+              <span style="font-size:15px; font-weight:700; color:var(--house, #b91c1c);">[BIND: currentItem.scoreText] <span style="font-weight:400; color:#666666;">of [BIND: currentItem.maxText]</span></span>
             </div>
             <div style="width:100%; height:6px; border-radius:999px; background-color:#dddddd; overflow:hidden;">
-              <div style="width:70%; height:6px; border-radius:999px; background-color:#b91c1c;"></div>
+              <div style="width:70%; height:6px; border-radius:999px; background-color:var(--house, #b91c1c);"></div>
             </div>
           </div>
         </div>
         <!-- Placing over the years. Repeat the column over $ctx.housePage.placings. No boxes: a hairline above each year. -->
         <div style="display:flex; flex-direction:column; row-gap:12px;">
-          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b91c1c;">Over the years</span>
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--house, #b91c1c);">Over the years</span>
           <div style="display:flex; flex-direction:row; flex-wrap:wrap; column-gap:32px; row-gap:24px;">
             <div style="display:flex; flex-direction:column; row-gap:4px; width:120px; border-top:2px solid #dddddd; padding-top:12px;">
               <span style="font-size:13px; font-weight:700; color:#666666;">[BIND: currentItem.ay]</span>
-              <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:56px; line-height:0.9; text-transform:uppercase; color:#b91c1c;">[BIND: currentItem.rankLabel]</span>
+              <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:56px; line-height:0.9; text-transform:uppercase; color:var(--house, #b91c1c);">[BIND: currentItem.rankLabel]</span>
               <span style="font-size:13px; color:#666666;">[BIND: currentItem.points] pts · [BIND: currentItem.statusText]</span>
-              <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#ffffff; background-color:#b91c1c; padding:4px 8px; border-radius:999px; align-self:flex-start;">Champions</span>
+              <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#ffffff; background-color:var(--house, #b91c1c); padding:4px 8px; border-radius:999px; align-self:flex-start;">Champions</span>
               <!-- Champions pill: visible when currentItem.isChampion (final year, 1st). -->
             </div>
           </div>
@@ -68,13 +75,13 @@
       </div>
 
       <!-- Side column, sticky: who leads the house, what's coming up, and the news. -->
-      <div style="display:flex; flex-direction:column; row-gap:28px; flex:1 1 300px; max-width:380px; min-width:0; position:sticky; top:96px; align-self:flex-start; border-top:6px solid #b91c1c; padding-top:20px; box-sizing:border-box;">
+      <div style="display:flex; flex-direction:column; row-gap:28px; flex:1 1 300px; max-width:380px; min-width:0; position:sticky; top:96px; align-self:flex-start; border-top:6px solid var(--house, #b91c1c); padding-top:20px; box-sizing:border-box;">
         <div style="display:flex; flex-direction:column; row-gap:14px;">
-          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:34px; line-height:0.92; text-transform:uppercase; color:#b91c1c;">Who leads it</span>
+          <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:34px; line-height:0.92; text-transform:uppercase; color:var(--house, #b91c1c);">Who leads it</span>
           <span style="font-size:13px; color:#666666;">[BIND: $ctx.housePage.ay]</span>
           <!-- Repeat the row over $ctx.housePage.leaders (house reps). -->
           <div style="display:flex; flex-direction:row; align-items:center; column-gap:12px;">
-            <div style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background-color:#b91c1c; color:#ffffff; font-size:15px; font-weight:700; flex:0 0 44px; overflow:hidden;">[BIND: currentItem.initials]</div>
+            <div style="display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:999px; background-color:var(--house, #b91c1c); color:#ffffff; font-size:15px; font-weight:700; flex:0 0 44px; overflow:hidden;">[BIND: currentItem.initials]</div>
             <div style="display:flex; flex-direction:column;">
               <span style="font-size:15px; font-weight:700; color:#1a1a1a;">[BIND: currentItem.name]</span>
               <span style="font-size:13px; color:#666666;">[BIND: currentItem.title]</span>
@@ -82,10 +89,10 @@
           </div>
         </div>
         <div style="display:flex; flex-direction:column; min-width:0;">
-          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b91c1c;">Coming up</span>
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--house, #b91c1c);">Coming up</span>
           <!-- Repeat the row over $ctx.housePage.events (visible when hasEvents; otherwise "Nothing scheduled yet."). Show at most 5. -->
           <a href="/events/1" style="text-decoration:none; display:flex; flex-direction:row; align-items:center; column-gap:14px; padding:12px 0; border-bottom:1px solid #dddddd; color:#1a1a1a;">
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:52px; height:52px; border-radius:8px; background-color:#b91c1c; color:#ffffff; flex:0 0 52px;">
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:52px; height:52px; border-radius:8px; background-color:var(--house, #b91c1c); color:#ffffff; flex:0 0 52px;">
             <span style="font-size:10px; font-weight:700; letter-spacing:0.08em;">[BIND: currentItem.monthShort]</span>
             <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:24px; line-height:1;">[BIND: currentItem.day]</span>
           </div>
@@ -93,11 +100,11 @@
             <span style="font-size:15px; font-weight:700;">[BIND: currentItem.title]</span>
             <span style="font-size:13px; color:#666666;">[BIND: currentItem.whenText] · [BIND: currentItem.venue]</span>
           </div>
-          <span style="color:#b91c1c; font-size:18px; font-weight:700;">→</span>
+          <span style="color:var(--house, #b91c1c); font-size:18px; font-weight:700;">→</span>
         </a>
         </div>
         <div style="display:flex; flex-direction:column; min-width:0;">
-          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#b91c1c;">From the news</span>
+          <span style="font-size:13px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--house, #b91c1c);">From the news</span>
           <!-- Repeat the row over $ctx.housePage.posts (visible when hasPosts). Show at most 5. -->
           <a href="/gazette/post" style="text-decoration:none; display:flex; flex-direction:column; row-gap:2px; padding:12px 0; border-bottom:1px solid #dddddd; color:#1a1a1a;">
           <span style="font-size:12px; color:#666666;">[BIND: currentItem.dateText] · [BIND: currentItem.categoryLabel]</span>

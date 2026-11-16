@@ -27,8 +27,15 @@
         <a href="/about/house-system/phoenix" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; justify-content:space-between; row-gap:20px; flex:1 1 250px; width:100%; max-width:276px; min-width:0; box-sizing:border-box;">
           <div style="display:flex; flex-direction:column; row-gap:14px;">
             <div style="position:relative; width:100%; height:160px; border-radius:8px; overflow:hidden; background-color:#b91c1c;">
+              <!-- Header photo: src = currentItem.header, visible when currentItem.hasHeader. -->
+              <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=70" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;" />
+              <!-- Colour wash over the photo: backgroundColor = currentItem.color, opacity 0.7 (visible when hasHeader). -->
+              <div style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#b91c1c; opacity:0.7;"></div>
               <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <!-- Initials show only when there is no logo (visible when !currentItem.hasLogo). -->
                 <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:72px; line-height:0.9; color:#ffffff; text-transform:uppercase;">[BIND: currentItem.initials]</span>
+                <!-- Logo: src = currentItem.logo, visible when currentItem.hasLogo. Round, white ring, centred on the picture. Disc colour: Style attribute { backgroundColor: currentItem.logoBg || "#ffffff" }. -->
+                <img src="https://placehold.co/160x160/ffffff/b91c1c?text=Logo" alt="" style="width:96px; height:96px; border-radius:999px; border:4px solid #ffffff; background-color:#ffffff; object-fit:cover;" />
               </div>
             </div>
             <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:32px; font-weight:400; line-height:0.94; text-transform:uppercase; color:#b91c1c;">[BIND: currentItem.name]</span>

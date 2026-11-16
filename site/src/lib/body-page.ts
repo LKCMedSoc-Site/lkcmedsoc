@@ -24,8 +24,12 @@ type PostItem = ReturnType<typeof postItem>;
 type GroupItem = { name: string; description: string; initials: string; link: string; logo: string; hasLogo: boolean; header: string; hasHeader: boolean; color: string; onColor: string; tint: string; overlay: string };
 type Colours = { color: string; onColor: string; tint: string; overlay: string };
 
+// Colour of the round disc behind a crest. White, so a crest reads whatever the house colour or photo; a white crest needs the house colour instead.
+const LIGHT_CRESTS = new Set(['Joseph Lister']);
+const logoBgOf = (name: string, color: string) => (LIGHT_CRESTS.has(name) ? color : '#ffffff');
+
 const DEFAULT = toneFor(null, 'LKCMedSoc');
-const BASE_EMPTY = { isLoading: false, notFound: false, name: '', short: '', description: '', initials: '', link: '', logo: '', hasLogo: false, header: '', hasHeader: false, ...colours(DEFAULT), aboutHtml: '', hasAbout: false, ay: '', leaders: [] as Person[], hasLeaders: false, groups: [] as GroupItem[], hasGroups: false, events: [] as EventItem[], hasEvents: false, posts: [] as PostItem[], hasPosts: false,
+const BASE_EMPTY = { isLoading: false, notFound: false, name: '', short: '', description: '', initials: '', link: '', logo: '', hasLogo: false, logoBg: '#ffffff', header: '', hasHeader: false, ...colours(DEFAULT), aboutHtml: '', hasAbout: false, ay: '', leaders: [] as Person[], hasLeaders: false, groups: [] as GroupItem[], hasGroups: false, events: [] as EventItem[], hasEvents: false, posts: [] as PostItem[], hasPosts: false,
   // House pages only (empty on committee pages): the house's place in the House Cup. See house-cup.ts and plasmic-kit/ABOUT-PAGES.md.
   currentPlacing: EMPTY_PLACING as Placing, hasCurrentPlacing: false, placings: [] as Placing[], hasPlacings: false, hasPastPlacings: false, breakdown: [] as { name: string; weightText: string; scoreText: string; maxText: string }[], hasBreakdown: false, gapText: '' };
 export type BodyPageData = typeof BASE_EMPTY;
@@ -59,7 +63,7 @@ export function buildBodyPage(o: Src & { kind: 'committee' | 'house'; slug: stri
     ...BASE_EMPTY,
     name: b.name, short: b.name.replace(/ Committee$/, ''), description: b.description ?? '', initials: initialsOf(b.name),
     link: o.kind === 'committee' ? `/about/committee/${o.slug}` : `/about/house-system/${o.slug}`,
-    logo: img(b.logo), hasLogo: !!b.logo, header: img(b.header), hasHeader: !!b.header, ...colours(tone),
+    logo: img(b.logo), hasLogo: !!b.logo, logoBg: logoBgOf(b.name, colours(tone).color), header: img(b.header), hasHeader: !!b.header, ...colours(tone),
     aboutHtml, hasAbout: !!aboutHtml, ay: o.ay, leaders: people.map(personOf), hasLeaders: people.length > 0,
     groups, hasGroups: groups.length > 0, events, hasEvents: events.length > 0, posts, hasPosts: posts.length > 0,
     currentPlacing: currentPlacing ?? EMPTY_PLACING, hasCurrentPlacing: !!currentPlacing, placings, hasPlacings: !!currentPlacing || placings.length > 0, hasPastPlacings: placings.length > 0,
@@ -77,7 +81,7 @@ export function buildHousesHub(o: Src & { intro?: string; howItWorks?: string })
   const names = new Set(houses.map((x) => x.name));
   const items = houses.map((x) => {
     const reps = sortLeaders(o.leaders.filter((l) => l.level === 'House' && l.body === x.name)).map(personOf);
-    return { name: x.name, slug: slugify(x.name), link: `/about/house-system/${slugify(x.name)}`, description: x.description ?? '', initials: initialsOf(x.name), logo: img(x.logo), hasLogo: !!x.logo, header: img(x.header), hasHeader: !!x.header, ...colours(tones.get(x.name)!), reps, hasReps: reps.length > 0 };
+    return { name: x.name, slug: slugify(x.name), link: `/about/house-system/${slugify(x.name)}`, description: x.description ?? '', initials: initialsOf(x.name), logo: img(x.logo), hasLogo: !!x.logo, logoBg: logoBgOf(x.name, colours(tones.get(x.name)!).color), header: img(x.header), hasHeader: !!x.header, ...colours(tones.get(x.name)!), reps, hasReps: reps.length > 0 };
   });
   const events = o.events.filter((e) => names.has(e.body ?? '')).slice(0, 6).map(eventItem);
   const posts = o.posts.filter((p) => names.has(p.bodyName)).slice(0, 6).map(postItem);
