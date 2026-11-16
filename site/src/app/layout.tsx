@@ -6,6 +6,7 @@ import { SITE } from '@/lib/site';
 import { getBodies, groupsOf, slugify } from '@/lib/records';
 import { PlasmicOr } from '@/lib/plasmic-page';
 import HideOnHost from '@/components/HideOnHost';
+import ProseLightbox from '@/components/ProseLightbox';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -25,6 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <div className="site-chrome"><HideOnHost><PlasmicOr lookup="Header"><Header index={index} groups={groups} /></PlasmicOr></HideOnHost></div>
         <main className="flex-1">{children}</main>
         <div className="site-chrome"><HideOnHost><PlasmicOr lookup="Footer"><Footer /></PlasmicOr></HideOnHost></div>
+        <ProseLightbox />
       </body>
     </html>
   );

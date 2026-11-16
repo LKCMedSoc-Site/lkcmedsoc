@@ -89,7 +89,7 @@ const OPENS = /^:::(callout|photos|quote|columns|toggle)(?:\s+.*)?$/;
 export function renderGroupMarkdown(md: string): string {
   const videos: string[] = [];
   const html = blocks((md ?? '').replace(/\r/g, '').split('\n'), videos, 0);
-  const clean = sizeGalleries(sizeImages(sanitizeHtml(html, GROUP_OPTIONS)));
+  const clean = lightboxable(sizeGalleries(sizeImages(sanitizeHtml(html, GROUP_OPTIONS))));
   return clean.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, (_m, i: string) => {
     const embed = videos[Number(i)];
     return embed ? `<div class="blk-video"><iframe src="${embed}" title="Video" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>` : '';
@@ -103,6 +103,18 @@ export function renderGroupMarkdown(md: string): string {
 function photoOpts(line: string): string {
   const cols = /\bcols=([234])\b/.exec(line), w = /\bw=(\d{1,3})\b/.exec(line), align = /\balign=(left|center|right)\b/.exec(line);
   return (cols ? ` data-cols="${cols[1]}"` : '') + (w ? ` data-w="${Math.min(100, Math.max(10, Number(w[1])))}"` : '') + (w && align ? ` data-align="${align[1]}"` : '');
+}
+
+/**
+ * Makes the pictures in a write-up reachable by keyboard for the viewer (components/ProseLightbox.tsx): a picture that is not inside a link gets tabindex,
+ * role=button and, when it has no alt text, a label. Done here, on the server, so the page and what the browser builds agree (no change after load).
+ */
+export function lightboxable(html: string): string {
+  return html.replace(/(<a\b[^>]*>\s*)?(<img\b[^>]*>)/g, (m, a: string | undefined, img: string) => {
+    if (a) return m;
+    const named = /\balt="[^"]+"/.test(img);
+    return `<img tabindex="0" role="button" data-lb="1"${named ? '' : ' aria-label="Enlarge photo"'}${img.slice(4)}`;
+  });
 }
 
 /** Turns a gallery's data-w / data-align into its width and position. Runs on already-sanitised HTML and builds the style from digits and fixed words only. */

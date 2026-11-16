@@ -70,6 +70,19 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .prose-lkc a.blk-button:hover { background: var(--color-p900); color: #fff; }
 .prose-lkc a.blk-button:active { transform: scale(.97); }
 .prose-lkc img { border-radius: .75rem; max-width: 100%; height: auto; }
+/* Pictures in write-ups open large when clicked (components/ProseLightbox.tsx): a pointer, a gentle lift on hover, a visible focus ring for the keyboard */
+.prose-lkc img { cursor: zoom-in; transition: transform .25s cubic-bezier(.23, 1, .32, 1), box-shadow .25s ease, filter .25s ease; }
+.prose-lkc a img { cursor: pointer; }
+.prose-lkc img:focus-visible { outline: 3px solid var(--g, var(--color-p500)); outline-offset: 3px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .prose-lkc img:not(a img):hover { transform: scale(1.015); box-shadow: 0 12px 28px -12px rgb(0 0 0 / .5); filter: brightness(1.04); position: relative; z-index: 1; }
+}
+@keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lb-pop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .lb-in { animation: lb-fade .18s ease-out both; }
+  .lb-img { animation: lb-pop .22s cubic-bezier(.23, 1, .32, 1) both; }
+}
 .prose-lkc .blk-video { position: relative; aspect-ratio: 16 / 9; border-radius: .75rem; overflow: hidden; background: var(--color-p950); }
 .prose-lkc .blk-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .prose-lkc .blk-columns { display: grid; gap: 1.5rem 2rem; grid-template-columns: 1fr; margin: 1.5em 0; }
