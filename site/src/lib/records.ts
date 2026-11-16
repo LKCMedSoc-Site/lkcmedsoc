@@ -18,16 +18,10 @@ export function nameCase(s: string) {
 export function toSocials(v: any): Social[] {
   return Array.isArray(v) ? v.filter((x) => x && typeof x.kind === 'string' && typeof x.url === 'string' && x.url).map((x) => ({ kind: x.kind, url: x.url })) : [];
 }
-/** Short descriptions are meant to stay under 400 characters. Anything longer is cut at a word and ends with an ellipsis wherever the site shows it. */
-export const DESCRIPTION_MAX = 400;
-export function clip(text: string | null, max = DESCRIPTION_MAX): string | null {
-  if (!text || text.length <= max) return text;
-  return text.slice(0, max).replace(/\s+\S*$/, '').replace(/[\s.,;:!?-]+$/, '') + '…';
-}
 export function toBodies(data: any[]): Body[] {
   return data.map((r) => ({
     name: r.name, level: r.level ?? '', status: r.status ?? 'Active', parent: clean(r.parent_committee) ?? '',
-    description: clip(clean(r.description)), logo: clean(r.logo_url), instagram: clean(r.instagram), website: clean(r.website), recruitment: clean(r.recruitment_url), header: clean(r.header_url), about: clean(r.about_md), color: clean(r.color), socials: toSocials(r.socials),
+    description: clean(r.description), logo: clean(r.logo_url), instagram: clean(r.instagram), website: clean(r.website), recruitment: clean(r.recruitment_url), header: clean(r.header_url), about: clean(r.about_md), color: clean(r.color), socials: toSocials(r.socials),
   })).filter((b) => b.name);
 }
 export function toLeaders(rows: any[]): { ay: string; leaders: Leader[] } {

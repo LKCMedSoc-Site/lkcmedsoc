@@ -337,7 +337,7 @@
     var blurb = h('textarea', { rows: 3, placeholder: 'One or two lines for your card, e.g. “Weekly visits to cheer up paediatric patients.”' });
     blurb.value = r.description || '';
     var count = h('span', { class: 'muted' }, '');
-    function cnt() { var n = blurb.value.length; count.textContent = n + ' / 400 recommended' + (n > 400 ? '. The website shows the first 400 characters followed by …' : ''); count.style.color = n > 400 ? '#a3321f' : ''; }
+    function cnt() { var n = blurb.value.length; count.textContent = n + ' / 400 recommended. Your own page shows it in full; cards in lists show the first 160 characters followed by …'; count.style.color = n > 400 ? '#a3321f' : ''; }
     blurb.addEventListener('input', cnt); cnt();
     var join = h('input', { value: r.recruitment_url || '', placeholder: 'https://forms.gle/…' });
     var ig = h('input', { value: r.instagram || '', placeholder: '@yourgroup' });

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Check, ChevronDown, Search } from 'lucide-react';
 import SafeImage from '@/components/SafeImage';
+import { clip } from '@/lib/text';
 
 export type GroupItem = { name: string; href: string; committee: string; committeeHref: string; chair: string; description: string | null; logo: string; header: string; recruiting: boolean; color?: string | null; committeeColor?: string | null };
 
@@ -30,7 +31,7 @@ function Card({ g, tone }: { g: GroupItem; tone: (typeof TONES)[number] }) {
           <h3 className="display text-[1.9rem] leading-[.95] text-p950">{g.name}</h3>
           {!g.header && g.logo ? <span className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-p900/20"><SafeImage src={g.logo} sizes="44px" className="h-full w-full" /></span> : null}
         </div>
-        {g.description ? <p className="mt-2 line-clamp-2 text-sm text-muted">{g.description}</p> : null}
+        {g.description ? <p className="mt-2 line-clamp-2 text-sm text-muted">{clip(g.description)}</p> : null}
         <div className="mt-auto pt-4">
           {g.chair ? <p className="truncate text-sm text-muted">Chairperson · <span className="font-medium text-p900">{g.chair}</span></p> : <p className="text-sm text-muted">&nbsp;</p>}
         </div>

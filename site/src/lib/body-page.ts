@@ -6,6 +6,7 @@ import { fmtTime, postDate, whenText, ymd } from './dates';
 import { photoUrl, storageUrl } from './supabase';
 import { assignTones, toneFor, type Tone } from './tones';
 import { breakdownOf, currentYear, EMPTY_PLACING, gapTextOf, placingOf, pointsText, rankLabel, updatedText, type HouseCupYear, type Placing } from './house-cup';
+import { clip } from './text';
 
 const SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const img = (v: string | null) => (v ? storageUrl('body-images', v) : '');
@@ -49,7 +50,7 @@ export function buildBodyPage(o: Src & { kind: 'committee' | 'house'; slug: stri
   const people = sortLeaders(o.leaders.filter((l) => l.level === (o.kind === 'committee' ? 'Committee' : 'House') && l.body === b.name));
   const groups: GroupItem[] = (c?.ccas ?? []).map((x) => {
     const t = x.color ? toneFor(x.color, x.name) : tone;
-    return { name: x.name, description: x.description ?? '', initials: initialsOf(x.name), link: `/student-groups/${c!.slug}/${slugify(x.name)}`, logo: img(x.logo), hasLogo: !!x.logo, header: img(x.header), hasHeader: !!x.header, ...colours(t) };
+    return { name: x.name, description: clip(x.description ?? ''), initials: initialsOf(x.name), link: `/student-groups/${c!.slug}/${slugify(x.name)}`, logo: img(x.logo), hasLogo: !!x.logo, header: img(x.header), hasHeader: !!x.header, ...colours(t) };
   });
   const events = o.events.filter((e) => names.has(e.body ?? '')).slice(0, 6).map(eventItem);
   const posts = o.posts.filter((p) => names.has(p.bodyName)).slice(0, 6).map(postItem);
@@ -81,7 +82,7 @@ export function buildHousesHub(o: Src & { intro?: string; howItWorks?: string })
   const names = new Set(houses.map((x) => x.name));
   const items = houses.map((x) => {
     const reps = sortLeaders(o.leaders.filter((l) => l.level === 'House' && l.body === x.name)).map(personOf);
-    return { name: x.name, slug: slugify(x.name), link: `/about/house-system/${slugify(x.name)}`, description: x.description ?? '', initials: initialsOf(x.name), logo: img(x.logo), hasLogo: !!x.logo, logoBg: logoBgOf(x.name, colours(tones.get(x.name)!).color), header: img(x.header), hasHeader: !!x.header, ...colours(tones.get(x.name)!), reps, hasReps: reps.length > 0 };
+    return { name: x.name, slug: slugify(x.name), link: `/about/house-system/${slugify(x.name)}`, description: clip(x.description ?? ''), initials: initialsOf(x.name), logo: img(x.logo), hasLogo: !!x.logo, logoBg: logoBgOf(x.name, colours(tones.get(x.name)!).color), header: img(x.header), hasHeader: !!x.header, ...colours(tones.get(x.name)!), reps, hasReps: reps.length > 0 };
   });
   const events = o.events.filter((e) => names.has(e.body ?? '')).slice(0, 6).map(eventItem);
   const posts = o.posts.filter((p) => names.has(p.bodyName)).slice(0, 6).map(postItem);
