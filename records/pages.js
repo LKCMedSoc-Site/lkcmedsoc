@@ -2,7 +2,6 @@
 (function () {
   'use strict';
   var SITE = 'https://lkcmedsoc.com';
-  var state = { id: null };
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function slug(s, stripCommittee) { s = String(s || '').toLowerCase(); if (stripCommittee) s = s.replace(/ committee$/, ''); return s.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
@@ -369,19 +368,7 @@
   }
 
   window.GroupPages = {
-    view: async function (kit) {
-      var h = kit.h;
-      kit.show(h('p', { class: 'muted' }, 'Loading…'));
-      var bodies = await kit.run(async function () { return kit.must(await kit.sb.rpc('my_bodies')); });
-      if (!bodies) return;
-      bodies = bodies.filter(function (b) { return b.level === 'CCA/Project' || b.level === 'Committee' || b.level === 'House'; });
-      if (!bodies.length) { kit.show(h('p', { class: 'muted' }, 'You do not manage a group page yet. Ask an admin to add you as a manager.')); return; }
-      if (!state.id || !bodies.some(function (b) { return b.id === state.id; })) state.id = bodies[0].id;
-      var slot = h('div');
-      var sel = h('select', { class: 'grow', onchange: function () { state.id = sel.value; load(Object.assign({}, kit, { slot: slot }), bodies.filter(function (b) { return b.id === state.id; })[0]); } },
-        bodies.map(function (b) { return h('option', { value: b.id, selected: b.id === state.id }, b.name + ' (' + b.level + ')'); }));
-      kit.show(h('div', null, h('h2', null, 'Group pages'), h('p', { class: 'muted' }, 'This is what the public sees on the website. Pick a group you manage.'), h('div', { class: 'row' }, sel), slot));
-      load(Object.assign({}, kit, { slot: slot }), bodies.filter(function (b) { return b.id === state.id; })[0]);
-    }
+    // The Public page section of Manage body: draws the editor for one body into `slot`.
+    edit: function (kit, body, slot) { load(Object.assign({}, kit, { slot: slot }), body); }
   };
 })();

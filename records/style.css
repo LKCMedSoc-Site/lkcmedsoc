@@ -192,5 +192,14 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 15px; col
 .ve-video { padding: 0; } .ve-video iframe { width: 100%; max-width: 480px; aspect-ratio: 16/9; border: 0; border-radius: 10px; display: block; } .ve-video .muted { display: block; padding: 18px 14px; border: 1px dashed var(--p300); border-radius: 10px; }
 .ve-content .ve-blk.ProseMirror-selectednode { outline: 2px solid var(--p500); }
 
+/* Manage body: the five starting buttons, and the lists of bodies */
+.catgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 14px 0 22px; }
+.catbtn { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: inherit; cursor: pointer; font: inherit; transition: border-color .15s, box-shadow .15s, transform .12s; }
+.catbtn strong { font-size: 18px; color: var(--p700); } .catbtn span { font-size: 13px; } .catbtn em { font-style: normal; font-size: 12px; color: var(--p500); margin-top: 6px; font-weight: 700; }
+.catbtn:hover { border-color: var(--p500); box-shadow: 0 4px 14px rgba(60,20,50,.12); } .catbtn:active { transform: scale(.98); } .catbtn:focus-visible, .bodybtn:focus-visible { outline: 3px solid var(--p300); outline-offset: 2px; }
+.bodylist { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 14px; }
+.bodybtn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: inherit; cursor: pointer; font: inherit; font-size: 14px; }
+.bodybtn:hover { border-color: var(--p500); background: var(--p50); }
+
 /* Elements the scripts hide with the hidden attribute must stay hidden even when a rule above sets display */
 .toolbar[hidden], .ve[hidden], .md-preview[hidden], .ve-page[hidden] { display: none; }

@@ -183,7 +183,7 @@
     try { me = must(await sb.rpc('whoami')); } catch (e) { toast(friendly(e), true); loginView(); return; }
     $who.replaceChildren(h('span', null, me.name || me.email), h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password'), h('button', { class: 'who-btn', onclick: async function () { await sb.auth.signOut(); me = null; loginView(); } }, 'Sign out'));
     var tabs = [['record', 'My record']];
-    if (me.can_manage || me.is_admin) tabs.push(['bodies', 'My bodies'], ['pages', 'Group pages']);
+    if (me.can_manage || me.is_admin) tabs.push(['manage', 'Manage body']);
     if (me.is_admin) tabs.push(['admin', 'Admin']);
     if (!tabs.some(function (t) { return t[0] === tab; })) tab = 'record';
     $tabs.hidden = false;
@@ -191,8 +191,11 @@
       return h('button', { class: t[0] === tab ? 'on' : '', onclick: function () { tab = t[0]; boot(); } }, t[1]);
     }));
     if (tab === 'record') recordView();
-    else if (tab === 'bodies') rosterView();
-    else if (tab === 'pages') window.GroupPages.view({ h: h, sb: sb, must: must, run: run, toast: toast, show: show, field: field, friendly: friendly });
+    else if (tab === 'manage') {
+      var kit = { h: h, sb: sb, must: must, run: run, toast: toast, show: show, field: field, friendly: friendly, table: table, me: me,
+        roster: rosterInto, pageEditor: function (slot, body) { window.GroupPages.edit(kit, body, slot); } };
+      window.ManageBody.view(kit);
+    }
     else adminView();
   }
 
@@ -319,39 +322,27 @@
                   : h('p', { class: 'muted' }, 'No positions recorded yet.')));
   }
 
-  // ---------- roster editor ----------
-  var rs = { bodyId: null, ay: null };
-  async function rosterView() {
-    show(h('p', { class: 'muted' }, 'Loading…'));
-    var data = await run(async function () {
-      return {
-        bodies: must(await sb.rpc('my_bodies')),
-        years: must(await sb.from('academic_years').select('*').order('ay', { ascending: false }))
-      };
-    });
-    if (!data) return;
-    if (!data.bodies.length) { show(h('p', { class: 'muted' }, 'You are not set up to manage any body yet.')); return; }
-    if (!rs.bodyId || !data.bodies.some(function (b) { return b.id === rs.bodyId; })) rs.bodyId = data.bodies[0].id;
-    if (!rs.ay || !data.years.some(function (y) { return y.ay === rs.ay; })) {
-      var open = data.years.filter(function (y) { return y.is_open; })[0];
-      rs.ay = (open || data.years[0] || {}).ay;
+  // ---------- roster editor (the Team section of Manage body) ----------
+  var rs = { ay: null };
+  async function rosterInto(holder, body) {
+    holder.replaceChildren(h('p', { class: 'muted' }, 'Loading…'));
+    var years = await run(async function () { return must(await sb.from('academic_years').select('*').order('ay', { ascending: false })); });
+    if (!years) return;
+    if (!rs.ay || !years.some(function (y) { return y.ay === rs.ay; })) {
+      var open = years.filter(function (y) { return y.is_open; })[0];
+      rs.ay = (open || years[0] || {}).ay;
     }
-    var body = data.bodies.filter(function (b) { return b.id === rs.bodyId; })[0];
-    var year = data.years.filter(function (y) { return y.ay === rs.ay; })[0];
+    var year = years.filter(function (y) { return y.ay === rs.ay; })[0];
     var editable = !!year && (year.is_open || me.is_admin);
-
-    var bodySel = h('select', { class: 'grow', onchange: function () { rs.bodyId = bodySel.value; rosterView(); } },
-      data.bodies.map(function (b) { return h('option', { value: b.id, selected: b.id === rs.bodyId }, b.name + ' (' + b.level + ')'); }));
-    var aySel = h('select', { onchange: function () { rs.ay = aySel.value; rosterView(); } },
-      data.years.map(function (y) { return h('option', { value: y.ay, selected: y.ay === rs.ay }, y.ay + (y.is_open ? '' : ' (closed)')); }));
-
-    var holder = h('div', null, h('p', { class: 'muted' }, 'Loading roster…'));
-    show(h('div', null, h('h2', null, 'My bodies'), h('div', { class: 'row' }, bodySel, aySel), holder));
-    if (!year) { holder.replaceChildren(h('p', { class: 'muted' }, 'No academic years exist yet. Ask an admin to add one.')); return; }
+    var aySel = h('select', { onchange: function () { rs.ay = aySel.value; rosterInto(holder, body); } },
+      years.map(function (y) { return h('option', { value: y.ay, selected: y.ay === rs.ay }, y.ay + (y.is_open ? '' : ' (closed)')); }));
+    var inner = h('div', null, h('p', { class: 'muted' }, 'Loading roster…'));
+    holder.replaceChildren(h('div', { class: 'row' }, aySel), inner);
+    if (!year) { inner.replaceChildren(h('p', { class: 'muted' }, 'No academic years exist yet. Ask an admin to add one.')); return; }
 
     var res = await run(async function () {
       return {
-        roster: await fetchAll(function () { return sb.from('roster_view').select('*').eq('body_id', rs.bodyId).eq('ay', rs.ay).order('points', { ascending: false }).order('full_name'); }),
+        roster: await fetchAll(function () { return sb.from('roster_view').select('*').eq('body_id', body.id).eq('ay', rs.ay).order('points', { ascending: false }).order('full_name'); }),
         positions: must(await sb.from('positions').select('*').eq('level', body.level).order('points', { ascending: false }))
       };
     });
@@ -369,14 +360,14 @@
             var d = must(await sb.from('participation').delete().eq('id', r.id).select('id'));
             if (!d.length) throw new Error("You don't have permission for that (or the academic year is closed).");
           }, 'Removed');
-          rosterView();
+          rosterInto(holder, body);
         } }, 'Remove') : ''];
     }), [3]) : h('p', { class: 'muted' }, 'Nobody yet.'));
-    if (editable) parts.push(addForms(body, res.positions));
-    holder.replaceChildren.apply(holder, parts);
+    if (editable) parts.push(addForms(body, res.positions, function () { rosterInto(holder, body); }));
+    inner.replaceChildren.apply(inner, parts);
   }
 
-  function addForms(body, positions) {
+  function addForms(body, positions, reload) {
     var picked = null;
     var q = h('input', { class: 'grow', placeholder: 'Search name or matric…' });
     var results = h('div');
@@ -401,11 +392,11 @@
       if (!picked) { toast('Pick a student first', true); return; }
       add.disabled = true;
       var ok = await run(async function () {
-        must(await sb.from('participation').insert({ ay: rs.ay, body_id: rs.bodyId, matric: picked.matric, role_tier: role.value, custom_text: custom.value.trim() || null }));
+        must(await sb.from('participation').insert({ ay: rs.ay, body_id: body.id, matric: picked.matric, role_tier: role.value, custom_text: custom.value.trim() || null }));
         return true;
       }, 'Added');
       add.disabled = false;
-      if (ok) rosterView();
+      if (ok) reload();
     } }, 'Add to roster');
 
     var bulkRole = h('select', null, positions.map(function (p) { return h('option', { value: p.role_tier }, p.role_tier); }));
@@ -416,7 +407,7 @@
       list = list.filter(function (v, i) { return list.indexOf(v) === i; });
       if (!list.length) { toast('Nothing to add', true); return; }
       bulkBtn.disabled = true;
-      var mk = function (m) { return { ay: rs.ay, body_id: rs.bodyId, matric: m, role_tier: bulkRole.value }; };
+      var mk = function (m) { return { ay: rs.ay, body_id: body.id, matric: m, role_tier: bulkRole.value }; };
       var failed = [], okCount = 0;
       var r = await sb.from('participation').insert(list.map(mk));
       if (!r.error) okCount = list.length;
@@ -430,7 +421,7 @@
       report.hidden = false;
       report.textContent = 'Added ' + okCount + ' of ' + list.length + '.' + (failed.length ? '\nCould not add:\n' + failed.join('\n') : '');
       toast('Added ' + okCount, failed.length > 0);
-      if (!failed.length) rosterView();
+      if (!failed.length) reload();
     } }, 'Add all');
 
     return h('div', null,
@@ -442,7 +433,7 @@
   }
 
   // ---------- admin ----------
-  var ADMIN_TABS = [['directory', 'Directory'], ['card', 'Report card'], ['years', 'Years'], ['bodies', 'Bodies'], ['positions', 'Positions'],
+  var ADMIN_TABS = [['directory', 'Directory'], ['card', 'Report card'], ['years', 'Years'], ['positions', 'Positions'],
     ['admins', 'Admins'], ['signin', 'Sign-in list'], ['sync', 'Annual sync'], ['groups', 'Email groups'], ['import', 'Import old data']];
   function adminView() {
     var holder = h('div');
@@ -450,7 +441,7 @@
       return h('button', { class: t[0] === adminTab ? 'on' : '', onclick: function () { adminTab = t[0]; adminView(); } }, t[1]);
     }));
     show(h('div', null, h('h2', null, 'Admin'), bar, holder));
-    ({ directory: adminDirectory, card: adminCard, years: adminYears, bodies: adminBodies, positions: adminPositions,
+    ({ directory: adminDirectory, card: adminCard, years: adminYears, positions: adminPositions,
        admins: adminAdmins, signin: adminSignin, sync: adminSync, groups: adminGroups, import: adminImport })[adminTab](holder);
   }
   async function yearSelect(onchange, preferOpen) {
@@ -516,82 +507,6 @@
         await run(async function () { must(await sb.from('academic_years').insert({ ay: v, is_open: true })); }, 'Added');
         adminYears(el);
       } }, 'Add (opens it)')));
-  }
-
-  async function adminBodies(el) {
-    var data = await run(async function () {
-      return { bodies: must(await sb.from('bodies').select('*').order('level').order('name')),
-               levels: must(await sb.from('positions').select('level')),
-               years: must(await sb.from('academic_years').select('ay').order('ay', { ascending: false })) };
-    });
-    if (!data) return;
-    var levels = data.levels.map(function (x) { return x.level; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
-    var editing = null;
-    var detail = h('div');
-    el.replaceChildren(h('div', { class: 'row' }, h('button', { class: 'btn', onclick: function () { openEdit({ status: 'Active', level: levels[0] || '' }); } }, 'New body')),
-      table(['Name', 'Level', 'Parent', 'Status', ''], data.bodies.map(function (b) {
-        return [b.name, b.level, b.parent_committee || '', b.status, h('button', { class: 'ghost', onclick: function () { openEdit(b); } }, 'Edit')];
-      })), detail);
-
-    async function openEdit(b) {
-      editing = b;
-      var f = {
-        name: h('input', { value: b.name || '' }),
-        level: h('select', null, levels.map(function (l) { return h('option', { value: l, selected: l === b.level }, l); })),
-        status: h('select', null, ['Active', 'Inactive'].map(function (s) { return h('option', { value: s, selected: s === b.status }, s); })),
-        parent_committee: h('input', { value: b.parent_committee || '' }),
-        contact_email: h('input', { value: b.contact_email || '' }),
-        description: h('textarea', null, b.description || ''),
-        logo_url: h('input', { value: b.logo_url || '' }), instagram: h('input', { value: b.instagram || '' }),
-        website: h('input', { value: b.website || '' }), recruitment_url: h('input', { value: b.recruitment_url || '' })
-      };
-      f.description.value = b.description || '';
-      var mgr = h('div');
-      detail.replaceChildren(h('h3', null, b.id ? 'Edit ' + b.name : 'New body'),
-        h('div', { class: 'card' },
-          field('Name', f.name), field('Level', f.level), field('Status', f.status), field('Parent committee (for CCAs)', f.parent_committee),
-          field('Official email (several allowed, comma separated)', f.contact_email), field('Description (public)', f.description),
-          field('Logo URL', f.logo_url), field('Instagram', f.instagram), field('Website', f.website), field('Recruitment link', f.recruitment_url),
-          h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async function () {
-            var rec = {};
-            Object.keys(f).forEach(function (k) { rec[k] = f[k].value.trim() || null; });
-            if (!rec.name) { toast('Name needed', true); return; }
-            var ok = await run(async function () {
-              if (b.id) must(await sb.from('bodies').update(rec).eq('id', b.id)); else must(await sb.from('bodies').insert(rec));
-              return true;
-            }, 'Saved');
-            if (ok) adminBodies(el);
-          } }, 'Save'))), mgr);
-      if (b.id) managersPanel(mgr, b);
-    }
-    function managersPanel(box, b) {
-      async function draw() {
-        var ms = await run(async function () { return must(await sb.from('body_managers').select('*').eq('body_id', b.id).order('email')); });
-        if (!ms) return;
-        var em = h('input', { type: 'email', placeholder: 'leader@e.ntu.edu.sg', class: 'grow' });
-        box.replaceChildren(h('h3', null, 'Who can edit this body'),
-          h('p', { class: 'muted' }, 'Top leaders become editors when you run "Refresh managers" below. Committee managers can also edit their CCAs automatically.'),
-          ms.length ? table(['Email', 'How added', ''], ms.map(function (m) {
-            return [m.email, m.source, h('button', { class: 'danger', onclick: async function () {
-              await run(async function () { must(await sb.from('body_managers').delete().eq('body_id', b.id).eq('email', m.email)); });
-              draw();
-            } }, 'Remove')];
-          })) : h('p', { class: 'muted' }, 'No managers yet.'),
-          h('div', { class: 'row' }, em, h('button', { class: 'btn', onclick: async function () {
-            await run(async function () { must(await sb.from('body_managers').insert({ body_id: b.id, email: em.value.trim().toLowerCase(), source: 'manual' })); }, 'Added');
-            draw();
-          } }, 'Add manager')));
-      }
-      draw();
-    }
-    // global refresh button
-    var ayS = h('select', null, data.years.map(function (y) { return h('option', { value: y.ay }, y.ay); }));
-    el.appendChild(h('h3', null, 'Refresh managers from top leaders'));
-    el.appendChild(h('div', { class: 'card' }, h('p', { class: 'muted' }, 'Replaces all automatic managers with the top leaders of the chosen year (committee heads, chairpersons, ExCo, year reps). Manually added managers are kept.'),
-      h('div', { class: 'row' }, ayS, h('button', { class: 'btn', onclick: async function () {
-        var n = await run(async function () { return must(await sb.rpc('refresh_managers', { a: ayS.value })); });
-        if (n !== undefined) toast(n + ' manager links set');
-      } }, 'Refresh managers'))));
   }
 
   async function adminPositions(el) {
