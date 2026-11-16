@@ -1,11 +1,31 @@
--- Policy: trust-based publishing. No vote is needed to publish a proposal:
--- any ExCo member can publish any proposal once ExCo has agreed it among themselves (objections are handled in conversation, not in the app).
+-- Policy: trust-based publishing. No vote. Any ExCo member can edit and suggest; the President confirms and publishes.
+-- Who may confirm: the President of the latest year in the Records data. If Records has none, any ExCo member (so a data gap cannot lock everyone out).
 -- This includes the Constitution: it works like any other document. Safe to run more than once.
+create or replace function activities.policy_is_confirmer() returns boolean
+language plpgsql stable security definer set search_path to 'activities', 'public' as $$
+declare pres text[];
+begin
+  if not is_exco() then return false; end if;
+  -- the President of the latest year on record, read from the Records data
+  select coalesce(array_agg(lower(s.email)), '{}') into pres
+  from records.participation p
+  join records.bodies b on b.id = p.body_id
+  join records.students s on s.matric = p.matric
+  where lower(b.level) = 'exco' and coalesce(p.final_title, p.custom_text, p.role_tier) = 'President'
+    and p.ay = (select max(p2.ay) from records.participation p2 join records.bodies b2 on b2.id = p2.body_id where lower(b2.level) = 'exco')
+    and coalesce(s.email, '') <> '';
+  if cardinality(pres) = 0 then return true; end if;   -- no President on record: any ExCo member
+  return lower(records.me_email()) = any(pres);
+end $$;
+grant execute on function activities.policy_is_confirmer() to authenticated;
+revoke execute on function activities.policy_is_confirmer() from public, anon;
+
 create or replace function activities.policy_publish(p_id uuid, p_effective date default current_date) returns integer
 language plpgsql security definer set search_path to 'activities', 'public' as $$
 declare a policy_amendments; d policy_docs; ch policy_amendment_changes; v int; mx int;
 begin
   if not is_exco() then raise exception 'ExCo only'; end if;
+  if not policy_is_confirmer() then raise exception 'Only the President can confirm a change'; end if;
   select * into a from policy_amendments where id = p_id for update;
   if not found then raise exception 'That proposal does not exist'; end if;
   select * into d from policy_docs where id = a.doc_id for update;
@@ -27,3 +47,13 @@ begin
   update policy_amendments set status = 'in_force', decided_at = coalesce(decided_at, now()), published_at = now(), effective_on = p_effective, version_after = v where id = p_id;
   return v;
 end $$;
+
+-- Rename a document and change its description. Allowed at any time, draft or in force (neither is a binding provision).
+create or replace function activities.policy_doc_save(p_slug text, p_title text, p_summary text) returns void
+language plpgsql security definer set search_path to 'activities', 'public' as $$
+begin
+  if not is_exco() then raise exception 'ExCo only'; end if;
+  update policy_docs set title = trim(p_title), summary = coalesce(trim(p_summary), ''), updated_at = now() where slug = p_slug;
+end $$;
+grant execute on function activities.policy_doc_save(text, text, text) to authenticated;
+revoke execute on function activities.policy_doc_save(text, text, text) from public, anon;

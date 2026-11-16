@@ -50,7 +50,7 @@
   function aNo(n) { return 'A-' + String(n).padStart(3, '0'); }
   function docPill(d) { return d.status === 'in_force' ? P.pill('In force · version ' + d.version, 'dark') : P.pill('Draft', 'warn'); }
   function amPill(s) {
-    var label = { proposed: 'Waiting to be published', approved: 'Approved, not yet in force', rejected: 'Rejected', withdrawn: 'Withdrawn', in_force: 'In force' }[s] || s;
+    var label = { proposed: 'Waiting for the President', approved: 'Approved, not yet in force', rejected: 'Rejected', withdrawn: 'Withdrawn', in_force: 'In force' }[s] || s;
     return P.pill(label, { proposed: 'warn', approved: 'ok', rejected: 'bad', withdrawn: '', in_force: 'dark' }[s]);
   }
   // A link to a document (and a provision in it) inside this app.
@@ -201,7 +201,7 @@
     P.loading();
     var docs = await rpc('policy_all');
     var parts = [h('div', { class: 'hero' }, h('h1', null, 'Policy'),
-      h('p', { class: 'muted' }, 'The Constitution, Bylaws and Guides. A draft is edited directly. Once published, changes are suggested and then published by ExCo. Every change is recorded.'), searchBox(''))];
+      h('p', { class: 'muted' }, 'The Constitution, Bylaws and Guides. A draft is edited directly. Once published, changes are suggested by anyone on ExCo and confirmed by the President. Every change is recorded.'), searchBox(''))];
     Object.keys(TIER).forEach(function (t) {
       var list = docs.filter(function (d) { return d.tier === t; });
       parts.push(h('h3', null, TIER[t]), h('p', { class: 'sub' }, TIER_NOTE[t]));
@@ -227,23 +227,23 @@
     var w = await rpc('policy_working', { p_slug: p.slug });
     if (!w) { P.show(h('p', { class: 'muted' }, 'That document does not exist.')); return; }
     var d = w.doc, draft = d.status === 'draft';
-    var head = [crumbs([['Documents', '#/'], [d.title]]), h('h2', { class: 'doc-title' }, d.title), h('p', { class: 'muted' }, d.summary),
+    var head = [crumbs([['Documents', '#/'], [d.title]]), titleBox(d),
       h('div', { class: 'row' }, docPill(d), d.effective_on ? h('span', { class: 'count' }, 'in force from ' + longDate(d.effective_on)) : null)];
     var actions = h('div', { class: 'row' },
       draft ? h('button', { class: 'btn', onclick: async function () {
-        if (!confirm('Publish “' + d.title + '”? It comes into force as it reads now, and members will see it.')) return;
+        if (!confirm(P.canConfirm ? 'Publish “' + d.title + '”? It comes into force as it reads now, and members will see it.' : 'Send “' + d.title + '” to the President to confirm?')) return;
         var v = await P.run(async function () {
           var id = await rpc('policy_propose', { p_doc: d.id, p_kind: 'adopt', p_title: 'Adopt ' + d.title, p_reason: 'First publication', p_changes: [], p_name: P.me.name || P.me.email });
-          await rpc('policy_publish', { p_id: id, p_effective: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10) });
+          if (P.canConfirm) await rpc('policy_publish', { p_id: id, p_effective: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10) });
           return true;
-        }, 'Published');
+        }, P.canConfirm ? 'Published' : 'Sent to the President to confirm');
         if (v) P.dispatch();
-      } }, 'Publish') : h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug }, 'Propose a change'),
+      } }, P.canConfirm ? 'Publish' : 'Send to the President') : h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug }, 'Suggest an edit'),
       (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })(),
         (function () { var b = h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, null, typeof past !== 'undefined' && past ? d.shown_version : null)); } }, ' Copy link'); b.prepend(ic('link')); return b; })());
     var note = draft
-      ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'Edit any clause directly. When it is ready, press Publish. After that, changes are made as suggestions that ExCo publishes.')
-      : h('div', { class: 'card' }, h('b', null, 'This document is in force. '), 'To change a clause, use “Propose a change”. The text only changes when the proposal is approved and published.');
+      ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'Edit any clause directly. When it is ready, press Publish. After that, changes are suggested and the President confirms them.')
+      : h('div', { class: 'card' }, h('b', null, 'This document is in force. '), 'To change a clause, use “Suggest an edit”. The text only changes when the President confirms it.');
     var cards = w.clauses.map(function (c) { return clauseCard(c, d, draft); });
     var parts = [head, actions, note, cards.length ? withToc(w.clauses, h('div', { class: 'stack' }, cards)) : h('div', { class: 'stack' })];
     if (draft) parts.push(addClauseForm(d, w.clauses));
@@ -260,6 +260,30 @@
     }
   } });
 
+  // The document's name and description, editable in place (ExCo).
+  function titleBox(d) {
+    var box = h('div', { class: 'titlebox' });
+    function show() {
+      var b = h('button', { class: 'ghost', onclick: edit }, ' Edit name and description'); b.prepend(ic('edit'));
+      box.replaceChildren(h('h2', { class: 'doc-title' }, d.title), h('p', { class: 'muted' }, d.summary || 'No description yet.'), h('div', { class: 'row noprint' }, b));
+    }
+    function edit() {
+      var t = h('input', { class: 'grow', value: d.title, maxlength: 120 }), sm = h('textarea', { maxlength: 400, style: 'min-height:70px' }, d.summary || '');
+      sm.value = d.summary || '';
+      var save = h('button', { class: 'btn', onclick: async function () {
+        if (t.value.trim().length < 3) { P.toast('The name needs at least 3 letters', true); return; }
+        save.disabled = true;
+        var ok = await P.run(function () { return rpcv('policy_doc_save', { p_slug: d.slug, p_title: t.value, p_summary: sm.value }); }, 'Saved');
+        save.disabled = false;
+        if (ok) { d.title = t.value.trim(); d.summary = sm.value.trim(); show(); }
+      } }, 'Save');
+      box.replaceChildren(P.field('Name', t), P.field('Description', sm, 'One or two sentences, shown under the name on the index. Up to 400 characters.'), h('div', { class: 'row' }, save, h('button', { class: 'ghost', onclick: show }, 'Cancel')));
+      t.focus();
+    }
+    show();
+    return box;
+  }
+
   function clauseCard(c, d, draft) {
     var box = h('div', { class: 'card clause' + (c.repealed ? ' repealed' : ''), id: c.ref });
     function show() {
@@ -267,7 +291,7 @@
         h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref), c.repealed ? P.pill('repealed', 'bad') : null),
         h('h3', { style: 'margin-top:0' }, c.heading), viewer(c.body_md),
         c.repealed ? null : h('div', { class: 'row' },
-          draft ? (function () { var b = h('button', { class: 'ghost', onclick: edit }, ' Edit this clause'); b.prepend(ic('edit')); return b; })() : h('a', { class: 'btn-link', href: '#/propose/' + d.slug + '?ref=' + encodeURIComponent(c.ref) }, 'Propose a change'),
+          draft ? (function () { var b = h('button', { class: 'ghost', onclick: edit }, ' Edit this clause'); b.prepend(ic('edit')); return b; })() : h('a', { class: 'btn-link', href: '#/propose/' + d.slug + '?ref=' + encodeURIComponent(c.ref) }, 'Suggest an edit'),
           null));
     }
     function edit() {
@@ -345,9 +369,9 @@
       editor(ebox, c ? c.body_md : '', '300px', refreshDiff).then(function (e) { it.ed = e; });
     }
     var pick = P.select([['', 'Choose a clause…']].concat(live.map(function (c) { return [c.ref, c.ref + '  ' + c.heading]; })), '');
-    var parts = [crumbs([['Documents', '#/'], [d.title, '#/d/' + d.slug], [adopt ? 'Propose adoption' : 'Propose a change']]), h('h2', null, adopt ? 'Propose adoption' : 'Propose a change'),
+    var parts = [crumbs([['Documents', '#/'], [d.title, '#/d/' + d.slug], [adopt ? 'Send for adoption' : 'Suggest an edit']]), h('h2', null, adopt ? 'Send for adoption' : 'Suggest an edit'),
       h('p', { class: 'muted' }, adopt ? 'This brings the whole document into force exactly as it reads now (' + live.length + ' clauses). ' + TIER_NOTE[d.tier]
-        : 'Nothing changes until it is published. ' + TIER_NOTE[d.tier]),
+        : 'Nothing changes until the President confirms it. ' + TIER_NOTE[d.tier]),
       P.field('Title', title), P.field('Reason', reason)];
     if (!adopt) {
       parts.push(h('h3', null, 'What changes'), list,
@@ -365,9 +389,9 @@
         else changes.push({ ref: it.ref, action: 'edit', heading: it.heading.value, body_md: it.ed.getMarkdown() });
       }
       send.disabled = true;
-      var id = await P.run(function () { return rpc('policy_propose', { p_doc: d.id, p_kind: adopt ? 'adopt' : 'change', p_title: title.value, p_reason: reason.value, p_changes: changes, p_name: P.me.name || P.me.email }); }, 'Proposal shared with ExCo');
+      var id = await P.run(function () { return rpc('policy_propose', { p_doc: d.id, p_kind: adopt ? 'adopt' : 'change', p_title: title.value, p_reason: reason.value, p_changes: changes, p_name: P.me.name || P.me.email }); }, 'Sent to the President to confirm');
       send.disabled = false; if (id) P.nav('#/a/' + id);
-    } }, 'Share with ExCo');
+    } }, 'Send to the President');
     parts.push(h('div', { class: 'sticky' }, send));
     P.show(h('div', null, parts));
   } });
@@ -388,7 +412,7 @@
         h('div', { class: 'meta' }, amPill(a.status), P.pill(TIER_ONE[a.tier]), P.pill(a.kind === 'adopt' ? 'adoption' : a.changes + ' clause' + (a.changes === 1 ? '' : 's')),
           null));
     })) : h('p', { class: 'muted' }, 'Nothing here.');
-    P.show(h('div', null, h('h2', null, 'Proposals'), h('p', { class: 'muted' }, 'Every change to a document in force, and every adoption of a draft, starts here. Open a draft or a clause to propose one.'), chips, list));
+    P.show(h('div', null, h('h2', null, 'To confirm'), h('p', { class: 'muted' }, 'Every change to a document in force, and every adoption of a draft, starts here. Open a draft or a clause to propose one.'), chips, list));
   } });
 
   // ---------- One proposal ----------
@@ -398,7 +422,7 @@
     if (!r) { P.show(h('p', { class: 'muted' }, 'That proposal does not exist.')); return; }
     var a = r.amendment, d = r.doc;
     function reload() { P.dispatch(); }
-    var parts = [crumbs([['Proposals', '#/a'], [aNo(a.number)]]),
+    var parts = [crumbs([['To confirm', '#/a'], [aNo(a.number)]]),
       h('div', { class: 'row' }, h('span', { class: 'ref' }, aNo(a.number)), amPill(a.status), P.pill(TIER_ONE[d.tier]), a.kind === 'adopt' ? P.pill('adoption') : null),
       h('h2', null, a.title),
       h('p', { class: 'muted' }, h('a', { href: '#/d/' + d.slug }, d.title), ' · proposed by ' + (a.proposed_by_name || 'someone') + ' on ' + when(a.proposed_at)),
@@ -418,12 +442,16 @@
     var dec = h('div', { class: 'card' }, h('h3', { style: 'margin-top:0' }, 'Decision'));
     if (a.status === 'proposed') {
       var effNow = h('input', { type: 'date', value: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10) });
-      dec.appendChild(h('p', { class: 'muted' }, 'Once ExCo has agreed this among yourselves, publish it. The new wording replaces the old and the change is recorded in the document’s history. If anyone objects, talk it through first.'));
-      dec.appendChild(h('div', { class: 'row' }, P.field('Takes effect on', effNow), h('button', { class: 'btn', onclick: async function () {
-        if (!confirm('Publish this change? It replaces the current wording.')) return;
-        var v = await P.run(function () { return rpc('policy_publish', { p_id: a.id, p_effective: effNow.value }); });
-        if (v) { P.toast('Published as version ' + v); reload(); }
-      } }, 'Publish')));
+      if (P.canConfirm) {
+        dec.appendChild(h('p', { class: 'muted' }, 'Read the change above. If it is right, confirm it: the new wording replaces the old and the change is recorded in the document’s history.'));
+        dec.appendChild(h('div', { class: 'row' }, P.field('Takes effect on', effNow), h('button', { class: 'btn', onclick: async function () {
+          if (!confirm('Confirm and publish this change? It replaces the current wording.')) return;
+          var v = await P.run(function () { return rpc('policy_publish', { p_id: a.id, p_effective: effNow.value }); });
+          if (v) { P.toast('Published as version ' + v); reload(); }
+        } }, 'Confirm and publish')));
+      } else {
+        dec.appendChild(h('p', null, 'Waiting for the President to confirm. Nothing changes until then.'));
+      }
     }
     if (a.status === 'approved') {
       var eff = h('input', { type: 'date', value: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10) });
