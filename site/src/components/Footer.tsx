@@ -17,7 +17,8 @@ export default function Footer({ className = '' }: { className?: string }) {
           <ul className="mt-3 space-y-2 text-sm">
             <li><Link className="text-mist no-underline hover:text-white" href="/">Home</Link></li>
             {NAV.map((n) => <li key={n.label}><Link className="text-mist no-underline hover:text-white" href={n.href}>{n.label}</Link></li>)}
-            <li><a className="text-mist no-underline hover:text-white" href="https://policy.lkcmedsoc.com/">Policy (sign in)</a></li>
+            
+            <li><Link className="text-mist no-underline hover:text-white" href="/policy">Policy</Link></li>
           </ul>
         </div>
         <div>

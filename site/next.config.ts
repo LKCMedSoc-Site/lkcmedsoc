@@ -2,11 +2,6 @@ import type { NextConfig } from 'next';
 
 // Old Wix addresses -> new ones. Blog posts keep their slug (/post/x -> /gazette/x). /news became /gazette in 2026.
 const redirects = [
-  // Policy moved into the sign-in-only Policy app
-  ['/policy', 'https://policy.lkcmedsoc.com/'],
-  ['/policy/changelog', 'https://policy.lkcmedsoc.com/#/log'],
-  ['/policy/:slug/latest.pdf', 'https://policy.lkcmedsoc.com/#/d/:slug'],
-  ['/policy/:slug', 'https://policy.lkcmedsoc.com/#/d/:slug'],
   ['/post/:slug', '/gazette/:slug'],
   ['/blog', '/gazette/all'],
   ['/whats-up-at-lkcmedicine', '/gazette/announcements'],
@@ -48,7 +43,10 @@ const redirects = [
 ] as const;
 
 const config: NextConfig = {
+  // pdfkit reads its font files from disk when it runs, so it must not be bundled (policy PDFs, /policy/<document>/latest.pdf).
+  serverExternalPackages: ['pdfkit'],
   // the PDF route reads the Arimo font files from disk: make sure they are shipped with it
+  outputFileTracingIncludes: { '/policy/[slug]/latest.pdf': ['./src/fonts/arimo/**'] },
   // Photos live in our Supabase storage. Next shrinks them to the size each place on the page needs.
   images: {
     formats: ['image/avif', 'image/webp'],
