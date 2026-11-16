@@ -48,7 +48,7 @@
   function longDate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? (+m[3]) + ' ' + MONTHS[+m[2] - 1] + ' ' + m[1] : ''; }
   function when(s) { return s ? longDate(String(s).slice(0, 10)) : ''; }
   function aNo(n) { return 'A-' + String(n).padStart(3, '0'); }
-  function docPill(d) { return d.status === 'in_force' ? P.pill('In force · version ' + d.version, 'dark') : P.pill('Draft proposal', 'warn'); }
+  function docPill(d) { return d.status === 'in_force' ? P.pill('In force · version ' + d.version, 'dark') : P.pill('Draft', 'warn'); }
   function amPill(s) {
     var label = { proposed: 'Waiting to be published', approved: 'Approved, not yet in force', rejected: 'Rejected', withdrawn: 'Withdrawn', in_force: 'In force' }[s] || s;
     return P.pill(label, { proposed: 'warn', approved: 'ok', rejected: 'bad', withdrawn: '', in_force: 'dark' }[s]);
@@ -177,10 +177,10 @@
     });
     var parts = [
       crumbs([['Documents', '#/'], [d.title]]), h('h2', { class: 'doc-title' }, d.title), h('p', { class: 'muted' }, d.summary),
-      h('div', { class: 'row' }, P.pill(TIER_ONE[d.tier]), past ? P.pill('Version ' + d.shown_version + ' (superseded)', 'warn') : docPill(d), !draft && d.effective_on ? P.pill('in force from ' + longDate(d.effective_on)) : null, P.pill('changed by ' + d.owner)),
+      h('div', { class: 'row' }, past ? P.pill('Version ' + d.shown_version + ' (superseded)', 'warn') : docPill(d), !draft && d.effective_on ? h('span', { class: 'count' }, 'in force from ' + longDate(d.effective_on)) : null),
       h('div', { class: 'row noprint' }, (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })(),
         (function () { var b = h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, null, typeof past !== 'undefined' && past ? d.shown_version : null)); } }, ' Copy link'); b.prepend(ic('link')); return b; })()),
-      draft ? h('div', { class: 'card' }, h('b', null, 'Draft proposal. '), 'This has not been adopted, so it is not binding yet. The wording can still change.') : null,
+      draft ? h('div', { class: 'card' }, h('b', null, 'Draft. '), 'This is not binding yet. The wording can still change.') : null,
       past ? h('div', { class: 'card' }, 'You are reading an older version. ', h('a', { href: '#/d/' + d.slug }, 'Go to the version in force (version ' + d.version + ')'), '.') : null,
       cards.length ? withToc(view.clauses, h('div', { class: 'stack' }, cards)) : h('p', { class: 'muted' }, 'This document has no provisions yet.'),
       h('h3', null, 'Versions'),
@@ -201,7 +201,7 @@
     P.loading();
     var docs = await rpc('policy_all');
     var parts = [h('div', { class: 'hero' }, h('h1', null, 'Policy'),
-      h('p', { class: 'muted' }, 'The Constitution, Bylaws and Guides. A draft can be edited directly; once adopted, a document only changes through a proposal that ExCo approves. Every change is recorded.'), searchBox(''))];
+      h('p', { class: 'muted' }, 'The Constitution, Bylaws and Guides. A draft is edited directly. Once published, changes are suggested and then published by ExCo. Every change is recorded.'), searchBox(''))];
     Object.keys(TIER).forEach(function (t) {
       var list = docs.filter(function (d) { return d.tier === t; });
       parts.push(h('h3', null, TIER[t]), h('p', { class: 'sub' }, TIER_NOTE[t]));
@@ -228,14 +228,21 @@
     if (!w) { P.show(h('p', { class: 'muted' }, 'That document does not exist.')); return; }
     var d = w.doc, draft = d.status === 'draft';
     var head = [crumbs([['Documents', '#/'], [d.title]]), h('h2', { class: 'doc-title' }, d.title), h('p', { class: 'muted' }, d.summary),
-      h('div', { class: 'row' }, P.pill(TIER_ONE[d.tier]), docPill(d), d.effective_on ? P.pill('effective ' + longDate(d.effective_on)) : null, P.pill('changed by ' + d.owner),
-        d.published ? P.pill('visible to members', 'ok') : P.pill('hidden from members'))];
+      h('div', { class: 'row' }, docPill(d), d.effective_on ? h('span', { class: 'count' }, 'in force from ' + longDate(d.effective_on)) : null)];
     var actions = h('div', { class: 'row' },
-      draft ? h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug + '?adopt=1' }, 'Propose adoption') : h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug }, 'Propose a change'),
+      draft ? h('button', { class: 'btn', onclick: async function () {
+        if (!confirm('Publish “' + d.title + '”? It comes into force as it reads now, and members will see it.')) return;
+        var v = await P.run(async function () {
+          var id = await rpc('policy_propose', { p_doc: d.id, p_kind: 'adopt', p_title: 'Adopt ' + d.title, p_reason: 'First publication', p_changes: [], p_name: P.me.name || P.me.email });
+          await rpc('policy_publish', { p_id: id, p_effective: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10) });
+          return true;
+        }, 'Published');
+        if (v) P.dispatch();
+      } }, 'Publish') : h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug }, 'Propose a change'),
       (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })(),
         (function () { var b = h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, null, typeof past !== 'undefined' && past ? d.shown_version : null)); } }, ' Copy link'); b.prepend(ic('link')); return b; })());
     var note = draft
-      ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'You can edit any clause directly. Once ExCo adopts it, every change has to be proposed, agreed by ExCo and published.')
+      ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'Edit any clause directly. When it is ready, press Publish. After that, changes are made as suggestions that ExCo publishes.')
       : h('div', { class: 'card' }, h('b', null, 'This document is in force. '), 'To change a clause, use “Propose a change”. The text only changes when the proposal is approved and published.');
     var cards = w.clauses.map(function (c) { return clauseCard(c, d, draft); });
     var parts = [head, actions, note, cards.length ? withToc(w.clauses, h('div', { class: 'stack' }, cards)) : h('div', { class: 'stack' })];
