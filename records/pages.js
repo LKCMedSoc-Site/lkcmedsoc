@@ -20,10 +20,10 @@
     } catch (e) { /* not a link */ }
     return null;
   }
-  // The optional `cols=3 shape=round` on a :::photos line (same rule as photoOpts in site/src/lib/markdown.ts).
+  // The optional `cols=3 w=70 align=center` on a :::photos line (same rule as photoOpts in site/src/lib/markdown.ts).
   function photoOpts(line) {
-    var c = /\bcols=([234])\b/.exec(line), sh = /\bshape=(square|round|wide)\b/.exec(line);
-    return (c ? ' data-cols="' + c[1] + '"' : '') + (sh ? ' data-shape="' + sh[1] + '"' : '');
+    var c = /\bcols=([234])\b/.exec(line), w = /\bw=(\d{1,3})\b/.exec(line), al = /\balign=(left|center|right)\b/.exec(line);
+    return (c ? ' data-cols="' + c[1] + '"' : '') + (w ? ' data-w="' + Math.min(100, Math.max(10, +w[1])) + '"' : '') + (w && al ? ' data-align="' + al[1] + '"' : '');
   }
   function blocks(lines, videos, depth) {
     var out = [], buf = [], i = 0, m;
@@ -61,7 +61,12 @@
   }
   function renderMd(md) {
     var videos = [], html = blocks(String(md || '').replace(/\r/g, '').split('\n'), videos, 0);
-    var clean = window.DOMPurify.sanitize(html, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote', 'h2', 'h3', 'h4', 'hr', 'img', 'aside', 'div', 'figure', 'code', 'details', 'summary'], ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'data-n', 'data-cols', 'data-shape'] });
+    var clean = window.DOMPurify.sanitize(html, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote', 'h2', 'h3', 'h4', 'hr', 'img', 'aside', 'div', 'figure', 'code', 'details', 'summary'], ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'data-n', 'data-cols', 'data-w', 'data-align'] });
+    clean = clean.replace(/<div class="blk-photos"([^>]*)>/g, function (m, a) {
+      var w = /data-w="(\d{1,3})"/.exec(a); if (!w) return m;
+      var al = (/data-align="(left|center|right)"/.exec(a) || [])[1];
+      return '<div class="blk-photos"' + a + ' style="width:' + Math.min(100, Math.max(10, +w[1])) + '%;' + (al === 'center' ? 'margin-left:auto;margin-right:auto;' : al === 'right' ? 'margin-left:auto;' : '') + '">';
+    });
     clean = clean.replace(/<img ([^>]*?)\s*\/?>\{w=(\d{1,3})(?:\s+align=(left|center|right))?\}/g, function (_m, a, w, al) { return '<img ' + a + ' class="blk-img' + (al ? ' blk-img-' + al : '') + '" style="width:' + Math.min(100, Math.max(10, +w)) + '%">'; });
     return clean.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, function (_m, n) { return videos[+n] ? '<div class="blk-video"><iframe src="' + videos[+n] + '" title="Video" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>' : ''; });
   }

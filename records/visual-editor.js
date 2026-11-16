@@ -71,10 +71,10 @@ function blockHtml(text, ctx) {
     return `<div data-blk="columns">${cols.map((c) => `<div data-blk="column">${mdHtml(c.join('\n'), ctx) || '<p></p>'}</div>`).join('')}</div>`;
   }
   if (kind === 'photos') {
-    const cols = /\bcols=([234])\b/.exec(head), shape = /\bshape=(square|round|wide)\b/.exec(head);
+    const cols = /\bcols=([234])\b/.exec(head), w = /\bw=(\d{1,3})\b/.exec(head), al = /\balign=(left|center|right)\b/.exec(head);
     const imgs = inner.filter((l) => l.trim() !== '');
     if (!imgs.length || !imgs.every((l) => IMG_LINE.test(l.trim()))) return null;
-    return `<div data-blk="photos"${cols ? ` data-cols="${cols[1]}"` : ''}${shape ? ` data-shape="${shape[1]}"` : ''}>${imgs.map((l) => String(ctx.marked.parse(l.trim())).replace(/<\/?p>|\n/g, '')).join('')}</div>`;
+    return `<div data-blk="photos"${cols ? ` data-cols="${cols[1]}"` : ''}${w ? ` data-w="${Math.min(100, Math.max(10, +w[1]))}"` : ''}${w && al ? ` data-align="${al[1]}"` : ''}>${imgs.map((l) => String(ctx.marked.parse(l.trim())).replace(/<\/?p>|\n/g, '')).join('')}</div>`;
   }
   return null;
 }
@@ -145,7 +145,7 @@ function block(n) {
     case 'quote': return fence(':::quote', kids(c));
     case 'toggle': return fence(':::toggle' + (n.attrs.title ? ' ' + n.attrs.title : ''), kids(c));
     case 'columns': return fence(':::columns', c.map((col) => kids(col.content || [])).join('\n|||\n'));
-    case 'photos': return fence(':::photos' + (n.attrs.cols ? ' cols=' + n.attrs.cols : '') + (n.attrs.shape ? ' shape=' + n.attrs.shape : ''), c.map((i) => '![' + String(i.attrs.alt || '').replace(/[\[\]]/g, '') + '](' + escUrl(i.attrs.src) + ')').join('\n'));
+    case 'photos': return fence(':::photos' + (n.attrs.cols ? ' cols=' + n.attrs.cols : '') + (n.attrs.w && n.attrs.w < 100 ? ' w=' + n.attrs.w + (n.attrs.align && n.attrs.align !== 'left' ? ' align=' + n.attrs.align : '') : ''), c.map((i) => '![' + String(i.attrs.alt || '').replace(/[\[\]]/g, '') + '](' + escUrl(i.attrs.src) + ')').join('\n'));
     case 'button': return ':::button ' + n.attrs.label + ' | ' + n.attrs.url;
     case 'video': return ':::video ' + n.attrs.url;
     case 'rawBlock': return String(n.attrs.text || '').replace(/\s+$/, '');
@@ -353,31 +353,46 @@ function makeExtensions(opts) {
       });
     },
   });
-  /** A gallery: photos laid out like a masonry wall (each keeps its own shape). Drop picture files on it, or drag a picture in, to add to it. */
+  /** A gallery: a masonry wall where every picture keeps the shape it was uploaded in. Drop picture files on it, or drag a picture in, to add to it. Drag its corner to resize the whole gallery. */
   const Photos = Node.create({
     name: 'photos', group: 'block', content: 'image+', defining: true,
     addAttributes() {
       return {
         cols: { default: null, parseHTML: (e) => e.getAttribute('data-cols'), renderHTML: (a) => (a.cols ? { 'data-cols': a.cols } : {}) },
-        shape: { default: null, parseHTML: (e) => e.getAttribute('data-shape'), renderHTML: (a) => (a.shape ? { 'data-shape': a.shape } : {}) },
+        w: { default: null, parseHTML: (e) => (e.getAttribute('data-w') ? Number(e.getAttribute('data-w')) : null), renderHTML: (a) => (a.w ? { 'data-w': a.w } : {}) },
+        align: { default: null, parseHTML: (e) => e.getAttribute('data-align'), renderHTML: (a) => (a.align ? { 'data-align': a.align } : {}) },
       };
     },
     parseHTML() { return [{ tag: 'div[data-blk="photos"]' }]; }, renderHTML({ HTMLAttributes }) { return ['div', mergeAttributes(HTMLAttributes, { 'data-blk': 'photos' }), 0]; },
     addNodeView() {
-      return containerView('Gallery', ({ node, getPos, editor, ctl, body, get }) => {
+      return containerView('Gallery', ({ node, getPos, editor, ctl, body, dom, get }) => {
         body.classList.add('ve-photos');
-        const sel = (label, choices, key) => {
-          const s = el('select'); s.setAttribute('aria-label', label); s.title = label;
-          choices.forEach(([v, t]) => s.append(new Option(t, v)));
-          s.addEventListener('change', () => setAttrs(editor, getPos, get(), { [key]: s.value || null }));
-          return s;
-        };
-        const shape = sel('How the photos are laid out', [['', 'Layout: masonry (natural shapes)'], ['square', 'Layout: squares'], ['wide', 'Layout: wide (16:9)'], ['round', 'Layout: circles']], 'shape');
-        const cols = sel('Photos per row', [['', 'Columns: automatic'], ['2', '2 columns'], ['3', '3 columns'], ['4', '4 columns']], 'cols');
+        const set = (patch) => setAttrs(editor, getPos, get(), patch);
+        const cols = el('select'); cols.setAttribute('aria-label', 'Photos per row'); cols.title = 'Photos per row';
+        [['', 'Columns: automatic'], ['2', '2 columns'], ['3', '3 columns'], ['4', '4 columns']].forEach(([v, t]) => cols.append(new Option(t, v)));
+        cols.addEventListener('change', () => set({ cols: cols.value || null }));
         const file = el('input'); file.type = 'file'; file.accept = 'image/*'; file.multiple = true; file.hidden = true;
         file.addEventListener('change', async () => { const files = [...file.files]; file.value = ''; opts.addFiles && opts.addFiles(files, getPos() + get().nodeSize - 1); });
-        ctl.append(btn('Add photos', 'Add more photos to this gallery (or drag picture files onto it)', () => file.click()), shape, cols, file);
-        const paint = (n) => { shape.value = n.attrs.shape || ''; cols.value = n.attrs.cols || ''; body.dataset.cols = n.attrs.cols || ''; body.dataset.shape = n.attrs.shape || ''; };
+        ctl.append(btn('Add photos', 'Add more photos to this gallery (or drag picture files onto it)', () => file.click()), cols,
+          btn('Left', 'Put the gallery on the left', () => set({ align: null })), btn('Centre', 'Centre the gallery', () => set({ align: 'center' })), btn('Right', 'Put the gallery on the right', () => set({ align: 'right' })),
+          btn('Full width', 'Back to full width', () => set({ w: null, align: null })), file);
+        const handle = el('span', 've-photos-handle'); handle.title = 'Drag to resize the gallery'; handle.setAttribute('role', 'slider'); handle.contentEditable = 'false'; dom.append(handle);
+        const paint = (n) => {
+          cols.value = n.attrs.cols || ''; body.dataset.cols = n.attrs.cols || '';
+          const w = n.attrs.w, al = n.attrs.align; dom.style.width = (w || 100) + '%'; dom.dataset.align = al || 'left';
+          dom.style.marginLeft = al === 'center' || al === 'right' ? 'auto' : ''; dom.style.marginRight = al === 'center' ? 'auto' : '';
+          handle.setAttribute('aria-valuenow', String(w || 100));
+        };
+        handle.addEventListener('pointerdown', (e) => {
+          e.preventDefault(); e.stopPropagation(); handle.setPointerCapture(e.pointerId);
+          const full = dom.parentElement.clientWidth, r = dom.getBoundingClientRect(), al = get().attrs.align || 'left'; let w = get().attrs.w || 100;
+          const move = (ev) => {
+            const px = al === 'right' ? r.right - ev.clientX : al === 'center' ? 2 * Math.abs(ev.clientX - (r.left + r.width / 2)) : ev.clientX - r.left;
+            w = Math.min(100, Math.max(10, Math.round((px / full) * 100 / 5) * 5)); dom.style.width = w + '%';
+          };
+          const up = () => { handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', up); set({ w: w >= 100 ? null : w, align: w >= 100 ? null : get().attrs.align }); };
+          handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', up);
+        });
         paint(node);
         return { update: paint };
       });

@@ -15,7 +15,6 @@
  "image plain": "![pic](https://x.com/a.webp)",
  "callout": ":::callout\nImportant note here.\n:::",
  "photos": ":::photos\n![](https://x.com/1.webp)\n![](https://x.com/2.webp)\n![](https://x.com/3.webp)\n:::",
- "photos opts": ":::photos cols=3 shape=round\n![](https://x.com/1.webp)\n![](https://x.com/2.webp)\n:::",
  "columns": ":::columns\n## Left\nText\n|||\n## Right\nText\n:::",
  "toggle": ":::toggle Question here\nAnswer text\n:::",
  "button": ":::button Join us | https://forms.gle/x",
@@ -32,5 +31,8 @@
  "photos in columns": ":::columns\n![](https://x.com/1.webp)\n|||\nRight text\n:::",
  "gallery with title attr": ":::photos cols=4\n![a](https://x.com/1.webp)\n![b](https://x.com/2.webp)\n:::",
  "button no scheme": ":::button Join us | abc.com",
- "empty columns": ":::columns\n\n|||\n\n:::"
+ "empty columns": ":::columns\n\n|||\n\n:::",
+ "gallery sized": ":::photos cols=3 w=60 align=center\n![](https://x.com/1.webp)\n![](https://x.com/2.webp)\n:::",
+ "gallery sized left": ":::photos w=70\n![](https://x.com/1.webp)\n:::",
+ "photos opts": ":::photos cols=3\n![](https://x.com/1.webp)\n![](https://x.com/2.webp)\n:::"
 }

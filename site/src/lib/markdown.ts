@@ -67,7 +67,7 @@ export function sanitizeBody(html: string): string {
 const GROUP_OPTIONS: sanitizeHtml.IOptions = {
   ...OPTIONS,
   allowedTags: [...(OPTIONS.allowedTags as string[]), 'aside', 'div', 'figure', 'details', 'summary'],
-  allowedAttributes: { ...(OPTIONS.allowedAttributes as Record<string, string[]>), div: ['data-n', 'data-cols', 'data-shape'] },
+  allowedAttributes: { ...(OPTIONS.allowedAttributes as Record<string, string[]>), div: ['data-n', 'data-cols', 'data-w', 'data-align'] },
   allowedClasses: { aside: ['blk-callout'], div: ['blk-photos', 'blk-columns', 'blk-col'], figure: ['blk-quote'], a: ['blk-button'], details: ['blk-toggle'] },
 };
 const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -89,17 +89,30 @@ const OPENS = /^:::(callout|photos|quote|columns|toggle)(?:\s+.*)?$/;
 export function renderGroupMarkdown(md: string): string {
   const videos: string[] = [];
   const html = blocks((md ?? '').replace(/\r/g, '').split('\n'), videos, 0);
-  const clean = sizeImages(sanitizeHtml(html, GROUP_OPTIONS));
+  const clean = sizeGalleries(sizeImages(sanitizeHtml(html, GROUP_OPTIONS)));
   return clean.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, (_m, i: string) => {
     const embed = videos[Number(i)];
     return embed ? `<div class="blk-video"><iframe src="${embed}" title="Video" loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>` : '';
   });
 }
 
-/** The optional `cols=3 shape=round` on a `:::photos` line, as data attributes (values are checked against a short list). records/pages.js has the same rule. */
+/**
+ * The optional `cols=3 w=70 align=center` on a `:::photos` line, as data attributes (values are checked: cols 2-4, width 10-100 as a percentage of the column,
+ * align left/center/right). Pictures always keep their own shape. records/pages.js has the same rule.
+ */
 function photoOpts(line: string): string {
-  const cols = /\bcols=([234])\b/.exec(line), shape = /\bshape=(square|round|wide)\b/.exec(line);
-  return (cols ? ` data-cols="${cols[1]}"` : '') + (shape ? ` data-shape="${shape[1]}"` : '');
+  const cols = /\bcols=([234])\b/.exec(line), w = /\bw=(\d{1,3})\b/.exec(line), align = /\balign=(left|center|right)\b/.exec(line);
+  return (cols ? ` data-cols="${cols[1]}"` : '') + (w ? ` data-w="${Math.min(100, Math.max(10, Number(w[1])))}"` : '') + (w && align ? ` data-align="${align[1]}"` : '');
+}
+
+/** Turns a gallery's data-w / data-align into its width and position. Runs on already-sanitised HTML and builds the style from digits and fixed words only. */
+export function sizeGalleries(html: string): string {
+  return html.replace(/<div class="blk-photos"([^>]*)>/g, (m, attrs: string) => {
+    const w = /data-w="(\d{1,3})"/.exec(attrs); if (!w) return m;
+    const align = (/data-align="(left|center|right)"/.exec(attrs) || [])[1];
+    const pos = align === 'center' ? 'margin-left:auto;margin-right:auto;' : align === 'right' ? 'margin-left:auto;' : '';
+    return `<div class="blk-photos"${attrs} style="width:${Math.min(100, Math.max(10, Number(w[1])))}%;${pos}">`;
+  });
 }
 
 function blocks(lines: string[], videos: string[], depth: number): string {
