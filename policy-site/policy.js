@@ -13,6 +13,28 @@
   };
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+  var ICONS = {
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+    print: '<path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/>',
+    undo: '<path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/>',
+    redo: '<path d="m15 14 5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/>',
+    edit: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4zM14 6l4 4"/>',
+    check: '<path d="m5 12 5 5L20 7"/>'
+  };
+  function ic(name) { var s = document.createElement('span'); s.className = 'ic'; s.setAttribute('aria-hidden', 'true'); s.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICONS[name] + '</svg>'; return s; }
+  // "Documents > Bylaws": where you are, and a way back up one level.
+  function crumbs(trail) {
+    return h('nav', { class: 'crumbs noprint', 'aria-label': 'Breadcrumb' }, trail.map(function (t, i) {
+      return i === trail.length - 1 ? h('span', { 'aria-current': 'page' }, t[0]) : h('a', { href: t[1] }, t[0]);
+    }));
+  }
+  function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function mark(text, q) {
+    var out = h('span');
+    var re = new RegExp('(' + String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
+    String(text).split(re).forEach(function (part, i) { out.appendChild(i % 2 ? h('mark', null, part) : document.createTextNode(part)); });
+    return out;
+  }
   function rpc(name, args) { return P.act.rpc(name, args || {}).then(P.must); }
   // For functions that return nothing: resolve to true so P.run reports success.
   function rpcv(name, args) { return rpc(name, args).then(function () { return true; }); }
@@ -34,18 +56,55 @@
     tui().then(function (T) { if (T && T.factory) T.factory({ el: box, viewer: true, initialValue: md || '' }); else box.textContent = md || ''; });
     return box;
   }
-  function editor(box, md, height) {
+  function editor(box, md, height, onChange) {
     return tui().then(function (T) {
       if (!T) { box.replaceChildren(h('p', { class: 'pill bad' }, 'The text editor could not load. Check your connection and refresh the page.')); return null; }
-      return new T({ el: box, height: height || '300px', initialEditType: 'wysiwyg', hideModeSwitch: true, usageStatistics: false, initialValue: md || '',
-        toolbarItems: [['heading', 'bold', 'italic'], ['ul', 'ol', 'table'], ['hr', 'quote'], ['link']] });
+      var inst = null;
+      function tool(name, tip, icon) { var b = h('button', { type: 'button', class: 'tb', 'aria-label': tip, title: tip, onclick: function () { if (inst) inst.exec(name); } }); b.appendChild(ic(icon)); return { name: name, tooltip: tip, el: b }; }
+      // Same order as Google Docs: undo and redo, then the text style, then bold and italic, then link, then lists.
+      inst = new T({ el: box, height: height || '300px', initialEditType: 'wysiwyg', hideModeSwitch: true, usageStatistics: false, initialValue: md || '',
+        toolbarItems: [[tool('undo', 'Undo', 'undo'), tool('redo', 'Redo', 'redo')], ['heading', 'bold', 'italic'], ['link'], ['ul', 'ol'], ['table', 'hr', 'quote']] });
+      if (onChange) inst.on('change', onChange);
+      return inst;
     });
   }
   // A comparison of two texts, with deleted words struck through and new words underlined.
+  // Strip the writing marks (**bold**, # headings, links, list dashes, table bars) so people compare words, not symbols.
+  function plain(md) {
+    return String(md || '').replace(/\r/g, '')
+      .replace(/^\s*\|?[\s:|-]+\|[\s:|-]*$/gm, '')                 // table divider rows
+      .replace(/^\s{0,3}#{1,6}\s+/gm, '')                            // headings
+      .replace(/^\s{0,3}>\s?/gm, '')                                 // quotes
+      .replace(/^\s*([-*+]|\d+[.)])\s+/gm, '\u2022 ')                 // list items
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')                     // images
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')                      // links
+      .replace(/(\*\*|__)(.+?)\1/g, '$2').replace(/(\*|_)(.+?)\1/g, '$2').replace(/`([^`]+)`/g, '$1')
+      .replace(/^\s*\|/gm, '').replace(/\|\s*$/gm, '').replace(/\s*\|\s*/g, '  \u00b7  ')
+      .replace(/\n{3,}/g, '\n\n').trim();
+  }
   function diffBox(a, b) {
+    a = plain(a); b = plain(b);
     var out = h('div', { class: 'diff' });
     L.wordDiff(a, b).forEach(function (p) { out.appendChild(p.t === 'same' ? document.createTextNode(p.s) : h(p.t === 'ins' ? 'ins' : 'del', null, p.s)); });
     return out;
+  }
+
+  // The provision list beside a long document: jumps to a clause and follows the reader down the page.
+  function withToc(refs, stack) {
+    var links = refs.map(function (c) { return h('a', { href: '#', 'data-ref': c.ref, onclick: function (ev) { ev.preventDefault(); var el = document.getElementById(c.ref); if (el) el.scrollIntoView({ behavior: 'smooth' }); } }, h('span', null, c.ref), c.heading); });
+    var toc = h('details', { class: 'toc noprint' }, h('summary', null, 'Jump to a provision'), h('nav', { 'aria-label': 'Provisions' }, links));
+    var mq = window.matchMedia('(min-width: 1180px)');
+    toc.open = mq.matches;
+    if (mq.addEventListener) mq.addEventListener('change', function (e) { toc.open = e.matches; });
+    links.forEach(function (a) { a.addEventListener('click', function () { if (!mq.matches) toc.open = false; }); });
+    if (typeof IntersectionObserver === 'function') {
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('data-ref') === e.target.id); }); });
+      }, { rootMargin: '-80px 0px -70% 0px' });
+      setTimeout(function () { stack.querySelectorAll('.clause').forEach(function (n) { io.observe(n); }); }, 0);
+      P.onLeave(function () { io.disconnect(); });
+    }
+    return h('div', { class: 'doc-layout' }, toc, stack);
   }
 
   // ---------- Reading (every signed-in member) ----------
@@ -55,7 +114,7 @@
     inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') go(); });
     return h('div', { class: 'row' }, inp, h('button', { class: 'btn', onclick: go }, 'Search'));
   }
-  function hero(lead) { return h('div', { class: 'hero' }, h('div', { class: 'muted' }, 'LKCMedSoc'), h('h1', null, 'Policy'), h('p', { class: 'muted' }, lead)); }
+  function hero(lead) { return h('div', { class: 'hero' }, h('h1', null, 'Policy'), h('p', { class: 'muted' }, lead)); }
   var LEAD = 'How MedSoc is run, in one place. Every provision has a number you can quote, and every change is recorded in the changelog. If an NTU or School rule conflicts with a MedSoc rule, the NTU or School rule applies.';
 
   async function memberIndex() {
@@ -64,7 +123,7 @@
     Object.keys(TIER).forEach(function (t) {
       var list = docs.filter(function (d) { return d.tier === t; });
       parts.push(h('h3', null, TIER[t]), h('p', { class: 'sub' }, TIER_NOTE[t]));
-      if (!list.length) { parts.push(h('p', { class: 'muted' }, t === 'external' ? 'None listed yet.' : t === 'guide' ? 'No Guides published yet.' : 'Nothing published yet.')); return; }
+      if (!list.length) { parts.push(h('div', { class: 'list' }, h('div', { class: 'item empty' }, t === 'external' ? 'None listed yet.' : t === 'guide' ? 'No Guides published yet.' : 'Nothing published yet.'))); return; }
       parts.push(h('div', { class: 'list' }, list.map(function (d) {
         return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + d.slug, style: 'text-decoration:none' }, d.title), h('div', { class: 's' }, d.summary), h('div', { class: 'meta' }, docPill(d)));
       })));
@@ -76,11 +135,11 @@
     var t = (q.q || '').trim();
     P.loading();
     var hits = t.length >= 2 ? await rpc('policy_search', { p_q: t }) : [];
-    P.show(h('div', null, h('p', { class: 'sub' }, h('a', { href: '#/' }, '← Documents')), searchBox(t),
+    P.show(h('div', null, crumbs([['Documents', '#/'], ['Search']]), searchBox(t),
       h('h3', null, t.length < 2 ? 'Type at least two letters' : hits.length ? hits.length + ' result' + (hits.length === 1 ? '' : 's') + ' for “' + t + '”' : 'Nothing found for “' + t + '”'),
       h('div', { class: 'list' }, hits.map(function (x) {
-        return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + x.doc_slug + '?at=' + encodeURIComponent(x.ref), style: 'text-decoration:none' }, x.ref + '  ' + x.heading),
-          h('div', { class: 's' }, x.doc_title), h('div', { class: 's' }, String(x.snippet || '').replace(/[|*#`-]+/g, ' ').replace(/\s+/g, ' ').slice(0, 150) + '…'));
+        return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + x.doc_slug + '?at=' + encodeURIComponent(x.ref), style: 'text-decoration:none' }, h('span', { class: 'ref' }, x.ref), ' ', mark(x.heading, t)),
+          h('div', { class: 's' }, x.doc_title), h('div', { class: 's' }, mark(String(x.snippet || '').replace(/[|*#`-]+/g, ' ').replace(/\s+/g, ' ').slice(0, 150) + '…', t)));
       }))));
   } });
 
@@ -107,15 +166,15 @@
       return h('div', { class: 'card clause', id: c.ref },
         h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), h('h3', { style: 'margin-top:0' }, c.heading), viewer(c.body_md),
         ns.length ? h('p', { class: 'sub' }, '[' + ns.join('; ') + ']') : null,
-        h('div', { class: 'row noprint' }, h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, c.ref, past ? d.shown_version : null)); } }, 'Copy link')));
+        h('div', { class: 'row noprint' }, (function () { var b = h('button', { class: 'ghost', title: 'Copy a link that opens this clause', onclick: function () { P.copy(docLink(d.slug, c.ref, past ? d.shown_version : null)); } }, ' Copy link to this clause'); b.prepend(ic('link')); return b; })()));
     });
     var parts = [
-      h('p', { class: 'sub noprint' }, h('a', { href: '#/' }, '← Documents')), h('h2', null, d.title), h('p', { class: 'muted' }, d.summary),
+      crumbs([['Documents', '#/'], [d.title]]), h('h2', { class: 'doc-title' }, d.title), h('p', { class: 'muted' }, d.summary),
       h('div', { class: 'row' }, P.pill(TIER_ONE[d.tier]), past ? P.pill('Version ' + d.shown_version + ' (superseded)', 'warn') : docPill(d), !draft && d.effective_on ? P.pill('in force from ' + longDate(d.effective_on)) : null, P.pill('changed by ' + d.owner)),
-      h('div', { class: 'row noprint' }, h('button', { class: 'ghost', onclick: function () { window.print(); } }, 'Print / Save as PDF')),
+      h('div', { class: 'row noprint' }, (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })()),
       draft ? h('div', { class: 'card' }, h('b', null, 'Draft proposal. '), 'This has not been adopted, so it is not binding yet. The wording can still change.') : null,
       past ? h('div', { class: 'card' }, 'You are reading an older version. ', h('a', { href: '#/d/' + d.slug }, 'Go to the version in force (version ' + d.version + ')'), '.') : null,
-      h('div', { class: 'stack' }, cards.length ? cards : h('p', { class: 'muted' }, 'This document has no provisions yet.')),
+      cards.length ? withToc(view.clauses, h('div', { class: 'stack' }, cards)) : h('p', { class: 'muted' }, 'This document has no provisions yet.'),
       h('h3', null, 'Versions'),
       view.versions.length ? h('div', { class: 'list' }, view.versions.map(function (x) {
         return h('div', { class: 'item' }, h('a', { class: 't', href: x.version === d.version ? '#/d/' + d.slug : '#/d/' + d.slug + '?v=' + x.version, style: 'text-decoration:none' }, 'Version ' + x.version), h('div', { class: 's' }, 'from ' + longDate(x.effective_on) + ' · ' + x.title));
@@ -124,7 +183,7 @@
     ];
     P.show(h('div', null, parts));
     if (q.at) {                                     // arriving at one provision: the text viewers settle a moment later and push the page down, so scroll again
-      var go = function () { var el = document.getElementById(q.at); if (el && P.current && P.current.path === '/d/' + p.slug) el.scrollIntoView(); };
+      var go = function () { var el = document.getElementById(q.at); if (el && P.current && P.current.path === '/d/' + p.slug) { el.scrollIntoView(); el.classList.add('hit'); } };
       [0, 400, 1000, 2000].forEach(function (ms) { setTimeout(go, ms); });
     }
   }
@@ -134,12 +193,12 @@
     if (!P.exco) return memberIndex(q);
     P.loading();
     var docs = await rpc('policy_all');
-    var parts = [h('div', { class: 'hero' }, h('div', { class: 'muted' }, 'LKCMedSoc'), h('h1', null, 'Policy'),
+    var parts = [h('div', { class: 'hero' }, h('h1', null, 'Policy'),
       h('p', { class: 'muted' }, 'The Constitution, Bylaws and Guides. A draft can be edited directly; once adopted, a document only changes through a proposal that ExCo approves. Every change is recorded.'), searchBox(''))];
     Object.keys(TIER).forEach(function (t) {
       var list = docs.filter(function (d) { return d.tier === t; });
       parts.push(h('h3', null, TIER[t]), h('p', { class: 'sub' }, TIER_NOTE[t]));
-      if (!list.length) { parts.push(h('p', { class: 'muted' }, t === 'external' ? 'None listed yet.' : 'Nothing here yet.')); return; }
+      if (!list.length) { parts.push(h('div', { class: 'list' }, h('div', { class: 'item empty' }, t === 'external' ? 'None listed yet.' : 'Nothing here yet.'))); return; }
       parts.push(h('div', { class: 'list' }, list.map(function (d) {
         var pub = h('input', { type: 'checkbox', checked: d.published, onchange: function (ev) {
           P.run(function () { return rpcv('policy_set_published', { p_slug: d.slug, p_on: ev.target.checked }); }, ev.target.checked ? 'Now visible to members' : 'Hidden from members');
@@ -147,8 +206,8 @@
         return h('div', { class: 'item' },
           h('a', { class: 't', href: '#/d/' + d.slug, style: 'text-decoration:none' }, d.title),
           h('div', { class: 's' }, d.summary),
-          h('div', { class: 'meta' }, docPill(d), P.pill(d.clauses + ' clauses'), d.open_amendments ? P.pill(d.open_amendments + ' open proposal' + (d.open_amendments > 1 ? 's' : ''), 'warn') : null,
-            h('label', { class: 'chk', style: 'margin:0 0 0 auto' }, pub, 'Visible to members')));
+          h('div', { class: 'meta' }, docPill(d), h('span', { class: 'count' }, d.clauses + ' clauses'), d.open_amendments ? P.pill(d.open_amendments + ' open proposal' + (d.open_amendments > 1 ? 's' : ''), 'warn') : null,
+            h('label', { class: 'chk', style: 'margin:0 0 0 auto' }, pub, 'Shown to members')));
       })));
     });
     P.show(h('div', null, parts));
@@ -161,18 +220,18 @@
     var w = await rpc('policy_working', { p_slug: p.slug });
     if (!w) { P.show(h('p', { class: 'muted' }, 'That document does not exist.')); return; }
     var d = w.doc, draft = d.status === 'draft';
-    var head = [h('p', { class: 'sub' }, h('a', { href: '#/' }, '← Documents')), h('h2', null, d.title), h('p', { class: 'muted' }, d.summary),
+    var head = [crumbs([['Documents', '#/'], [d.title]]), h('h2', { class: 'doc-title' }, d.title), h('p', { class: 'muted' }, d.summary),
       h('div', { class: 'row' }, P.pill(TIER_ONE[d.tier]), docPill(d), d.effective_on ? P.pill('effective ' + longDate(d.effective_on)) : null, P.pill('changed by ' + d.owner),
         d.published ? P.pill('visible to members', 'ok') : P.pill('hidden from members'))];
     var actions = h('div', { class: 'row' },
       draft ? h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug + '?adopt=1' }, 'Propose adoption') : h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug }, 'Propose a change'),
       h('a', { class: 'btn-link', href: '#/d/' + d.slug + '?read=1' }, 'Read as a member'),
-      h('button', { class: 'ghost', onclick: function () { window.print(); } }, 'Print / Save as PDF'));
+      (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })());
     var note = draft
       ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'You can edit any clause directly. Once ExCo adopts it, every change has to be proposed, voted on and recorded.')
       : h('div', { class: 'card' }, h('b', null, 'This document is in force. '), 'To change a clause, use “Propose a change”. The text only changes when the proposal is approved and published.');
     var cards = w.clauses.map(function (c) { return clauseCard(c, d, draft); });
-    var parts = [head, actions, note, h('div', { class: 'stack' }, cards)];
+    var parts = [head, actions, note, cards.length ? withToc(w.clauses, h('div', { class: 'stack' }, cards)) : h('div', { class: 'stack' })];
     if (draft) parts.push(addClauseForm(d));
     P.show(h('div', null, parts));
     // Arriving from a link on one provision: go straight to it (edit a draft in place; propose a change to a document in force).
@@ -194,18 +253,26 @@
         h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref), c.repealed ? P.pill('repealed', 'bad') : null),
         h('h3', { style: 'margin-top:0' }, c.heading), viewer(c.body_md),
         c.repealed ? null : h('div', { class: 'row' },
-          draft ? h('button', { class: 'ghost', onclick: edit }, 'Edit') : h('a', { class: 'btn-link', href: '#/propose/' + d.slug + '?ref=' + encodeURIComponent(c.ref) }, 'Propose a change'),
-          h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, c.ref)); } }, 'Copy link')));
+          draft ? (function () { var b = h('button', { class: 'ghost', onclick: edit }, ' Edit this clause'); b.prepend(ic('edit')); return b; })() : h('a', { class: 'btn-link', href: '#/propose/' + d.slug + '?ref=' + encodeURIComponent(c.ref) }, 'Propose a change'),
+          (function () { var b = h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, c.ref)); } }, ' Copy link to this clause'); b.prepend(ic('link')); return b; })()));
     }
     function edit() {
-      var title = h('input', { class: 'grow', value: c.heading }), ebox = h('div'), ed = null;
-      var save = h('button', { class: 'btn', onclick: async function () {
-        if (!ed) return; save.disabled = true;
-        var ok = await P.run(function () { return rpcv('policy_draft_save', { p_clause: c.id, p_heading: title.value, p_body: ed.getMarkdown() }); }, 'Saved');
-        save.disabled = false; if (ok) P.dispatch();
-      } }, 'Save');
-      box.replaceChildren(h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), P.field('Heading', title), P.field('Text', ebox), h('div', { class: 'row' }, save, h('button', { class: 'ghost', onclick: show }, 'Cancel')));
-      editor(ebox, c.body_md, '320px').then(function (e) { ed = e; });
+      var title = h('input', { class: 'grow', value: c.heading }), ebox = h('div'), ed = null, timer = null, dirty = false;
+      var status = h('span', { class: 'savestate', role: 'status', 'aria-live': 'polite' }, 'All changes saved');
+      function setStatus(t, cls) { status.textContent = t; status.className = 'savestate' + (cls ? ' ' + cls : ''); }
+      // Like Google Docs: there is no Save button. Changes are kept a moment after you stop typing.
+      async function save() {
+        if (!ed || !dirty) return true;
+        dirty = false; setStatus('Saving…');
+        try { await rpcv('policy_draft_save', { p_clause: c.id, p_heading: title.value, p_body: ed.getMarkdown() }); c.heading = title.value; c.body_md = ed.getMarkdown(); if (!dirty) setStatus('All changes saved'); return true; }
+        catch (e) { dirty = true; setStatus('Not saved. Check your connection; we will try again.', 'bad'); return false; }
+      }
+      function touch() { dirty = true; setStatus('Saving…'); clearTimeout(timer); timer = setTimeout(save, 1200); }
+      title.addEventListener('input', touch);
+      P.onLeave(function () { clearTimeout(timer); if (dirty) save(); });
+      var done = h('button', { class: 'btn', onclick: async function () { clearTimeout(timer); if (await save()) show(); } }, 'Done');
+      box.replaceChildren(h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), P.field('Heading', title), P.field('Text', ebox), h('div', { class: 'row' }, done, status));
+      editor(ebox, c.body_md, '320px', touch).then(function (e) { ed = e; });
     }
     show();
     return box;
@@ -248,10 +315,23 @@
           h('button', { class: 'ghost', style: 'margin-left:auto', onclick: function () { items.splice(items.indexOf(it), 1); card.remove(); } }, 'Remove')),
         ebody);
       it.card = card; items.push(it); list.appendChild(card);
-      editor(ebox, c ? c.body_md : '', '300px').then(function (e) { it.ed = e; });
+      var diffWrap = h('div', { class: 'suggest', hidden: true }, h('b', null, 'Your suggestion, as ExCo will see it'), h('div'));
+      ebody.appendChild(diffWrap);
+      var dt = null;
+      function refreshDiff() {
+        clearTimeout(dt);
+        dt = setTimeout(function () {
+          if (!it.ed || !c) return;
+          var a = c.heading + '\n\n' + c.body_md, b = it.heading.value + '\n\n' + it.ed.getMarkdown();
+          diffWrap.hidden = a === b;
+          if (a !== b) diffWrap.lastChild.replaceWith(diffBox(a, b));
+        }, 300);
+      }
+      it.heading.addEventListener('input', refreshDiff);
+      editor(ebox, c ? c.body_md : '', '300px', refreshDiff).then(function (e) { it.ed = e; });
     }
     var pick = P.select([['', 'Choose a clause…']].concat(live.map(function (c) { return [c.ref, c.ref + '  ' + c.heading]; })), '');
-    var parts = [h('p', { class: 'sub' }, h('a', { href: '#/d/' + d.slug }, '← ' + d.title)), h('h2', null, adopt ? 'Propose adoption' : 'Propose a change'),
+    var parts = [crumbs([['Documents', '#/'], [d.title, '#/d/' + d.slug], [adopt ? 'Propose adoption' : 'Propose a change']]), h('h2', null, adopt ? 'Propose adoption' : 'Propose a change'),
       h('p', { class: 'muted' }, adopt ? 'This brings the whole document into force exactly as it reads now (' + live.length + ' clauses). ' + TIER_NOTE[d.tier]
         : 'Nothing changes until ExCo approves this and it is published. ' + TIER_NOTE[d.tier]),
       P.field('Title', title), P.field('Reason', reason)];
@@ -304,7 +384,7 @@
     if (!r) { P.show(h('p', { class: 'muted' }, 'That proposal does not exist.')); return; }
     var a = r.amendment, d = r.doc, need = r.needed, mine = (r.votes.filter(function (v) { return v.voter === r.me; })[0] || {}).vote;
     function reload() { P.dispatch(); }
-    var parts = [h('p', { class: 'sub' }, h('a', { href: '#/a' }, '← Proposals')),
+    var parts = [crumbs([['Proposals', '#/a'], [aNo(a.number)]]),
       h('div', { class: 'row' }, h('span', { class: 'ref' }, aNo(a.number)), amPill(a.status), P.pill(TIER_ONE[d.tier]), a.kind === 'adopt' ? P.pill('adoption') : null),
       h('h2', null, a.title),
       h('p', { class: 'muted' }, h('a', { href: '#/d/' + d.slug }, d.title), ' · proposed by ' + (a.proposed_by_name || 'someone') + ' on ' + when(a.proposed_at)),
@@ -316,7 +396,7 @@
       var body = c.action === 'edit' ? [h('h3', { style: 'margin-top:8px' }, 'Heading'), diffBox(c.old_heading, c.new_heading), h('h3', null, 'Text'), diffBox(c.old_body_md, c.new_body_md),
           h('details', null, h('summary', null, 'Show the new text as it will read'), viewer(c.new_body_md))]
         : c.action === 'add' ? [h('h3', { style: 'margin-top:8px' }, c.new_heading), viewer(c.new_body_md)]
-        : [h('p', { class: 'muted' }, 'This clause is removed. Its number is kept and never reused.'), h('div', { class: 'diff' }, h('del', null, c.old_heading + '\n\n' + c.old_body_md))];
+        : [h('p', { class: 'muted' }, 'This clause is removed. Its number is kept and never reused.'), h('div', { class: 'diff' }, h('del', null, plain(c.old_heading + '\n\n' + c.old_body_md)))];
       parts.push(h('div', { class: 'card' }, h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref), P.pill({ edit: 'Changed', add: 'New clause', repeal: 'Repealed' }[c.action], c.action === 'repeal' ? 'bad' : '')), body));
     });
 
