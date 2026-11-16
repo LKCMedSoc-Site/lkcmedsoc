@@ -7,8 +7,7 @@
 --   * the chair or a vice-chair of a student group (CCA / project)
 -- A photo is still public only when its owner ticks "show my photo on the website"; nothing else about visibility changes.
 --
--- Year representatives are found by name ("Year ... Rep..." in the governance level, role or title). If the check below shows a year rep missing,
--- tell me how that post is written in the records and I will match it exactly.
+-- Year representatives are the role "Year Representative" (stream representatives, also at the Year level, are not included).
 
 create or replace function records.can_have_photo() returns boolean language sql stable security definer set search_path = 'records', 'public' as $$
   select exists (
@@ -19,8 +18,7 @@ create or replace function records.can_have_photo() returns boolean language sql
          lower(p.governance_level) = 'exco'
       or (lower(p.governance_level) = 'committee' and p.is_top)
       or lower(p.governance_level) = 'house'
-      or lower(p.governance_level) like 'year%'
-      or p.role_tier ilike '%year%rep%' or p.final_title ilike '%year%rep%'
+      or p.role_tier = 'Year Representative'
       or (b.level = 'CCA/Project' and (p.is_top or p.role_tier ilike '%chair%'))))
 $$;
 
@@ -39,5 +37,5 @@ end $$;
 -- Check (optional): who would now qualify this year, by post. Counts only.
 -- select p.governance_level, p.role_tier, count(*) from records.participation p join records.academic_years y on y.ay = p.ay and y.is_open
 --   join records.bodies b on b.id = p.body_id
---  where lower(p.governance_level) in ('exco','house') or lower(p.governance_level) like 'year%' or p.role_tier ilike '%year%rep%'
+--  where lower(p.governance_level) in ('exco','house') or p.role_tier = 'Year Representative'
 --     or (b.level = 'CCA/Project' and (p.is_top or p.role_tier ilike '%chair%')) group by 1, 2 order by 1, 2;
