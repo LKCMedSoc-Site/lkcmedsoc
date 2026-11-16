@@ -94,7 +94,6 @@
     if (P.me) {
       tabs.push(['docs', 'Documents', '#/']);
       if (P.exco) tabs.push(['amend', 'Proposals' + (P.badge ? ' (' + P.badge + ')' : ''), '#/a']);
-      tabs.push(['log', 'Changelog', '#/log']);
     }
     var cur = P.current && P.current.opts && P.current.opts.nav;
     $tabs.hidden = !P.me;
