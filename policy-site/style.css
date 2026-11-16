@@ -172,3 +172,11 @@ th { background: #fff; border-bottom: 2px solid var(--p900); }
 .toastui-editor-defaultUI-toolbar { background: #fff; }
 .diff { background: #fff; }
 button.ghost:hover, a.btn-link:hover { background: #fff; border-color: var(--p900); }
+
+/* Print / Save as PDF: just the document. */
+@media print {
+  .top, .tabs, .noprint, .toast, .row button, .row a.btn-link, #who { display: none !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+  .card.clause { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; break-inside: avoid; padding: 8px 0; }
+}

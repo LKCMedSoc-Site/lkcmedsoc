@@ -1,4 +1,4 @@
-// LKCMedSoc Policy: sign-in, the page chrome and start-up. Only ExCo can use the app; the public reads the site.
+// LKCMedSoc Policy: sign-in, the page chrome and start-up. Policy is for signed-in members: everyone reads, only ExCo edits, proposes and votes.
 (function () {
   'use strict';
   var P = window.P, h = P.h, sb = P.sb;
@@ -52,6 +52,7 @@
     var link = function (label, m) { return h('button', { class: 'ghost', onclick: function () { loginView(m); } }, label); };
     authBox(mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Reset password' : 'Sign in', [
       note ? h('p', { class: 'pill ok' }, note) : null,
+      mode === 'signin' ? h('p', { class: 'muted' }, 'Policy is for LKCMedSoc members. Sign in with your NTU email; it is the same account as the other LKCMedSoc apps.') : null,
       mode === 'signup' ? h('p', { class: 'muted' }, 'Use your NTU email. We send a link to confirm it is yours. This is the same account as the records site.') : null,
       h('div', { class: 'row' }, email),
       mode === 'forgot' ? null : h('div', { class: 'row' }, pw),
@@ -90,9 +91,9 @@
   }
   function drawTabs() {
     var tabs = [];
-    if (P.exco) {
+    if (P.me) {
       tabs.push(['docs', 'Documents', '#/']);
-      tabs.push(['amend', 'Proposals' + (P.badge ? ' (' + P.badge + ')' : ''), '#/a']);
+      if (P.exco) tabs.push(['amend', 'Proposals' + (P.badge ? ' (' + P.badge + ')' : ''), '#/a']);
       tabs.push(['log', 'Changelog', '#/log']);
     }
     var cur = P.current && P.current.opts && P.current.opts.nav;

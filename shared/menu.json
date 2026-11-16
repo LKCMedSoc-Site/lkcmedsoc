@@ -24,7 +24,7 @@
         { "label": "Records", "href": "https://records.lkcmedsoc.com", "note": "Leadership and participation records", "external": true },
         { "label": "Inventory", "href": "https://inventory.lkcmedsoc.com", "note": "Equipment and reservations", "external": true },
         { "label": "Booking", "href": "https://booking.lkcmedsoc.com", "note": "Book a venue", "external": true },
-        { "label": "MedSoc policy", "href": "/policy", "note": "How MedSoc and its CCAs operate." }
+        { "label": "MedSoc policy", "href": "https://policy.lkcmedsoc.com", "note": "How MedSoc and its CCAs operate. Sign in to read.", "external": true }
       ]
     }
   ]

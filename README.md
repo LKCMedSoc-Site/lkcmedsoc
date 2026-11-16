@@ -7,7 +7,7 @@ Code for the LKCMedSoc website and internal tools. This repository is public: it
 | `site/` | Public website (Next.js; layout edited in Plasmic) | lkcmedsoc.com | Vercel |
 | `activities-site/` | LKCMedSoc Activities: events, write-ups and approvals | activities.lkcmedsoc.com | Vercel |
 | `gazette-site/` | LKCMedSoc Gazette: write, review, publish and curate posts (shares the post tables with Activities) | gazette.lkcmedsoc.com | Vercel |
-| `policy-site/` | LKCMedSoc Policy: ExCo edits the Constitution, Bylaws and Guides, proposes and votes on changes, and publishes versions (the public pages are `/policy` on the website, with a PDF per document) | policy.lkcmedsoc.com | Vercel |
+| `policy-site/` | LKCMedSoc Policy: members read, ExCo edits the Constitution, Bylaws and Guides, proposes and votes on changes, and publishes versions (everyone signed in can read; ExCo edits. Sign-in only: `/policy` on the website redirects here. PDF via the browser's Print / Save as PDF) | policy.lkcmedsoc.com | Vercel |
 | `feedback-site/` | LKCMedSoc Feedback: suggestions, issues and SSLG meetings | feedback.lkcmedsoc.com | Vercel |
 | `records/` | Leadership and participation records | records.lkcmedsoc.com | Vercel |
 | `Inventory/` | Inventory app | inventory.lkcmedsoc.com | Vercel |

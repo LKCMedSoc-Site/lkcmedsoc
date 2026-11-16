@@ -24,11 +24,7 @@ What the website serves today, plus notes on the structure. Keep it in step with
 | `/about/committee/[committee]` | One committee and its groups (there is no `/about/committee` index) | Yes |
 | `/about/honour-roll`, `/about/honour-roll/[ay]` | Honour roll, and one MedSoc term | Coded only |
 | `/resources` | Resources and apps (one "Resources" menu, apps included) | Yes |
-| `/policy` | Policy contents page (search, documents by tier) | Yes (readers; ExCo keep the coded page unless the design has the editing pieces) |
-| `/policy/[slug]` | One policy document (`?v=N` for an older version) | Yes (same rule); `?v=` always coded |
-| `/policy/[slug]/latest.pdf` | The document as a PDF (`?v=N` for an older version) | Coded only |
 | `/sign-in` | Plain sign-in page (`?next=` says where to go afterwards: this site or another lkcmedsoc.com address). The header's Sign in button opens a lightbox instead; this page is for email links and links from the other apps. Not indexed | Coded only |
-| `/policy/changelog` | Every change that has come into force | Coded only |
 | `/president-message`, `/about/work-with-us`, `/about/alumni` | Plain text pages from `site/content/*.md` (the `[...slug]` catch-all). `/students-corner` redirects to `/resources` | Coded only |
 
 Not pages: `/api/navigation` (the menu as JSON for the apps), `/plasmic-host` (Studio's host page), `/trial/...` (Plasmic-only sandbox, noindex).

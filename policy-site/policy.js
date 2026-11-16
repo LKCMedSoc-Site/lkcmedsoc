@@ -1,5 +1,5 @@
 // LKCMedSoc Policy: the screens. Documents, one document, proposing a change, proposals and their votes, and the changelog.
-// Everything goes through the policy_* functions in sql/policy.sql, which check who is asking. Only ExCo can use this app.
+// Everything goes through the policy_* functions in sql/policy.sql, which check who is asking. Signed-in members can read; only ExCo can edit, propose and vote.
 (function () {
   'use strict';
   var P = window.P, h = P.h, L = P.L;
@@ -24,7 +24,8 @@
     var label = { proposed: 'Voting', approved: 'Approved, not yet in force', rejected: 'Rejected', withdrawn: 'Withdrawn', in_force: 'In force' }[s] || s;
     return P.pill(label, { proposed: 'warn', approved: 'ok', rejected: 'bad', withdrawn: '', in_force: 'dark' }[s]);
   }
-  function siteUrl(path) { return String(P.cfg.SITE_URL || '').replace(/\/$/, '') + path; }
+  // A link to a document (and a provision in it) inside this app.
+  function docLink(slug, ref, v) { var q = []; if (v) q.push('v=' + v); if (ref) q.push('at=' + encodeURIComponent(ref)); return location.origin + location.pathname + '#/d/' + slug + (q.length ? '?' + q.join('&') : ''); }
 
   // ---------- the rich-text editor (Toast UI, the same one the Gazette uses) ----------
   function tui() { return Promise.resolve(window.toastuiReady).catch(function () { /* handled by the caller */ }).then(function () { return window.toastui && window.toastui.Editor; }); }
@@ -47,43 +48,126 @@
     return out;
   }
 
-  // ---------- Documents ----------
-  P.route('/', { nav: 'docs', exco: true, fn: async function () {
+  // ---------- Reading (every signed-in member) ----------
+  function searchBox(q) {
+    var inp = h('input', { type: 'search', class: 'grow', value: q || '', placeholder: 'Search the policy, or type a number like B-9.4', 'aria-label': 'Search the policy' });
+    function go() { var t = inp.value.trim(); P.nav(t ? '#/s?q=' + encodeURIComponent(t) : '#/'); }
+    inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') go(); });
+    return h('div', { class: 'row' }, inp, h('button', { class: 'btn', onclick: go }, 'Search'));
+  }
+  function hero(lead) { return h('div', { class: 'hero' }, h('div', { class: 'muted' }, 'LKCMedSoc'), h('h1', null, 'Policy'), h('p', { class: 'muted' }, lead)); }
+  var LEAD = 'How MedSoc is run, in one place. Every provision has a number you can quote, and every change is recorded in the changelog. If an NTU or School rule conflicts with a MedSoc rule, the NTU or School rule applies.';
+
+  async function memberIndex() {
+    P.loading();
+    var docs = await rpc('policy_index'), parts = [hero(LEAD), searchBox('')];
+    Object.keys(TIER).forEach(function (t) {
+      var list = docs.filter(function (d) { return d.tier === t; });
+      parts.push(h('h3', null, TIER[t]), h('p', { class: 'sub' }, TIER_NOTE[t]));
+      if (!list.length) { parts.push(h('p', { class: 'muted' }, t === 'external' ? 'None listed yet.' : t === 'guide' ? 'No Guides published yet.' : 'Nothing published yet.')); return; }
+      parts.push(h('div', { class: 'list' }, list.map(function (d) {
+        return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + d.slug, style: 'text-decoration:none' }, d.title), h('div', { class: 's' }, d.summary), h('div', { class: 'meta' }, docPill(d)));
+      })));
+    });
+    P.show(h('div', null, parts));
+  }
+
+  P.route('/s', { nav: 'docs', fn: async function (p, q) {
+    var t = (q.q || '').trim();
+    P.loading();
+    var hits = t.length >= 2 ? await rpc('policy_search', { p_q: t }) : [];
+    P.show(h('div', null, h('p', { class: 'sub' }, h('a', { href: '#/' }, '← Documents')), searchBox(t),
+      h('h3', null, t.length < 2 ? 'Type at least two letters' : hits.length ? hits.length + ' result' + (hits.length === 1 ? '' : 's') + ' for “' + t + '”' : 'Nothing found for “' + t + '”'),
+      h('div', { class: 'list' }, hits.map(function (x) {
+        return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + x.doc_slug + '?at=' + encodeURIComponent(x.ref), style: 'text-decoration:none' }, x.ref + '  ' + x.heading),
+          h('div', { class: 's' }, x.doc_title), h('div', { class: 's' }, String(x.snippet || '').replace(/[|*#`-]+/g, ' ').replace(/\s+/g, ' ').slice(0, 150) + '…'));
+      }))));
+  } });
+
+  // One document as members read it: the version in force (or an older one with ?v=), with a source note under each provision.
+  async function readDoc(p, q) {
+    P.loading();
+    var v = /^\d{1,4}$/.test(q.v || '') ? +q.v : null;
+    var got = await Promise.all([rpc('policy_doc', { p_slug: p.slug, p_version: v }), rpc('policy_changelog', { p_slug: p.slug })]);
+    var view = got[0], full = got[1] || [];
+    if (!view) { P.show(h('p', { class: 'muted' }, 'That document does not exist, or it is not visible to members yet.')); return; }
+    var d = view.doc, draft = d.status === 'draft', past = v !== null && v < d.version;
+    var upTo = full.filter(function (e) { return e.version <= d.shown_version; }).sort(function (a, b) { return a.version - b.version; });
+    function notes(ref) {
+      var out = [];
+      upTo.forEach(function (e) {
+        if (e.kind === 'adopt') { out.push('Adopted ' + aNo(e.number) + ', in force ' + longDate(e.effective_on)); return; }
+        var c = e.changes.filter(function (x) { return x.ref === ref; })[0];
+        if (c) out.push({ edit: 'Amended', add: 'Added', repeal: 'Repealed' }[c.action] + ' ' + aNo(e.number) + ', in force ' + longDate(e.effective_on));
+      });
+      return out;
+    }
+    var cards = view.clauses.map(function (c) {
+      var ns = notes(c.ref);
+      return h('div', { class: 'card clause', id: c.ref },
+        h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), h('h3', { style: 'margin-top:0' }, c.heading), viewer(c.body_md),
+        ns.length ? h('p', { class: 'sub' }, '[' + ns.join('; ') + ']') : null,
+        h('div', { class: 'row noprint' }, h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, c.ref, past ? d.shown_version : null)); } }, 'Copy link')));
+    });
+    var parts = [
+      h('p', { class: 'sub noprint' }, h('a', { href: '#/' }, '← Documents')), h('h2', null, d.title), h('p', { class: 'muted' }, d.summary),
+      h('div', { class: 'row' }, P.pill(TIER_ONE[d.tier]), past ? P.pill('Version ' + d.shown_version + ' (superseded)', 'warn') : docPill(d), !draft && d.effective_on ? P.pill('in force from ' + longDate(d.effective_on)) : null, P.pill('changed by ' + d.owner)),
+      h('div', { class: 'row noprint' }, h('button', { class: 'ghost', onclick: function () { window.print(); } }, 'Print / Save as PDF')),
+      draft ? h('div', { class: 'card' }, h('b', null, 'Draft proposal. '), 'This has not been adopted, so it is not binding yet. The wording can still change.') : null,
+      past ? h('div', { class: 'card' }, 'You are reading an older version. ', h('a', { href: '#/d/' + d.slug }, 'Go to the version in force (version ' + d.version + ')'), '.') : null,
+      h('div', { class: 'stack' }, cards.length ? cards : h('p', { class: 'muted' }, 'This document has no provisions yet.')),
+      h('h3', null, 'Versions'),
+      view.versions.length ? h('div', { class: 'list' }, view.versions.map(function (x) {
+        return h('div', { class: 'item' }, h('a', { class: 't', href: x.version === d.version ? '#/d/' + d.slug : '#/d/' + d.slug + '?v=' + x.version, style: 'text-decoration:none' }, 'Version ' + x.version), h('div', { class: 's' }, 'from ' + longDate(x.effective_on) + ' · ' + x.title));
+      })) : h('p', { class: 'muted' }, 'No version has come into force yet.'),
+      h('p', { class: 'noprint' }, h('a', { href: '#/log' }, 'Full changelog'))
+    ];
+    P.show(h('div', null, parts));
+    if (q.at) {                                     // arriving at one provision: the text viewers settle a moment later and push the page down, so scroll again
+      var go = function () { var el = document.getElementById(q.at); if (el && P.current && P.current.path === '/d/' + p.slug) el.scrollIntoView(); };
+      [0, 400, 1000, 2000].forEach(function (ms) { setTimeout(go, ms); });
+    }
+  }
+
+  // ---------- Documents (ExCo's working view) ----------
+  P.route('/', { nav: 'docs', fn: async function (p, q) {
+    if (!P.exco) return memberIndex(q);
     P.loading();
     var docs = await rpc('policy_all');
     var parts = [h('div', { class: 'hero' }, h('div', { class: 'muted' }, 'LKCMedSoc'), h('h1', null, 'Policy'),
-      h('p', { class: 'muted' }, 'The Constitution, Bylaws and Guides. A draft can be edited directly; once adopted, a document only changes through a proposal that ExCo approves. Every change is recorded.'))];
+      h('p', { class: 'muted' }, 'The Constitution, Bylaws and Guides. A draft can be edited directly; once adopted, a document only changes through a proposal that ExCo approves. Every change is recorded.'), searchBox(''))];
     Object.keys(TIER).forEach(function (t) {
       var list = docs.filter(function (d) { return d.tier === t; });
       parts.push(h('h3', null, TIER[t]), h('p', { class: 'sub' }, TIER_NOTE[t]));
       if (!list.length) { parts.push(h('p', { class: 'muted' }, t === 'external' ? 'None listed yet.' : 'Nothing here yet.')); return; }
       parts.push(h('div', { class: 'list' }, list.map(function (d) {
         var pub = h('input', { type: 'checkbox', checked: d.published, onchange: function (ev) {
-          P.run(function () { return rpcv('policy_set_published', { p_slug: d.slug, p_on: ev.target.checked }); }, ev.target.checked ? 'Now shown on the website' : 'Hidden from the website');
+          P.run(function () { return rpcv('policy_set_published', { p_slug: d.slug, p_on: ev.target.checked }); }, ev.target.checked ? 'Now visible to members' : 'Hidden from members');
         } });
         return h('div', { class: 'item' },
           h('a', { class: 't', href: '#/d/' + d.slug, style: 'text-decoration:none' }, d.title),
           h('div', { class: 's' }, d.summary),
           h('div', { class: 'meta' }, docPill(d), P.pill(d.clauses + ' clauses'), d.open_amendments ? P.pill(d.open_amendments + ' open proposal' + (d.open_amendments > 1 ? 's' : ''), 'warn') : null,
-            h('label', { class: 'chk', style: 'margin:0 0 0 auto' }, pub, 'Shown on the website')));
+            h('label', { class: 'chk', style: 'margin:0 0 0 auto' }, pub, 'Visible to members')));
       })));
     });
     P.show(h('div', null, parts));
   } });
 
   // ---------- One document ----------
-  P.route('/d/:slug', { nav: 'docs', exco: true, fn: async function (p, q) {
+  P.route('/d/:slug', { nav: 'docs', fn: async function (p, q) {
+    if (!P.exco || q.read || q.v) return readDoc(p, q);
     P.loading();
     var w = await rpc('policy_working', { p_slug: p.slug });
     if (!w) { P.show(h('p', { class: 'muted' }, 'That document does not exist.')); return; }
     var d = w.doc, draft = d.status === 'draft';
     var head = [h('p', { class: 'sub' }, h('a', { href: '#/' }, '← Documents')), h('h2', null, d.title), h('p', { class: 'muted' }, d.summary),
       h('div', { class: 'row' }, P.pill(TIER_ONE[d.tier]), docPill(d), d.effective_on ? P.pill('effective ' + longDate(d.effective_on)) : null, P.pill('changed by ' + d.owner),
-        d.published ? P.pill('shown on the website', 'ok') : P.pill('not on the website yet'))];
+        d.published ? P.pill('visible to members', 'ok') : P.pill('hidden from members'))];
     var actions = h('div', { class: 'row' },
       draft ? h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug + '?adopt=1' }, 'Propose adoption') : h('a', { class: 'btn-link solid', href: '#/propose/' + d.slug }, 'Propose a change'),
-      h('a', { class: 'btn-link', href: siteUrl('/policy/' + d.slug + '/latest.pdf'), target: '_blank', rel: 'noopener' }, draft ? 'Draft PDF' : 'Latest PDF'),
-      h('a', { class: 'btn-link', href: siteUrl('/policy/' + d.slug), target: '_blank', rel: 'noopener' }, 'View on the website'));
+      h('a', { class: 'btn-link', href: '#/d/' + d.slug + '?read=1' }, 'Read as a member'),
+      h('button', { class: 'ghost', onclick: function () { window.print(); } }, 'Print / Save as PDF'));
     var note = draft
       ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'You can edit any clause directly. Once ExCo adopts it, every change has to be proposed, voted on and recorded.')
       : h('div', { class: 'card' }, h('b', null, 'This document is in force. '), 'To change a clause, use “Propose a change”. The text only changes when the proposal is approved and published.');
@@ -91,7 +175,7 @@
     var parts = [head, actions, note, h('div', { class: 'stack' }, cards)];
     if (draft) parts.push(addClauseForm(d));
     P.show(h('div', null, parts));
-    // Arriving from the website's "Edit" link on one provision: go straight to it (edit a draft in place; propose a change to a document in force).
+    // Arriving from a link on one provision: go straight to it (edit a draft in place; propose a change to a document in force).
     if (q && q.edit) {
       var card = document.getElementById(q.edit);
       if (card) {
@@ -111,7 +195,7 @@
         h('h3', { style: 'margin-top:0' }, c.heading), viewer(c.body_md),
         c.repealed ? null : h('div', { class: 'row' },
           draft ? h('button', { class: 'ghost', onclick: edit }, 'Edit') : h('a', { class: 'btn-link', href: '#/propose/' + d.slug + '?ref=' + encodeURIComponent(c.ref) }, 'Propose a change'),
-          h('button', { class: 'ghost', onclick: function () { P.copy(siteUrl('/policy/' + d.slug + '#' + c.ref)); } }, 'Copy link')));
+          h('button', { class: 'ghost', onclick: function () { P.copy(docLink(d.slug, c.ref)); } }, 'Copy link')));
     }
     function edit() {
       var title = h('input', { class: 'grow', value: c.heading }), ebox = h('div'), ed = null;
@@ -149,7 +233,7 @@
     if (adopt && d.status !== 'draft') { P.show(h('p', { class: 'muted' }, 'This document is already in force.')); return; }
     if (!adopt && d.status !== 'in_force') { P.show(h('p', { class: 'muted' }, 'This is a draft: edit it directly, or propose its adoption.')); return; }
     var title = h('input', { class: 'grow', value: adopt ? 'Adopt ' + d.title : '', placeholder: 'One line: what is changing' });
-    var reason = h('textarea', { placeholder: 'Why is this needed? This is shown in the public changelog.' });
+    var reason = h('textarea', { placeholder: 'Why is this needed? This is shown in the changelog.' });
     var list = h('div', { class: 'stack' });
     var live = w.clauses.filter(function (c) { return !c.repealed; });
 
@@ -227,7 +311,7 @@
       h('div', { class: 'card' }, h('b', null, 'Why: '), a.reason)];
 
     // what changes
-    if (a.kind === 'adopt') parts.push(h('div', { class: 'card' }, 'Adopting brings the whole document into force as it now reads. ', h('a', { href: siteUrl('/policy/' + d.slug), target: '_blank', rel: 'noopener' }, 'Read it on the website'), '.'));
+    if (a.kind === 'adopt') parts.push(h('div', { class: 'card' }, 'Adopting brings the whole document into force as it now reads. ', h('a', { href: '#/d/' + d.slug + '?read=1' }, 'Read it as members see it'), '.'));
     r.changes.forEach(function (c) {
       var body = c.action === 'edit' ? [h('h3', { style: 'margin-top:8px' }, 'Heading'), diffBox(c.old_heading, c.new_heading), h('h3', null, 'Text'), diffBox(c.old_body_md, c.new_body_md),
           h('details', null, h('summary', null, 'Show the new text as it will read'), viewer(c.new_body_md))]
@@ -280,7 +364,7 @@
           if (v) { P.toast('In force as version ' + v); reload(); }
         } }, 'Bring into force'))));
     }
-    if (a.status === 'in_force') dec.appendChild(h('p', null, 'In force from ' + longDate(a.effective_on) + ' as version ' + a.version_after + '. ', h('a', { href: siteUrl('/policy/' + d.slug + '?v=' + a.version_after), target: '_blank', rel: 'noopener' }, 'See it on the website'), ' · ', h('a', { href: siteUrl('/policy/' + d.slug + '/latest.pdf' + (a.version_after ? '?v=' + a.version_after : '')), target: '_blank', rel: 'noopener' }, 'PDF')));
+    if (a.status === 'in_force') dec.appendChild(h('p', null, 'In force from ' + longDate(a.effective_on) + ' as version ' + a.version_after + '. ', h('a', { href: '#/d/' + d.slug + '?read=1&v=' + a.version_after }, 'Read this version')));
     if (a.status === 'proposed') dec.appendChild(h('div', { class: 'row' }, h('button', { class: 'danger', onclick: async function () {
       if (!confirm('Withdraw this proposal?')) return;
       var ok = await P.run(function () { return rpcv('policy_withdraw', { p_id: a.id }); }, 'Withdrawn'); if (ok) reload();
@@ -302,14 +386,14 @@
   } });
 
   // ---------- Changelog ----------
-  P.route('/log', { nav: 'log', exco: true, fn: async function () {
+  P.route('/log', { nav: 'log', fn: async function () {
     P.loading();
     var log = await rpc('policy_changelog');
-    P.show(h('div', null, h('h2', null, 'Changelog'), h('p', { class: 'muted' }, 'Everything that has come into force, as the public sees it on the website. ', h('a', { href: siteUrl('/policy/changelog'), target: '_blank', rel: 'noopener' }, 'Open the public page')),
+    P.show(h('div', null, h('h2', null, 'Changelog'), h('p', { class: 'muted' }, 'Every change that has come into force, newest first: what changed, why, and how it was decided.'),
       log.length ? h('div', { class: 'list' }, log.map(function (e) {
         var how = e.tier === 'constitution' && e.meeting_date ? 'General Meeting ' + e.meeting_for + ' for, ' + e.meeting_against + ' against' : e.votes ? 'ExCo vote ' + e.votes['for'] + ' for, ' + e.votes.against + ' against' : '';
         return h('div', { class: 'item' }, h('div', { class: 't' }, aNo(e.number) + '  ' + e.title), h('div', { class: 's' }, e.doc_title + ', version ' + e.version + ' · from ' + longDate(e.effective_on)),
-          h('div', { class: 'meta' }, P.pill(TIER_ONE[e.tier]), how ? P.pill(how) : null, e.changes.map(function (c) { return P.pill(c.ref + ' ' + c.action); })));
+          h('div', { class: 'meta' }, h('a', { class: 'pill', href: '#/d/' + e.doc_slug + '?v=' + e.version }, 'Read version ' + e.version), P.pill(TIER_ONE[e.tier]), how ? P.pill(how) : null, e.changes.map(function (c) { return P.pill(c.ref + ' ' + c.action); })));
       })) : h('p', { class: 'muted' }, 'Nothing has come into force yet.')));
   } });
 })();
