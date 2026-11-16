@@ -20,8 +20,9 @@
     return null;
   }
   // The optional `cols=3 w=70 align=center` on a :::photos line (same rule as photoOpts in site/src/lib/markdown.ts).
-  function photoOpts(line) {
-    var c = /\bcols=([234])\b/.exec(line), w = /\bw=(\d{1,3})\b/.exec(line), al = /\balign=(left|center|right)\b/.exec(line);
+  function photoOpts(line, inner) {
+    var pics = inner.filter(function (l) { return /^!\[/.test(l.trim()); }).length, auto = pics === 1 || pics === 2 ? String(pics) : '';
+    var c = /\bcols=([1-4])\b/.exec(line) || (auto ? [auto, auto] : null), w = /\bw=(\d{1,3})\b/.exec(line), al = /\balign=(left|center|right)\b/.exec(line);
     return (c ? ' data-cols="' + c[1] + '"' : '') + (w ? ' data-w="' + Math.min(100, Math.max(10, +w[1])) + '"' : '') + (w && al ? ' data-align="' + al[1] + '"' : '');
   }
   function blocks(lines, videos, depth) {
@@ -48,7 +49,7 @@
         }
         var html = blocks(inner, videos, depth + 1);
         if (kind === 'toggle') out.push('<details class="blk-toggle"><summary>' + esc(ln.replace(/^:::toggle\s*/, '').trim() || 'More') + '</summary>' + html + '</details>');
-        else out.push(kind === 'callout' ? '<aside class="blk-callout">' + html + '</aside>' : kind === 'photos' ? '<div class="blk-photos"' + photoOpts(ln) + '>' + html + '</div>' : '<figure class="blk-quote">' + html + '</figure>');
+        else out.push(kind === 'callout' ? '<aside class="blk-callout">' + html + '</aside>' : kind === 'photos' ? '<div class="blk-photos"' + photoOpts(ln, inner) + '>' + html + '</div>' : '<figure class="blk-quote">' + html + '</figure>');
         continue;
       }
       if ((m = /^:::button\s+(.+?)\s*\|\s*(https?:\/\/\S+)\s*$/.exec(ln))) { flush(); out.push('<p><a class="blk-button" href="' + esc(m[2]) + '">' + esc(m[1]) + '</a></p>'); i++; continue; }

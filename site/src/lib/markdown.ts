@@ -100,8 +100,9 @@ export function renderGroupMarkdown(md: string): string {
  * The optional `cols=3 w=70 align=center` on a `:::photos` line, as data attributes (values are checked: cols 2-4, width 10-100 as a percentage of the column,
  * align left/center/right). Pictures always keep their own shape. records/pages.js has the same rule.
  */
-function photoOpts(line: string): string {
-  const cols = /\bcols=([234])\b/.exec(line), w = /\bw=(\d{1,3})\b/.exec(line), align = /\balign=(left|center|right)\b/.exec(line);
+function photoOpts(line: string, inner: string[] = []): string {
+  const pics = inner.filter((l) => /^!\[/.test(l.trim())).length, auto = pics === 1 || pics === 2 ? String(pics) : '';
+  const cols = /\bcols=([1-4])\b/.exec(line) || (auto ? [auto, auto] : null), w = /\bw=(\d{1,3})\b/.exec(line), align = /\balign=(left|center|right)\b/.exec(line);
   return (cols ? ` data-cols="${cols[1]}"` : '') + (w ? ` data-w="${Math.min(100, Math.max(10, Number(w[1])))}"` : '') + (w && align ? ` data-align="${align[1]}"` : '');
 }
 
@@ -152,7 +153,7 @@ function blocks(lines: string[], videos: string[], depth: number): string {
       }
       const body = blocks(inner, videos, depth + 1);
       if (kind === 'toggle') { const title = ln.replace(/^:::toggle\s*/, '').trim() || 'More'; out.push(`<details class="blk-toggle"><summary>${esc(title)}</summary>${body}</details>`); }
-      else out.push(kind === 'callout' ? `<aside class="blk-callout">${body}</aside>` : kind === 'photos' ? `<div class="blk-photos"${photoOpts(ln)}>${body}</div>` : `<figure class="blk-quote">${body}</figure>`);
+      else out.push(kind === 'callout' ? `<aside class="blk-callout">${body}</aside>` : kind === 'photos' ? `<div class="blk-photos"${photoOpts(ln, inner)}>${body}</div>` : `<figure class="blk-quote">${body}</figure>`);
       continue;
     }
     if ((m = /^:::button\s+(.+?)\s*\|\s*(https?:\/\/\S+)\s*$/.exec(ln))) { flush(); out.push(`<p><a class="blk-button" href="${esc(m[2])}">${esc(m[1])}</a></p>`); i++; continue; }

@@ -34,5 +34,7 @@
  "empty columns": ":::columns\n\n|||\n\n:::",
  "gallery sized": ":::photos cols=3 w=60 align=center\n![](https://x.com/1.webp)\n![](https://x.com/2.webp)\n:::",
  "gallery sized left": ":::photos w=70\n![](https://x.com/1.webp)\n:::",
- "photos opts": ":::photos cols=3\n![](https://x.com/1.webp)\n![](https://x.com/2.webp)\n:::"
+ "photos opts": ":::photos cols=3\n![](https://x.com/1.webp)\n![](https://x.com/2.webp)\n:::",
+ "gallery of one": ":::photos\n![A caption](https://x.com/1.webp)\n:::",
+ "gallery one col": ":::photos cols=1 w=60 align=center\n![](https://x.com/1.webp)\n:::"
 }

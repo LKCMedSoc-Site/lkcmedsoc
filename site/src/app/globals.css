@@ -58,7 +58,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Gallery: a masonry wall. Each picture keeps its own shape (nothing is cropped). `w=` sets the whole gallery's width and `align=` where it sits. */
 .prose-lkc .blk-photos { column-width: 180px; column-gap: .5rem; white-space: normal; } /* normal: the page text style keeps line breaks, which would put a blank line between pictures */
 .prose-lkc .blk-photos p { display: contents; margin: 0; }
-.prose-lkc .blk-photos[data-cols="2"] { column-count: 2; column-width: auto; } .prose-lkc .blk-photos[data-cols="3"] { column-count: 3; column-width: auto; } .prose-lkc .blk-photos[data-cols="4"] { column-count: 4; column-width: auto; }
+.prose-lkc .blk-photos[data-cols="1"] { column-count: 1; column-width: auto; } .prose-lkc .blk-photos[data-cols="2"] { column-count: 2; column-width: auto; } .prose-lkc .blk-photos[data-cols="3"] { column-count: 3; column-width: auto; } .prose-lkc .blk-photos[data-cols="4"] { column-count: 4; column-width: auto; }
 @media (max-width: 560px) { .prose-lkc .blk-photos[data-cols="3"], .prose-lkc .blk-photos[data-cols="4"] { column-count: 2; } .prose-lkc .blk-photos[style] { width: 100% !important; } }
 .prose-lkc img.blk-img { display: block; height: auto; }
 .prose-lkc img.blk-img-center { margin-left: auto; margin-right: auto; }

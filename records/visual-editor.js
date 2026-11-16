@@ -71,7 +71,7 @@ function blockHtml(text, ctx) {
     return `<div data-blk="columns">${cols.map((c) => `<div data-blk="column">${mdHtml(c.join('\n'), ctx) || '<p></p>'}</div>`).join('')}</div>`;
   }
   if (kind === 'photos') {
-    const cols = /\bcols=([234])\b/.exec(head), w = /\bw=(\d{1,3})\b/.exec(head), al = /\balign=(left|center|right)\b/.exec(head);
+    const cols = /\bcols=([1-4])\b/.exec(head), w = /\bw=(\d{1,3})\b/.exec(head), al = /\balign=(left|center|right)\b/.exec(head);
     const imgs = inner.filter((l) => l.trim() !== '');
     if (!imgs.length || !imgs.every((l) => IMG_LINE.test(l.trim()))) return null;
     return `<div data-blk="photos"${cols ? ` data-cols="${cols[1]}"` : ''}${w ? ` data-w="${Math.min(100, Math.max(10, +w[1]))}"` : ''}${w && al ? ` data-align="${al[1]}"` : ''}>${imgs.map((l) => String(ctx.marked.parse(l.trim())).replace(/<\/?p>|\n/g, '')).join('')}</div>`;
@@ -369,7 +369,7 @@ function makeExtensions(opts) {
         body.classList.add('ve-photos');
         const set = (patch) => setAttrs(editor, getPos, get(), patch);
         const cols = el('select'); cols.setAttribute('aria-label', 'Photos per row'); cols.title = 'Photos per row';
-        [['', 'Columns: automatic'], ['2', '2 columns'], ['3', '3 columns'], ['4', '4 columns']].forEach(([v, t]) => cols.append(new Option(t, v)));
+        [['', 'Columns: automatic'], ['1', '1 column'], ['2', '2 columns'], ['3', '3 columns'], ['4', '4 columns']].forEach(([v, t]) => cols.append(new Option(t, v)));
         cols.addEventListener('change', () => set({ cols: cols.value || null }));
         const file = el('input'); file.type = 'file'; file.accept = 'image/*'; file.multiple = true; file.hidden = true;
         file.addEventListener('change', async () => { const files = [...file.files]; file.value = ''; opts.addFiles && opts.addFiles(files, getPos() + get().nodeSize - 1); });
@@ -378,7 +378,7 @@ function makeExtensions(opts) {
           btn('Full width', 'Back to full width', () => set({ w: null, align: null })), file);
         const handle = el('span', 've-photos-handle'); handle.title = 'Drag to resize the gallery'; handle.setAttribute('role', 'slider'); handle.contentEditable = 'false'; dom.append(handle);
         const paint = (n) => {
-          cols.value = n.attrs.cols || ''; body.dataset.cols = n.attrs.cols || '';
+          cols.value = n.attrs.cols || ''; body.dataset.cols = n.attrs.cols || (n.childCount < 3 ? String(n.childCount) : '');
           const w = n.attrs.w, al = n.attrs.align; dom.style.width = (w || 100) + '%'; dom.dataset.align = al || 'left';
           dom.style.marginLeft = al === 'center' || al === 'right' ? 'auto' : ''; dom.style.marginRight = al === 'center' ? 'auto' : '';
           handle.setAttribute('aria-valuenow', String(w || 100));
@@ -480,7 +480,7 @@ export function create(opts) {
     if (!nodes.length) return;
     const doc = editor.state.doc, at = pos == null ? editor.state.selection.from : Math.min(Math.max(pos, 0), doc.content.size), $p = doc.resolve(at);
     for (let d = $p.depth; d >= 0; d--) if ($p.node(d).type.name === 'photos') { editor.chain().insertContentAt($p.after(d) - 1, nodes).run(); return; }
-    insertTop(nodes.length > 1 ? { type: 'photos', content: nodes } : nodes[0], pos);
+    insertTop({ type: 'photos', content: nodes }, pos);
   }
 
   const editor = new Editor({
@@ -539,14 +539,8 @@ export function create(opts) {
   };
 
   // ---- Toolbar, laid out like Google Docs: undo/redo, text style, bold/italic/link, lists, then Photo and Insert menus ----
-  const fileIn = el('input'); fileIn.type = 'file'; fileIn.accept = 'image/*'; fileIn.hidden = true;
   const rowIn = el('input'); rowIn.type = 'file'; rowIn.accept = 'image/*'; rowIn.multiple = true; rowIn.hidden = true;
-  fileIn.addEventListener('change', () => { const f = fileIn.files[0]; fileIn.value = ''; if (f) addFiles([f], null); });
-  rowIn.addEventListener('change', async () => {
-    const files = [...rowIn.files].filter((f) => /^image\//.test(f.type)); rowIn.value = ''; const nodes = [];
-    for (const f of files) { try { nodes.push({ type: 'image', attrs: { src: await opts.upload(f), alt: '' } }); } catch (e) { opts.onError && opts.onError(e); break; } }
-    if (nodes.length) insertTop({ type: 'photos', content: nodes });
-  });
+  rowIn.addEventListener('change', () => { const files = [...rowIn.files]; rowIn.value = ''; addFiles(files, null); });
   const active = [];
   function tool(content, title, fn, isOn) { const b = el('button', 've-tb'); b.type = 'button'; b.title = title; b.setAttribute('aria-label', title); b.innerHTML = content; b.addEventListener('mousedown', (e) => e.preventDefault()); b.addEventListener('click', fn); if (isOn) active.push([b, isOn]); return b; }
   const on = (name, a) => () => editor.isActive(name, a);
@@ -554,11 +548,7 @@ export function create(opts) {
   const styleSel = el('select', 've-style'); styleSel.title = 'Text style'; styleSel.setAttribute('aria-label', 'Text style');
   [['p', 'Normal text'], ['2', 'Heading'], ['3', 'Subheading'], ['4', 'Small heading']].forEach(([v, t]) => styleSel.append(new Option(t, v)));
   styleSel.addEventListener('change', () => { const v = styleSel.value; if (v === 'p') run().setParagraph().run(); else run().setHeading({ level: Number(v) }).run(); });
-  const photoBtn = tool(icon('image') + '<span>Photo</span>', 'Add a photo', () => showMenu(photoBtn, [
-    { label: 'One photo', hint: 'A single picture you can resize', run: () => fileIn.click() },
-    { label: 'Gallery of photos', hint: 'Choose several. Drag more in later to grow it', run: () => rowIn.click() },
-  ]));
-  photoBtn.setAttribute('data-menu-anchor', '1');
+  const photoBtn = tool(icon('image') + '<span>Photos</span>', 'Add photos: choose one or many. They go in a gallery you can resize', () => rowIn.click());
   const insertBtn = tool(icon('plus') + '<span>Insert</span>', 'Insert something', () => showMenu(insertBtn, [
     { label: 'Columns', hint: 'Text side by side (add up to 4 columns)', run: () => addBlock('Columns') },
     { label: 'Highlighted box', hint: 'A tinted box for something important', run: () => addBlock('Callout') },
@@ -583,7 +573,7 @@ export function create(opts) {
     tool(icon('bullets'), 'Bulleted list', () => run().toggleBulletList().run(), on('bulletList')),
     tool(icon('numbers'), 'Numbered list', () => run().toggleOrderedList().run(), on('orderedList')),
     tool(icon('quote'), 'Indented quote', () => run().toggleBlockquote().run(), on('blockquote')), sep(),
-    photoBtn, insertBtn, fileIn, rowIn);
+    photoBtn, insertBtn, rowIn);
   const refresh = () => {
     active.forEach(([b, f]) => b.setAttribute('aria-pressed', f() ? 'true' : 'false'));
     const lvl = [2, 3, 4].find((l) => editor.isActive('heading', { level: l })); styleSel.value = lvl ? String(lvl) : 'p';
