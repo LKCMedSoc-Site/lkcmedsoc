@@ -20,6 +20,11 @@
     } catch (e) { /* not a link */ }
     return null;
   }
+  // The optional `cols=3 shape=round` on a :::photos line (same rule as photoOpts in site/src/lib/markdown.ts).
+  function photoOpts(line) {
+    var c = /\bcols=([234])\b/.exec(line), sh = /\bshape=(square|round|wide)\b/.exec(line);
+    return (c ? ' data-cols="' + c[1] + '"' : '') + (sh ? ' data-shape="' + sh[1] + '"' : '');
+  }
   function blocks(lines, videos, depth) {
     var out = [], buf = [], i = 0, m;
     function flush() { if (buf.length) { out.push(window.marked.parse(buf.join('\n'))); buf = []; } }
@@ -44,7 +49,7 @@
         }
         var html = blocks(inner, videos, depth + 1);
         if (kind === 'toggle') out.push('<details class="blk-toggle"><summary>' + esc(ln.replace(/^:::toggle\s*/, '').trim() || 'More') + '</summary>' + html + '</details>');
-        else out.push(kind === 'callout' ? '<aside class="blk-callout">' + html + '</aside>' : kind === 'photos' ? '<div class="blk-photos">' + html + '</div>' : '<figure class="blk-quote">' + html + '</figure>');
+        else out.push(kind === 'callout' ? '<aside class="blk-callout">' + html + '</aside>' : kind === 'photos' ? '<div class="blk-photos"' + photoOpts(ln) + '>' + html + '</div>' : '<figure class="blk-quote">' + html + '</figure>');
         continue;
       }
       if ((m = /^:::button\s+(.+?)\s*\|\s*(https?:\/\/\S+)\s*$/.exec(ln))) { flush(); out.push('<p><a class="blk-button" href="' + esc(m[2]) + '">' + esc(m[1]) + '</a></p>'); i++; continue; }
@@ -56,7 +61,8 @@
   }
   function renderMd(md) {
     var videos = [], html = blocks(String(md || '').replace(/\r/g, '').split('\n'), videos, 0);
-    var clean = window.DOMPurify.sanitize(html, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote', 'h2', 'h3', 'h4', 'hr', 'img', 'aside', 'div', 'figure', 'code', 'details', 'summary'], ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'data-n'] });
+    var clean = window.DOMPurify.sanitize(html, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'blockquote', 'h2', 'h3', 'h4', 'hr', 'img', 'aside', 'div', 'figure', 'code', 'details', 'summary'], ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'data-n', 'data-cols', 'data-shape'] });
+    clean = clean.replace(/<img ([^>]*?)\s*\/?>\{w=(\d{1,3})(?:\s+align=(left|center|right))?\}/g, function (_m, a, w, al) { return '<img ' + a + ' class="blk-img' + (al ? ' blk-img-' + al : '') + '" style="width:' + Math.min(100, Math.max(10, +w)) + '%">'; });
     return clean.replace(/<p>LKCVIDEO(\d+)TOKEN<\/p>/g, function (_m, n) { return videos[+n] ? '<div class="blk-video"><iframe src="' + videos[+n] + '" title="Video" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>' : ''; });
   }
 
@@ -141,7 +147,7 @@
       tb('Join button', 'A big button linking somewhere', function () { var u = prompt('Where should the button go? (https://…)'); if (u) block(':::button Join us | ' + u); }),
       tb('Callout', 'A highlighted box', function () { block(':::callout\nImportant note here.\n:::'); }),
       tb('Photo row', 'Several photos side by side', function () { block(':::photos\n![](https://)\n![](https://)\n:::'); }),
-      tb('Quote', 'A pull quote', function () { block(':::quote\n“What a memorable experience.”\n— Name, Year 3\n:::'); }),
+      tb('Quote', 'A pull quote', function () { block(':::quote\n“What a memorable experience.”\n\n— Name, Year 3\n:::'); }),
       h('span', { class: 'sep' }),
       tb('2 columns', 'Two columns side by side', function () { block(':::columns\n## Left column\nWrite here.\n|||\n## Right column\nWrite here.\n:::'); }),
       tb('3 columns', 'Three columns side by side', function () { block(':::columns\n### One\nWrite here.\n|||\n### Two\nWrite here.\n|||\n### Three\nWrite here.\n:::'); }),
@@ -149,7 +155,24 @@
       tb('Video', 'A YouTube or Vimeo video', function () { var u = prompt('Video link (YouTube or Vimeo)'); if (u) block(':::video ' + u.trim()); }),
       tb('Divider', 'A thin line between sections', function () { block('---'); }),
       toggle);
-    return { get: function () { return ta.value; }, el: h('div', null, toolbar, ta, preview, fileIn, h('p', { class: 'muted' }, 'Blocks start with ::: on their own line and end with a line of just :::. Blocks can sit inside columns and toggles; in columns a line of just ||| starts the next column. Emoji work in headings. Use Preview to check how it looks.')) };
+    // Visual mode (type on the page). Loaded on demand; if it cannot load, the plain text box simply stays.
+    var ve = null, veHost = h('div', { hidden: true }), mode = 'text', modeBtn = h('button', { class: 'ghost sm', type: 'button' }, 'Loading page editor…');
+    modeBtn.disabled = true;
+    var hint = h('p', { class: 'muted' }, 'Blocks start with ::: on their own line and end with a line of just :::. Blocks can sit inside columns and toggles; in columns a line of just ||| starts the next column. Emoji work in headings. Use Preview to check how it looks.');
+    function setMode(m) {
+      if (m === mode) return;
+      if (m === 'visual') { ve.setMarkdown(ta.value); } else { ta.value = ve.get(); }
+      mode = m; var vis = m === 'visual';
+      veHost.hidden = !vis; ta.hidden = vis || !write; toolbar.hidden = vis; preview.hidden = vis || write; hint.hidden = vis;
+      modeBtn.textContent = vis ? 'Edit as text' : 'Edit on the page';
+    }
+    modeBtn.addEventListener('click', function () { if (ve) setMode(mode === 'visual' ? 'text' : 'visual'); });
+    import('./visual-editor.js').then(function (mod) {
+      ve = mod.create({ markdown: ta.value, marked: window.marked, render: renderMd, videoEmbed: videoEmbed, upload: function (f) { return upload(kit, bodyId, f, 1600); }, onError: function (e) { kit.toast(kit.friendly ? kit.friendly(e) : e.message, true); } });
+      veHost.appendChild(ve.el); modeBtn.disabled = false; modeBtn.textContent = 'Edit on the page';
+      setMode('visual');
+    }).catch(function () { modeBtn.textContent = 'Page editor unavailable'; });
+    return { get: function () { return mode === 'visual' && ve ? ve.get() : ta.value; }, el: h('div', null, h('div', { class: 'row' }, modeBtn), veHost, toolbar, ta, preview, fileIn, hint) };
   }
 
   // Icon links for the group's page. Instagram, website and the join link have their own boxes above; these are everything else (Telegram, TikTok, email…).
@@ -205,15 +228,46 @@
   var HEX = /^#[0-9a-fA-F]{6}$/;
   function colorField(kit, initial, name) {
     var h = kit.h, value = (COLORS[initial] || HEX.test(initial || '')) ? initial : '';
-    var chip = h('span', { class: 'colorchip' }, name);
-    var note = h('span', { class: 'muted' }, '');
+    var note = h('p', { class: 'muted' }, '');
+    var preview = h('div', { class: 'tonepreview' });
+    var shortName = String(name || 'Your group').replace(/ Committee$/, '');
+    function chipEl(cls, st, text) { return h('span', { class: 'tp-chip ' + cls, style: st }, text); }
+    // The same four tones the website derives in site/src/lib/tones.ts: solid, white-on-solid text, a 12% wash and a 55% photo wash.
+    function paintPreview(shown) {
+      if (!shown) { preview.replaceChildren(h('p', { class: 'muted' }, 'A colour is picked for you (your committee’s colour if you belong to one). Choose a colour above to see how it would look.')); return; }
+      var tint = shown + '1f', over = shown + '8c';
+      function tone(label, use, bg, fg, text) { return h('div', { class: 'tp-tone' }, h('div', { class: 'tp-sw', style: 'background:' + bg + ';color:' + fg }, text || 'Aa'), h('strong', null, label), h('span', { class: 'muted' }, use)); }
+      var photo = 'linear-gradient(135deg,#d9c4a3,#8a9fb0 55%,#4b5d6b)';
+      preview.replaceChildren(
+        h('strong', null, 'Tones used'),
+        h('div', { class: 'tp-tones' },
+          tone('Solid', 'Badges, bars and selected chips, with white text', shown, '#fff', shown),
+          tone('Light wash', 'Resting chips, pills and tags', tint, shown, 'Aa'),
+          tone('Coloured text', 'Links and headings on white', '#fff', shown, 'Aa'),
+          tone('Photo wash', 'Over your header photo', over, '#fff', 'Aa')),
+        h('strong', { style: 'display:block;margin-top:14px' }, 'How it will look'),
+        h('div', { class: 'tp-demo' },
+          h('div', { class: 'tp-card' },
+            h('div', { class: 'tp-photo', style: 'background:' + photo }, h('div', { class: 'tp-over', style: 'background:' + over }), h('span', { class: 'tp-badge', style: 'background:' + shown }, shortName.charAt(0))),
+            h('div', { class: 'tp-bar', style: 'background:' + shown }, shortName),
+            h('div', { class: 'tp-body' }, h('strong', null, name || 'Your group'), h('span', { class: 'muted' }, 'Your card on the Student Groups page'))),
+          h('div', { class: 'tp-side' },
+            h('div', { class: 'muted' }, 'Filter chips'),
+            h('div', { class: 'row' }, chipEl('', 'background:' + tint + ';color:' + shown + ';border-color:' + shown, shortName), chipEl('', 'background:' + shown + ';color:#fff;border-color:' + shown, shortName + ' ✓')),
+            h('div', { class: 'muted' }, 'Event and news pills'),
+            h('div', { class: 'row' }, chipEl('sq', 'background:' + tint + ';color:' + shown, 'Event'), chipEl('sq', 'background:' + shown + ';color:#fff', 'Event')),
+            h('div', { class: 'muted' }, 'Links and buttons on your page'),
+            h('div', { class: 'row' }, h('span', { class: 'tp-link', style: 'color:' + shown }, 'Join our next session'), chipEl('', 'background:' + shown + ';color:#fff;border-color:' + shown, 'Join us')),
+            h('div', { class: 'tp-callout', style: 'background:' + tint + ';border-left:4px solid ' + shown }, 'A highlighted box in your write-up')))
+      );
+    }
     var buttons = [];
     var custom = h('input', { type: 'color', class: 'swatch-input', 'aria-label': 'Pick any colour' });
     var customBtn = h('label', { class: 'swatch custom', title: 'Pick any colour' }, h('span', null, 'Any'), custom);
     function hexOf(v) { return COLORS[v] || (HEX.test(v) ? v.toLowerCase() : ''); }
     function paint() {
       var raw = hexOf(value), shown = raw ? readable(raw) : '';
-      chip.style.background = shown || '#8a8494';
+      paintPreview(shown);
       note.textContent = raw && shown !== raw ? 'Shown a little darker on the website so white text stays easy to read.' : '';
       buttons.forEach(function (b) { b.btn.setAttribute('aria-pressed', b.key === value ? 'true' : 'false'); });
       var isCustom = HEX.test(value);
@@ -230,7 +284,7 @@
     custom.addEventListener('input', function () { value = custom.value.toLowerCase(); paint(); });
     var row = h('div', { class: 'swatches' }, swatch('', 'Automatic', null), Object.keys(COLORS).map(function (k) { return swatch(k, k.charAt(0).toUpperCase() + k.slice(1), COLORS[k]); }), customBtn);
     paint();
-    return { get: function () { return value; }, el: h('div', { class: 'card' }, h('strong', null, 'Group colour'), h('p', { class: 'muted' }, 'Used for your filter chip, your badge and your card on the website. Pick a suggested colour or choose any colour you like with Any. Auto picks one for you; a group with no colour of its own uses its committee’s.'), row, h('div', { class: 'row' }, chip, note)) };
+    return { get: function () { return value; }, el: h('div', { class: 'card' }, h('strong', null, 'Group colour'), h('p', { class: 'muted' }, 'Used for your filter chip, your badge and your card on the website. Pick a suggested colour or choose any colour you like with Any. Auto picks one for you; a group with no colour of its own uses its committee’s.'), row, preview, note) };
   }
 
   async function load(kit, body) {
