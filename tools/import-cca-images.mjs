@@ -4,7 +4,8 @@
 //   Preview (downloads and shrinks the images into ./.cca-images-preview, uploads nothing; no key needed):
 //     node tools/import-cca-images.mjs --dry-run
 //   Houses: add  --level House --manifest house-images.json  (crest = logo, a group photo = header).
-//   A manifest entry may also have "gallery": [ids]; those go into the About text as :::photos rows.
+//   A manifest entry may also have "gallery": [ids]; those go into the About text as ONE :::photos gallery. An item may be {"id": ..., "caption": ...}: the caption becomes the picture's alt text (shown as its caption on the site).
+//   Only the gallery of CCAs (not logo/header): add  --only gallery  (and  --name "Project Aasha"  to limit to one or a few; repeatable).
 //   Re-do only the logos (e.g. after changing how crests are fitted): add  --only logo  with --replace "Name" for each house.
 //   To overwrite a CCA that already has images: add  --replace "Active Ageing Advocates"
 //   For real (needs the project's service-role key, from Supabase > Project Settings > API; keep it out of the repo):
@@ -25,7 +26,8 @@ const dry = process.argv.includes('--dry-run');
 const replace = new Set(process.argv.flatMap((a, i, all) => (a === '--replace' ? [all[i + 1]] : [])));
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i > -1 ? process.argv[i + 1] : d; };
 const LEVEL = arg('--level', 'CCA/Project');
-const ONLY = arg('--only', ''); // --only logo: skip the header and gallery
+const ONLY = arg('--only', ''); // --only logo: skip the header and gallery; --only gallery: only the gallery
+const NAMES = new Set(process.argv.flatMap((a, i, all) => (a === '--name' ? [all[i + 1]] : [])));
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!dry && !key) { console.error('Set SUPABASE_SERVICE_ROLE_KEY, or pass --dry-run.'); process.exit(1); }
 const sb = dry ? null : createClient(URL_, key, { db: { schema: 'records' }, auth: { persistSession: false } });
@@ -58,6 +60,7 @@ async function fetchImage(id, maxW, kind) {
 
 let ok = 0, skipped = 0, failed = 0;
 for (const [name, imgs] of Object.entries(manifest)) {
+  if (name.startsWith('_') || (NAMES.size && !NAMES.has(name))) continue;
   let row = null;
   if (!dry) {
     const { data, error } = await sb.from('bodies').select('id,logo_url,header_url,about_md').eq('name', name).eq('level', LEVEL).single();
@@ -67,7 +70,7 @@ for (const [name, imgs] of Object.entries(manifest)) {
   const patch = {};
   for (const [kind, maxW] of [['logo', 400], ['header', 1800]]) {
     const id = imgs[kind];
-    if (!id || (ONLY && ONLY !== kind)) continue;
+    if (!id || (ONLY && ONLY !== kind)) continue;  // (ONLY = gallery skips both)
     if (row && row[kind + '_url'] && !replace.has(name)) { skipped++; continue; }
     try {
       const { buf, from, squared } = await fetchImage(id, maxW, kind);
@@ -83,10 +86,11 @@ for (const [name, imgs] of Object.entries(manifest)) {
       ok++;
     } catch (e) { console.log(`!! ${name} ${kind}: ${e.message || e}`); failed++; }
   }
-  // Gallery (houses): upload each photo at 1600px and append rows of three to the About text as :::photos blocks. Skipped if the text already has one.
-  if (!ONLY && imgs.gallery?.length && (dry || !(row.about_md || '').includes(':::photos') || replace.has(name))) {
+  // Gallery: upload each photo at 1600px and append them to the About text as one :::photos block. Skipped if the text already has a gallery (unless --replace).
+  if ((!ONLY || ONLY === 'gallery') && imgs.gallery?.length && (dry || !(row.about_md || '').includes(':::photos') || replace.has(name))) {
     const urls = [];
-    for (const id of imgs.gallery) {
+    for (const item of imgs.gallery) {
+      const id = typeof item === 'string' ? item : item.id, caption = typeof item === 'string' ? '' : (item.caption || '').replace(/[\[\]\n]/g, ' ').trim();
       try {
         const { buf, from } = await fetchImage(id, 1600);
         const tag = createHash('sha1').update(id).digest('hex').slice(0, 10);
@@ -95,17 +99,17 @@ for (const [name, imgs] of Object.entries(manifest)) {
           const path = `${row.id}/wix-gallery-${tag}.webp`;
           const up = await sb.storage.from('body-images').upload(path, buf, { contentType: 'image/webp', cacheControl: '31536000', upsert: true });
           if (up.error) throw up.error;
-          urls.push(sb.storage.from('body-images').getPublicUrl(path).data.publicUrl);
+          urls.push({ url: sb.storage.from('body-images').getPublicUrl(path).data.publicUrl, caption });
         }
         console.log(`${name} gallery: ${(from / 1024) | 0} KB -> ${(buf.length / 1024) | 0} KB`);
         ok++;
       } catch (e) { console.log(`!! ${name} gallery: ${e.message || e}`); failed++; }
     }
     if (!dry && urls.length) {
-      const rows = [];
-      for (let i = 0; i < urls.length; i += 3) rows.push(':::photos\n' + urls.slice(i, i + 3).map((u) => `![](${u})`).join('\n') + '\n:::');
+      // One gallery block holding every picture (separate blocks of three would each be a separate masonry with gaps between them).
+      const block = ':::photos\n' + urls.map((u) => `![${u.caption}](${u.url})`).join('\n') + '\n:::';
       const base = replace.has(name) ? (row.about_md || '').split(/\n*:::photos[\s\S]*$/)[0] : (row.about_md || '');
-      patch.about_md = (base ? base + '\n\n' : '') + rows.join('\n\n');
+      patch.about_md = (base ? base + '\n\n' : '') + block;
     }
   }
   if (!dry && Object.keys(patch).length) {

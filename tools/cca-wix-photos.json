@@ -1,0 +1,618 @@
+{
+ "_about": "Pictures on each student group's own page on the old Wix site (crawled 2026-11-16): the slideshow gallery first, then the two captioned photos (the page's ABOVE caption belongs to the first, LEFT to the second). Used by tools/import-cca-images.mjs with --level \"CCA/Project\" --manifest cca-wix-photos.json --only gallery.",
+ "Project Aasha": {
+  "gallery": [
+   "3dbd98_58ed6362a61b4d89ae8af2a26925bf84~mv2.jpg",
+   "3dbd98_0ce5ceb7cb694a8395a2132c6a003d31~mv2.jpg",
+   "3dbd98_1caeef4b89de44b3b3f472b50d3a3be6~mv2.jpg",
+   "3dbd98_7cc4eadb961e4fb393685e7330e06dba~mv2.jpg",
+   "3dbd98_061b74f281bd4eb78456a17e08aba08a~mv2.jpg",
+   "3dbd98_dbb79127115d49debc2e096dc8e69e78~mv2.jpg",
+   "3dbd98_0420353f625a42bd8990302ee7958e58~mv2.jpg",
+   "3dbd98_ad88d17453414ca6a9f543c2f9f0c316~mv2.jpg",
+   "3dbd98_a0484b1b3ed4431dab7afd66ad1dc930~mv2.jpg",
+   {
+    "id": "3dbd98_07bcb26e77b54975af351685da4b4620~mv2.jpg",
+    "caption": "A stunning view of the hilly terrain en route to Dharan in Eastern Nepal."
+   },
+   {
+    "id": "3dbd98_beedd6fdbd1d48a3822f3e303dbc2a9a~mv2.jpg",
+    "caption": "The team of Project Aasha 2024!"
+   }
+  ]
+ },
+ "Project Asada": {
+  "gallery": [
+   "0cc0ad_ec138472142d45e48e030c78d55c915e~mv2.jpg",
+   "0cc0ad_30dd1920770e45f6bf2c55868a71c6c1~mv2.jpg",
+   "0cc0ad_86b360a321474ce3ae68131bccf6d578~mv2.jpg",
+   "0cc0ad_0cc5334539ba4e588c59512b03a313ef~mv2.jpg",
+   "0cc0ad_c8f4639939d24a11b7576a5fe3a30251~mv2.jpg",
+   "0cc0ad_3384937cf89b42d28eb0f47f209e5137~mv2.jpg",
+   "0cc0ad_3269ae400a3544abbce4e9d17aa4dfb5~mv2.jpg",
+   "26185e_bb70c2e372eb494faa6c215a03da30f3~mv2.jpg",
+   "26185e_8c7031fe1b0c445cb891f71ac5d3f7fb~mv2.jpg",
+   {
+    "id": "105886_4e71454f262343b28174bc1b7c4c6447~mv2.jpg",
+    "caption": "Learning in progress!"
+   },
+   {
+    "id": "105886_772dba825d6540e5af92f11b6f9470cd~mv2.jpg",
+    "caption": "Time to see the Doctor!"
+   }
+  ]
+ },
+ "Project Bantayan": {
+  "gallery": [
+   "7aef73_c34f39f50f604d7cbecf60e8970bdfc8~mv2.jpg",
+   "7aef73_eeec685f21824e97977706fdbf87dd1c~mv2.jpg",
+   "7aef73_92df7131a7dd43fca10eeadcb05b81bc~mv2.jpg",
+   "7aef73_842b89c564c64c6e84d5ff97084ed96d~mv2.jpg",
+   {
+    "id": "7aef73_bfff11d6ccf84754aabdf278fb883a33~mv2.jpg",
+    "caption": "Medical mission at Barangay Sillon"
+   },
+   {
+    "id": "7aef73_12290ecdb9e84b308edcf9ba509f7583~mv2.jpg",
+    "caption": "Exchange with Cebu Doctors' University"
+   }
+  ]
+ },
+ "Project Butanding": {
+  "gallery": [
+   "1e3234_4a97732ad4824ee59261b1084cfcaccf~mv2.jpg",
+   "1e3234_7746e7ca407f4960a00e2e6ea405e009~mv2.jpg",
+   "1e3234_11b2b6fa96db43f6a54f121c824e2edc~mv2.jpg",
+   "1e3234_eba61000038c413b8d8ca3426dbd6ee1~mv2.jpg",
+   "1e3234_bf681cd2c288447594970278908df3ab~mv2.jpg",
+   "1e3234_95bd0dff3d454e818983f050040a14a6~mv2.jpg",
+   "1e3234_4ef20686b2c1407cbe1cc477a43c7619~mv2.jpg",
+   "1e3234_d078d668a5b6475392006f580ff35d38~mv2.jpg",
+   "1e3234_b2b30ca233254b6b9b17b56f224a6dc4~mv2.jpg",
+   {
+    "id": "1e3234_f61c4ec72d8a4461808f74dee4f4bc97~mv2.png",
+    "caption": "Team Butanding!"
+   },
+   {
+    "id": "1e3234_ac18934c121643beaa1f8b5392c5db4a~mv2.png",
+    "caption": "Group photo with students from Mohon Elementary School!"
+   }
+  ]
+ },
+ "Project Chiang Mai": {
+  "gallery": [
+   "4b233f_19f9d30182984ddfad7935a4b8fded7d~mv2.jpg",
+   "4b233f_cc937fef59d64f0ead056fbe5c7dee9f~mv2.jpg",
+   "4b233f_44d781a683de4f79b7470810e66c7342~mv2.jpg",
+   "4b233f_1a30b8a47f6f4be09d3729c82487c25f~mv2.jpg",
+   "4b233f_71e68cfb77d0448bb9aedb8c933ce3f2~mv2.jpg",
+   "4b233f_21dcff218624408c9963625bafb834a5~mv2.jpg",
+   "8005af_3f7174d8f93845fabf415006c70462e2~mv2.jpg",
+   "8005af_8f5211848a854c97b1eb266950dfe394~mv2.jpg",
+   "8005af_9ccb491984a145c1b95768e102254349~mv2.jpg",
+   "8005af_bc8663b85ae34ad4b67b3ac7e7eb5062~mv2.jpg",
+   "8005af_eb26db18dc484f1bb304f6dd72adf90e~mv2.jpg",
+   "8005af_ce4b660bb3e049119730e1eb8ae954f5~mv2.jpg",
+   "8005af_956ac57f3af74e9f94658f8aafdec716~mv2.jpg",
+   {
+    "id": "8005af_00b3c296fefe42418bdc42e6caeab340~mv2.jpg",
+    "caption": "Paediatric screening at a local school. Alongside the pictured Snellen Chart visual acuity, the Paediatric team conducts dental checkups and physical examination for children of Phrao yearly."
+   },
+   {
+    "id": "8005af_2352e0fc57f9439eafcb88abe3748893~mv2.jpg",
+    "caption": "Ultrasound screening at a local clinic. We regularly work with local clinics to ensure continuity of our care and dedication to the city."
+   }
+  ]
+ },
+ "Project Davao": {
+  "gallery": [
+   "f2b8b8_d89b0664d3934289a568080a7ee49da5f001.jpg",
+   "f2b8b8_1fb1bf99a6f74a8696c5ec7699123db2f001.jpg",
+   "f2b8b8_debb987efb6946e88e837ab78c90ff33f001.jpg",
+   "f2b8b8_c36a673fa6cf4b3ca7a68a3471555517f001.jpg",
+   "f2b8b8_21f7a1032dee47209f56307c9260a665f001.jpg",
+   "f2b8b8_00377d80fa764d5fb2588cfa589df583~mv2.jpg",
+   "f2b8b8_1156486d25d1404d9ea4cf1d1b981591~mv2.png",
+   "f2b8b8_a555ad77a1394c428384a08bb526ee4b~mv2.jpg",
+   "f2b8b8_8d3741bf079d4a129333af660f6efb5f~mv2.png",
+   "f2b8b8_0e7177af24ac40538d60be8edbaa1666~mv2.jpg",
+   {
+    "id": "f2b8b8_16da8937f57940b6b139d1214058fe0c~mv2.jpeg",
+    "caption": "Science Education at Langub National High School"
+   },
+   {
+    "id": "f2b8b8_d0c0a8cf8b45449baa9010ad5223d773~mv2.jpeg",
+    "caption": "DMSF Mobile Clinic"
+   }
+  ]
+ },
+ "Project Daya": {
+  "gallery": [
+   "6407b6_7c8acf8da6ce4d72b01429dbd3f83422~mv2.png",
+   "6407b6_00abf2714c744e909a8cd1f95437147d~mv2.png",
+   "6407b6_90542b2e2e104198b0cb5a66b7d5dcc7~mv2.png",
+   {
+    "id": "6407b6_dca1e31a16084018be0d07c27bfbd4ce~mv2.png",
+    "caption": "Project Daya at the end of our July 25 trip"
+   },
+   {
+    "id": "6407b6_22b8fa8c3f4c47c1bb2a59b6758b51a2~mv2.png",
+    "caption": "Project Daya with volunteers and translators from our partner organisations"
+   }
+  ]
+ },
+ "Project Iloilo": {
+  "gallery": [
+   "881d2b_0043ae4633c84a168d806ffc7080b4bd~mv2.jpg",
+   "881d2b_31eff550aa774948b8223b3829d7bdcc~mv2.jpg",
+   "881d2b_3859ff93d52f47c9a0df7442d7c7d300~mv2.jpg",
+   "881d2b_bd1c6173dd0f48e2abe36694c99f8e2d~mv2.jpg",
+   "881d2b_21c0894b4b8548dd993f85e71da32608~mv2.jpg",
+   "881d2b_3eabec94fd4d4ec3a1066eb4960d1b90~mv2.jpg",
+   "881d2b_9a85ad2f6988403a996748a1e9433f25~mv2.jpg",
+   "881d2b_43c54f8c25c543b19e450f0dc5f7108b~mv2.jpg",
+   "881d2b_4f540caac41b4031a0579550911d4d96~mv2.jpg",
+   "881d2b_dda0f646ee074ff8a5a2950ac7f1d7b0~mv2.jpg",
+   {
+    "id": "881d2b_d8dffb2a01c34e3ba6423d0fd45f07fa~mv2.jpg",
+    "caption": "Registration + Triage Station!"
+   },
+   {
+    "id": "881d2b_603ad1b61721407697eadfa3aaee495e~mv2.jpg",
+    "caption": "Last goodbye to the children after their health screening :("
+   }
+  ]
+ },
+ "Project ISIP": {
+  "gallery": [
+   "c7ddec_87c548055a254adba22c3b81b48e2788~mv2.jpg",
+   "c7ddec_df14255faf7540c6aec321f9c0de6a0b~mv2.jpg",
+   "c7ddec_6bc0ec70f22345b5a82f9eeb0682ef95~mv2.jpg",
+   "c7ddec_1b0b2424161a480ab3c30b1c21d454bf~mv2.jpg",
+   "c7ddec_b1ff51a0d79349bfaa1af2a3e558bc39~mv2.jpg",
+   "c7ddec_3d02402ba480492ea3bbcb456587e3fb~mv2.jpg",
+   "c7ddec_9e7779607f974d1094945c3608852aea~mv2.jpg",
+   "c7ddec_f966eace58094bf0bbba4c70acb2fa8c~mv2.jpg",
+   "c7ddec_648225e7411147c2bfe77a4ed297798e~mv2.png",
+   "c7ddec_d7a21e18beae479188322d4f670035d2~mv2.jpg",
+   {
+    "id": "c7ddec_77c85d229add4953b4590ca63e746acf~mv2.jpg",
+    "caption": "Taking history from residents of Barangay Pahonocoy alongside USLS nursing students"
+   },
+   {
+    "id": "c7ddec_8238ed65735543948d10cf8cc26f9188~mv2.jpg",
+    "caption": "Interacting with the children of Amity during our Family educational and cultural fair"
+   }
+  ]
+ },
+ "Project Karuna": {
+  "gallery": [
+   "52e516_ef847b77fed54c2fb4a541f4eea67c54~mv2.jpeg",
+   "52e516_e4fa2a8dd8ae4cfc81af99027b52f00d~mv2.jpeg",
+   "52e516_7ab09ca5571d4bea85c18470409d51c3~mv2.jpeg",
+   "52e516_640bb5159dc84224ad89868873be2963~mv2.jpeg",
+   "52e516_f065f8226a6b4b63a13438aa443b75a7~mv2.jpeg",
+   "52e516_c6beba43f0f942c09c4ee6d7114ff21f~mv2.jpeg",
+   "52e516_c0735fc38e884522aaa87c1b2d051195~mv2.jpeg",
+   "52e516_2296bf3edf3d43a58a7a5ee25576343c~mv2.jpeg",
+   "52e516_a7595de41ecb44fea11e215ff4f818b2~mv2.jpeg",
+   "52e516_83bfd33396f04f8984a82ae44e21d3b2~mv2.jpeg",
+   {
+    "id": "52e516_3145f509f0af44f191555cd6c472fcfc~mv2.jpeg",
+    "caption": "podu screening!"
+   },
+   {
+    "id": "52e516_42976bd7bf4243828f3cb208fa7d7422~mv2.jpeg",
+    "caption": "end of doctor's consult!"
+   }
+  ]
+ },
+ "Project Kolkata": {
+  "gallery": [
+   "0c9c74_2e4c2414b7264710ac399f1951100d9d~mv2.png",
+   "0c9c74_f8adc7158a2b4cf1948ed3e5ccc8ec00~mv2.png",
+   "0c9c74_6f7452f6f69f43bc8bfc24eddbbb434a~mv2.png",
+   "0c9c74_f6adbb758b74400893106b8e10834919~mv2.png",
+   "0c9c74_dbc6c3a5369c401da0d0b42936b90abb~mv2.jpg",
+   "0c9c74_7b8a0b16eddf40b1b895f0f69cef5bfa~mv2.png",
+   "0c9c74_4f5129aeae1442478521cc48482347f6~mv2.png",
+   "0c9c74_d82675e5c252422eafa88f43c8c257c4~mv2.png",
+   "0c9c74_7be93cae76bf48a8986f41f56fedd0eb~mv2.jpeg",
+   "0c9c74_f7fd10311f4a42ea9b669d0b25f1ec46~mv2.jpg",
+   "0c9c74_318de6aeb037487a973475d1b0762a47~mv2.jpg",
+   "0c9c74_08293478058f4405a1f183a3bda7512d~mv2.jpg",
+   "0c9c74_75df5df716014ad2a6432de618923749~mv2.jpg",
+   "0c9c74_4c6cc4c4314f47e08f3815d09aba9158~mv2.jpg",
+   "0c9c74_19da7ccc4ba74a848aeded8ca20cf56f~mv2.jpg",
+   "0c9c74_120e3cc38c474da89212f1bf54f58d8f~mv2.jpg",
+   "0c9c74_15a29cd1340c4befa8c1ddf43ee58cb4~mv2.jpg",
+   "0c9c74_bae264c157c24946ba43b93fef97ce31~mv2.jpg",
+   {
+    "id": "0c9c74_8cd9af9082f44b6f83e4fe81f52dd9e9~mv2.jpg",
+    "caption": "With the team at Tollygunge WIN Headquarters!"
+   },
+   {
+    "id": "0c9c74_c7274b3ea2294035a8aa7353adcf7360~mv2.jpg",
+    "caption": "Science Camp at Touch Nature!"
+   }
+  ]
+ },
+ "Project Songkeum": {
+  "gallery": [
+   "3e1192_6471958fae104a2fade7274f44e89153~mv2.jpg",
+   "3e1192_0d5279f4f89e4929ad91151b194d044e~mv2.jpg",
+   "3e1192_188a5ef38f8b438fb14b46563e6744f5~mv2.jpg",
+   "3e1192_7a2a5481954349499ee6407272490106~mv2.jpg",
+   "3e1192_ed8178973aa741aa8ed725faa6e6836b~mv2.jpg",
+   "3e1192_d087e7c841e3482dac4fafa9a6bc978d~mv2.jpg",
+   "3e1192_c3310a1e19044a6497f7321a74e91e13~mv2.jpg",
+   "3e1192_4729c2b447ac4bd58db5e6c605399fac~mv2.jpeg",
+   "3e1192_1725d7445a5a46b5b0d566ff30865caa~mv2.jpg",
+   "3e1192_efc7aaf59ba444a398b7faf5f0a033bb~mv2.jpeg",
+   {
+    "id": "3e1192_637e803514f94d16a59f59e8e9ea68d7~mv2.jpg",
+    "caption": "Meet the 26/27 SK M2s!!"
+   },
+   {
+    "id": "3e1192_e89568c0871c4c4488141acb3d522739~mv2.jpg",
+    "caption": "Our Songkeum Family &lt;3"
+   }
+  ]
+ },
+ "Project Tongxin": {
+  "gallery": [
+   "6f5f04_367f3c28e9414a4dbce75e7e7097f709~mv2.jpg",
+   "6f5f04_51c944f51ac2486ca283dbb57597cc61~mv2.jpg",
+   "6f5f04_042de6282aa94943a82bc27fc1ad23ea~mv2.png",
+   "6f5f04_9865a611be294ae0b903a35cabc0d659~mv2.jpg",
+   "6f5f04_2d5f9021c6124782823157fc5aa6fd37~mv2.jpg",
+   "6f5f04_4e1e939a6ba44e1d9936b07471f75d05~mv2.jpg",
+   "6f5f04_cf0330271e4a434ca337c8653cda3343~mv2.jpg",
+   "6f5f04_8fe998c85a25487b9f3f8f2ad0e961f4~mv2.jpg",
+   {
+    "id": "6f5f04_c9fa170a144d4cde89f28b5b65c33353~mv2.png",
+    "caption": "Interactions with the local leaders and school leaders"
+   }
+  ]
+ },
+ "Active Ageing Advocates": {
+  "gallery": [
+   "4b233f_4431193ad27f4c18a7ce15bf82197653~mv2.png",
+   "4b233f_178586987e9d43dea99d48ef21181770~mv2.png",
+   "93427b_101340ed181e4036b6e7b64c402ed25d~mv2.png",
+   {
+    "id": "93427b_395ec41ab0e4439e85b331c09ebaf787~mv2.png",
+    "caption": "Our 25/26 Committee!"
+   },
+   {
+    "id": "93427b_c09a319085294fa682d09a298f12841b~mv2.jpg",
+    "caption": "AAA's Annual Health Screening!"
+   }
+  ]
+ },
+ "Blood Donation Drive": {
+  "gallery": [
+   "4b233f_bed46ad5ff464b1b8e8e68f695b36bd2~mv2.jpg",
+   "4b233f_03650b75ff0f41e0be83220122e69a32~mv2.jpg"
+  ]
+ },
+ "Camp Simba": {
+  "gallery": [
+   "4b233f_62cefc354bb74a67a9982824215dc600~mv2.png",
+   "4b233f_2a0f91977f73453781ae445d4f3cecb3~mv2.png",
+   "54ca7f_5a0990dda95340539d4d191d6e8351f8~mv2.jpg",
+   "54ca7f_e823aec0652e4b0baa97cb348a812eea~mv2.jpg",
+   "54ca7f_56835d1a68704658b2164004bf54537f~mv2.jpg",
+   "54ca7f_c397868cb0f443a08544d417dc588341~mv2.jpg",
+   "54ca7f_7bb10012a78544d08272b93d84a93652~mv2.jpg",
+   "54ca7f_ae4d395d71b74fa0bb66f44e8d9024f2~mv2.jpg",
+   "54ca7f_604a694238cf495f9104d3acdcc00d06~mv2.jpg",
+   "54ca7f_658b498407ef48db817877f01d90a655~mv2.jpg",
+   "54ca7f_23cd8380edaf44e484034a1d661d0cda~mv2.jpg",
+   "54ca7f_f2682b870d804602ba68abc2308a901a~mv2.jpg",
+   {
+    "id": "54ca7f_7b61127b6b3741a686ab02a0ea48807f~mv2.jpg",
+    "caption": "Reunion Camp 1 @ the Singapore Zoo!"
+   },
+   {
+    "id": "54ca7f_73229fa971ca414eaaacf2233b93e30e~mv2.jpg",
+    "caption": "Reunion Camp 2 @ Kok Fah Farm!"
+   }
+  ]
+ },
+ "Constructing Care Collaboration": {
+  "gallery": [
+   "082f21_01144632fa8746adad85d18a7708b0c0~mv2.jpg",
+   "082f21_de8b71948e184c07b2ed60396f098c9e~mv2.jpg",
+   "082f21_ec8b7b58efc047889d455f34684e7f7e~mv2.jpg",
+   "082f21_e0c51f983faa4dc79edbc6ca42371297~mv2.jpg",
+   "082f21_65c2a815644e4d3cb99fc12dea90cbd1~mv2.jpg",
+   "082f21_4ffb9a06d7774147b820d76de14558e8~mv2.jpg",
+   "082f21_a803d32f4d474838a380b34209fd7e56~mv2.jpg",
+   "082f21_c32821cd7f6e47ddbc332b292cf70509~mv2.jpg",
+   "082f21_750cf53a488f4ddc95c9fd4fa673dddb~mv2.jpg",
+   "082f21_7ec2ce4fe88c4ec9907df08157891e8e~mv2.jpg",
+   {
+    "id": "082f21_33ba9e684ae841da802e8afd0de77766~mv2.jpg",
+    "caption": "Our lovely volunteers from Health Screening Event on 30 Mar 2025"
+   },
+   {
+    "id": "082f21_da0db6e83a5742f8b0b5c884c0cbb1a0~mv2.jpg",
+    "caption": "The wonderful people that helped make this event possible, including our volunteers from both medical schools, NHG Family Medicine and SIT Physiotherapy!"
+   }
+  ]
+ },
+ "Dover Park Hospice": {
+  "gallery": [
+   "4b233f_4e618d0ce55b47c8a0bb20ab76aea020~mv2.png",
+   "4b233f_cb2c461ffb6c4daa99d4bb9c5b5af4d6~mv2.png"
+  ]
+ },
+ "Make-A-Wish": {
+  "gallery": [
+   "4b233f_bed46ad5ff464b1b8e8e68f695b36bd2~mv2.jpg",
+   "4b233f_03650b75ff0f41e0be83220122e69a32~mv2.jpg"
+  ]
+ },
+ "Medisign": {
+  "gallery": [
+   "c61f33_4b952f912f4c44ab926a80bf1b52840b~mv2.jpg",
+   "c61f33_8d1cf22da2414549bf6e9944a0136b56~mv2.jpg",
+   "c61f33_35fb17cb77a544e2b65d385c14ecb195~mv2.jpg",
+   "c61f33_a57c330b49854220a567413438e31fdb~mv2.jpg",
+   "c61f33_06fec2cd2373492c82bf3c33f06e5812~mv2.jpg",
+   "c61f33_f00b7aa09ef94b74bb97bab55dfeca53~mv2.jpg",
+   {
+    "id": "c61f33_9b38b3c7280a44c88317b165179f6dd2~mv2.jpeg",
+    "caption": "SgSL Level 1!"
+   },
+   {
+    "id": "c61f33_ca960789976744638337d4b400f4ca1d~mv2.jpeg",
+    "caption": "SgSL Level 2!"
+   }
+  ]
+ },
+ "NHG-LKC CommHealth": {
+  "gallery": [
+   "2b9b90_b5ed2448f3c54b91ac877a972aabcdb2~mv2.jpg",
+   "2b9b90_3560446547f141df9c4c3cd953b2ea5a~mv2.jpg",
+   "2b9b90_57e375b88d394a8da85ad1d0163f136c~mv2.png",
+   "2b9b90_4e56b76891bf4739a0c515e168e897b7~mv2.png",
+   "2b9b90_4e65ff7fddb94125b53fd4908bc4f106~mv2.png",
+   "2b9b90_c056557544c241c29d7b9c20ae049a1c~mv2.png",
+   {
+    "id": "2b9b90_c11a9e394a564de9b93455b4c7f178f0~mv2.png",
+    "caption": "Volunteers at the fall risk screening training held by TTSH"
+   },
+   {
+    "id": "2b9b90_1e393890ea824b848243ad8ced38d01d~mv2.png",
+    "caption": "Volunteers conducting biopsychosocial surveys with elderly residents in Whampoa CC"
+   }
+  ]
+ },
+ "Neighbourhood Health Service": {
+  "gallery": [
+   "4b233f_79b7b1db0a8145f4afcf7dc11ce812b6~mv2.jpeg",
+   "4b233f_7031459e2e554ec48e04257a8297cb35~mv2.jpg",
+   "4b233f_f3048914cec842209b7d0aa146b540dc~mv2.png"
+  ]
+ },
+ "Pallipals": {
+  "gallery": [
+   "4b233f_8655ddda75644b09a64ac0c8d19289ad~mv2.png",
+   "4b233f_910592ba9ef447a1bea2ffdfd6c2987b~mv2.png",
+   {
+    "id": "58b1bd_7e56f4c6b2534376b6086fe8e006b98f~mv2.jpg",
+    "caption": "Handicraft workshop with the residents!"
+   },
+   {
+    "id": "58b1bd_756e8b59b6954b1791cd86c64cb485fd~mv2.png",
+    "caption": "One of our visits at TTSH Integrated Care Hub!"
+   }
+  ]
+ },
+ "Project Angel": {
+  "gallery": [
+   "78da30_c0a16eb4c65549bda56972a1654f8f29~mv2.png",
+   "78da30_87c954e3a900456e8c5327f706c76fb0~mv2.jpg",
+   {
+    "id": "0c9c74_78470e1ce35b4f238bed31837aae4826~mv2.jpg",
+    "caption": "Cheerful volunteers displaying some of the creations by the residents at Bishan Home!"
+   },
+   {
+    "id": "0c9c74_ea21f31a4da34293af98b02dc19cb941~mv2.jpg",
+    "caption": "Happy residents inviting the volunteers for a group photograph"
+   }
+  ]
+ },
+ "Project Envision": {
+  "gallery": [
+   "a3ff77_f5796e37ab09495a990e62dbfe57764d~mv2.jpg",
+   "a3ff77_e1dd8293ad47437bba35af59aace2d9f~mv2.jpg",
+   "a3ff77_c36dce413e4b4980b3291b7bd463be3a~mv2.jpg",
+   "a3ff77_84dad383df034b82b6c46c570dd3cecc~mv2.jpg",
+   "a3ff77_0e68696105ab4b3ca724d0f52b85b0e3~mv2.jpg",
+   {
+    "id": "a3ff77_0ff8557a0c454d71acabe7011d334f81~mv2.jpg",
+    "caption": "Chair yoga session!"
+   },
+   {
+    "id": "a3ff77_ab67c3dbe73e40cfaec8046d45a7dac2~mv2.jpg",
+    "caption": "Scrabble session organised at SAVH"
+   }
+  ]
+ },
+ "Project Janan": {
+  "gallery": [
+   "4b233f_9b0ea226fdbb44dab6125d7105faa5da~mv2.png",
+   "4b233f_24da1184d17d41f591247bed7939f8bc~mv2.png"
+  ]
+ },
+ "Project Kirakira": {
+  "gallery": [
+   "0cc0ad_e18ebfc54aaf432d90456573461e515a~mv2.png",
+   {
+    "id": "5929b1_860bd7ea36c340ba9ec280d70ab4af34~mv2.jpg",
+    "caption": "Our annual Clinical Communications Workshop"
+   },
+   {
+    "id": "5929b1_6f826d644a8246a8a33b38523abda7bc~mv2.jpg",
+    "caption": "Sharing by Dr. Sara Delia Menon"
+   }
+  ]
+ },
+ "Project LKCaleidoscope": {
+  "gallery": [
+   {
+    "id": "593fed_df9bbcb3d5a84e78951d6fbae26c7974~mv2.jpg",
+    "caption": "The team at Project LKCaleidoscope"
+   },
+   {
+    "id": "593fed_67c4959acfcb4363a5b3585fc8c7ffaa~mv2.jpg",
+    "caption": "Our makeup artist applying makeup for one of our beneficiaries at Assisi Hospice"
+   }
+  ]
+ },
+ "Project Prism": {
+  "gallery": [
+   "84235b_09e4d05ad6884b748016d7ce38d44760~mv2.jpg",
+   "84235b_c8769b002d9046c9849b28b96dff3840~mv2.jpg",
+   "84235b_f62ccd830cc8403989f3d530c6b73ed8~mv2.jpg",
+   "84235b_446b8b4ebe8843b89c7e9bcaa02d41b0~mv2.jpg",
+   "84235b_2486aa564a53470caff36a537ed14873~mv2.jpg",
+   "84235b_e230d56dfaad4db4a9ab8991710d19bd~mv2.jpg",
+   "84235b_0ec9cdb029c44741885a018ae23310b8~mv2.jpg",
+   "84235b_1d3476d7597d46a581ddafc42c5d1406~mv2.jpg",
+   "84235b_1104ff2f78fb4c9e8b922b8051be8d97~mv2.jpg",
+   "84235b_b41771ed99024228abcccb645dd205ec~mv2.jpg",
+   "84235b_01312f26e5d649e7b474429fb411c3bd~mv2.jpg",
+   "84235b_24d5a65cb8304bfeb9158800098e28d4~mv2.jpg",
+   {
+    "id": "84235b_fc93bd5765714ebfb02db5da7992365b~mv2.jpg",
+    "caption": "Students engage in focus group discussion (FGD) facilitated by members of kayos kollective"
+   },
+   {
+    "id": "84235b_22eec0ecd43243849450f54ec8a6ba06~mv2.jpg",
+    "caption": "Dr Jeremiah Pereira demonstrates how they conduct an SP (simulated patient) scenario"
+   }
+  ]
+ },
+ "Project Soleil": {
+  "gallery": [
+   "8c7ddf_114cc1c37a0a44cb919b43bf937470a7~mv2.jpg",
+   "8c7ddf_f264ed784ed54c9cbed50b2e6218b8e3~mv2.jpg",
+   "8c7ddf_471c431c88e144edb8d951e20171a5a2~mv2.jpg",
+   "8c7ddf_2ed6f5f590e14a6983d8f11612abd9ce~mv2.jpeg",
+   "8c7ddf_8dde752d6e9a4e618c53ac5b0c97d5e0~mv2.jpg",
+   "8c7ddf_ac497063e3594719acf7b4091b6a9358~mv2.jpg",
+   "8c7ddf_acbb2fa9ad954cef834ceba8b26fb43d~mv2.jpg",
+   "8c7ddf_c9cabfc133d34d4eb7cfb8bd2e2fd9cc~mv2.jpg",
+   "8c7ddf_e9f10e204efd4d6d88877848c7fc5372~mv2.jpeg",
+   "8c7ddf_32375ad909194dddb4370ba4903e691d~mv2.jpg",
+   {
+    "id": "8c7ddf_74bc497ef9db4b4b84f7be59f4039504~mv2.jpg",
+    "caption": "The Human Library at our 2024 MND Seminar, where stories from MND warriors, caregivers and healthcare professionals were shared."
+   },
+   {
+    "id": "8c7ddf_af3506c8dd5e4e3f9a6be2bdb9edd52f~mv2.jpg",
+    "caption": "A photo from the launch of our guidebook, \"Symptoms and Management of Motor Neurone Disease\" Guidebook."
+   }
+  ]
+ },
+ "SGMarrow": {
+  "gallery": [
+   "f6a6d8_78004f17d6db4411abe0d85a73d00359~mv2.jpeg",
+   "f6a6d8_5eb8f89e9eba4a98b3bd7144bb98743e~mv2.jpeg",
+   "f6a6d8_d3dfdac679a241fb942cf02508441127~mv2.jpeg",
+   "f6a6d8_f37dd3dae36341759f1921e358edaa66~mv2.jpeg",
+   "f6a6d8_ef667576774d4681be3bf86ba83714cd~mv2.jpeg",
+   "f6a6d8_98e821b171f24a6b98524842cbadc680~mv2.jpeg",
+   "f6a6d8_d38539d5f48b4c2cb3b1467bab47abd6~mv2.jpeg",
+   "f6a6d8_b5da6c068f7a451b80b936169ebee6d8~mv2.jpeg",
+   "f6a6d8_e2aa1927e8d54105b5e3ccdeeab7554f~mv2.jpeg",
+   {
+    "id": "f6a6d8_c9cd7690b67440e2b753141abda2f924~mv2.jpeg",
+    "caption": "Donors feeling excited after completing their registration at our booths."
+   },
+   {
+    "id": "f6a6d8_3605e9d1ce2043998b3b44edefecf97b~mv2.jpeg",
+    "caption": "During our recent donation drive in February, where eager donors signed up to be part of the bone marrow donors’ registry."
+   }
+  ]
+ },
+ "Teddy Bear Hospital": {
+  "gallery": [
+   "92b06f_f1e0a91e1dd641658e3e551b4f0263da~mv2.jpg",
+   "92b06f_529f5190b45d4056aed7c5ab45810804~mv2.jpg",
+   "92b06f_95a2f1a0d9d8464dad4934d51c4669b7~mv2.jpg",
+   "92b06f_65dbcd2ca0ea4431821c791db412607b~mv2.jpg",
+   "92b06f_7f5f54e4fc4c408bb2ac3ec290cede2e~mv2.jpg",
+   "92b06f_b1300d1224024249aaed51e63c3b8728~mv2.jpg",
+   {
+    "id": "92b06f_c42028ad2c2d45d9ab348f59a33923ad~mv2.jpg",
+    "caption": "All smiles at our volunteering session!"
+   },
+   {
+    "id": "92b06f_2c3ed1f381264bbe965868ca2611ce8e~mv2.jpg",
+    "caption": "A group photo featuring our committee members from both NUS and NTU."
+   }
+  ]
+ },
+ "The Final Journey Collective": {
+  "gallery": [
+   "105886_7bcaf7e0398e4b5894c919822ff260fa~mv2.jpg",
+   "105886_1c77c5d5708e4e14ac0c5c7dbf26c187~mv2.jpg",
+   "105886_8984159a7b5d469eafd1a2e87098d7af~mv2.jpg",
+   {
+    "id": "105886_9f44c670545d4cb09575282fd0341875~mv2.jpg",
+    "caption": "Scattering of ashes at Changi Jetty."
+   },
+   {
+    "id": "6ededf_94511ccfefd841438e0b991b3529b9f9~mv2.jpg",
+    "caption": "Death and Dialogue workshop."
+   }
+  ]
+ },
+ "Trigenerational Homecare": {
+  "gallery": [
+   "4b233f_b8413efd7667454c986ad5e4f0f22788~mv2.png",
+   "4b233f_c60bc6d54918441dbfda148c35100c3e~mv2.png",
+   "649dae_4fb07d6d0d3d41218863e4d5d1747096~mv2.png",
+   "649dae_7cbde4764b12460481a7fdeb412584f3~mv2.png",
+   {
+    "id": "649dae_49f12feceab14cb2806aef5a5dda7e3b~mv2.jpg",
+    "caption": "Our committee photo on Induction Day"
+   },
+   {
+    "id": "649dae_d59d920ce6da4b31a030ba9f06f02dd8~mv2.jpg",
+    "caption": "During TriGen 11th Anniversary with the Mayor Alex Yam as our GOH!"
+   }
+  ]
+ },
+ "LKCrew": {
+  "gallery": [
+   {
+    "id": "21e63a_3f5aafc25be54756a7ceecaf54810f32~mv2.jpg",
+    "caption": "LKCrew at the Art and Science of Medicine Festival 2025"
+   },
+   {
+    "id": "21e63a_82bee1572f1c4f1b85193accff7d8efe~mv2.jpg",
+    "caption": "LKCrew at Peanut Butter n Jam 2025"
+   }
+  ]
+ },
+ "MedLee": {
+  "gallery": [
+   "687a12_764109df163547dd9d8f3929e69b23f8~mv2.jpeg",
+   "687a12_4d73c4013c5e4033a2af91058a9b476a~mv2.jpeg",
+   "687a12_e23e5711cdd94266a4c493a0cfaf7114~mv2.jpeg",
+   "687a12_10910bd4369f45978d330395eed89c80~mv2.jpeg",
+   "687a12_5d622b48bacf494b807338c7df463311~mv2.jpeg",
+   {
+    "id": "687a12_234b66aec0b943989dbc5a6181c90b37~mv2.jpeg",
+    "caption": "Us performing at LKC’s annual Dinner & Dance!"
+   },
+   "4b233f_03650b75ff0f41e0be83220122e69a32~mv2.jpg"
+  ]
+ }
+}
