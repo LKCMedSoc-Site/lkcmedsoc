@@ -337,3 +337,25 @@ div.item label.chk { position: relative; z-index: 1; }
 .item.empty:hover { background: none; }
 .count { font-size: 14px; color: var(--muted); }
 .item .meta { gap: 10px; }
+
+/* Name and description: type straight into them */
+.titlebox { margin: 4px 0 6px; }
+textarea.edit-in-place { display: block; width: calc(100% + 12px); min-height: 0; margin: 0 0 0 -6px; padding: 2px 6px; border: 1px solid transparent; border-radius: 10px; background: transparent; resize: none; overflow: hidden; transition: border-color .2s, background .2s, box-shadow .2s; }
+textarea.edit-in-place:hover { border-color: var(--line); }
+textarea.edit-in-place:focus { outline: 0; border-color: var(--p500); background: #fff; box-shadow: 0 0 0 3px rgba(134,48,111,.15); }
+textarea.edit-in-place::placeholder { color: var(--p300); }
+textarea.doc-title { font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: clamp(40px, 7vw, 64px); line-height: .98; letter-spacing: .01em; color: var(--p900); margin-top: 6px; }
+textarea.edit-in-place.muted { font-size: 16px; line-height: 1.5; color: #5a4757; max-width: 70ch; }
+.titlebox .row { margin: 2px 0 0; min-height: 22px; }
+
+.card.waiting ul { margin: 8px 0 0; padding-left: 18px; }
+.card.waiting li { margin: 4px 0; }
+
+/* Index: one list, type as a quiet label */
+.chips { margin: 22px 0 14px; }
+.kind { font-size: 14px; font-weight: 700; color: var(--p500); }
+.list { margin-top: 0; }
+.how { margin-top: 40px; border-top: 1px solid var(--line); padding-top: 6px; }
+.how dl { margin: 6px 0 0; display: grid; gap: 4px 20px; grid-template-columns: max-content 1fr; font-size: 15px; }
+.how dt { font-weight: 700; color: var(--p900); } .how dd { margin: 0; color: var(--muted); max-width: 68ch; }
+@media (max-width: 640px) { .how dl { grid-template-columns: 1fr; } .how dd { margin-bottom: 8px; } }
