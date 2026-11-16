@@ -218,6 +218,14 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
   .plasmic-page img[alt="Decorative Graphic"] { animation: hero-drift 14s ease-in-out infinite alternate; }
   @keyframes hero-drift { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-12px) rotate(3deg); } }
 
+  /* Home hero. Class names are set in Studio (Design > HTML attributes > Class Name):
+     .hero-rise on the headline row, .hero-card + .hero-card-1 to -4 on the four photo cards, .hero-rod on the rod. */
+  .hero-rise { animation: rise .8s cubic-bezier(.23, 1, .32, 1) both; animation-delay: 100ms; }
+  .hero-card { animation: rise .8s cubic-bezier(.23, 1, .32, 1) both; animation-delay: calc(260ms + var(--i, 0) * 120ms); }
+  .hero-card-1 { --i: 0; } .hero-card-2 { --i: 1; } .hero-card-3 { --i: 2; } .hero-card-4 { --i: 3; }
+  .hero-rod { animation: rod-drift 20s ease-in-out infinite alternate; }
+  @keyframes rod-drift { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-22px) rotate(1.5deg); } }
+
   /* Cards and rows fade up as they appear (page load, new filter results, next page). */
   :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div > div img, > div img):not(header a, footer a, nav a) { animation: card-in .55s cubic-bezier(.22, 1, .36, 1) both; }
   @keyframes card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
