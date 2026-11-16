@@ -1,6 +1,6 @@
 -- Shows each CCA's vice-chairperson(s) on its public page, next to the chairperson(s).
 -- Run once in the Supabase SQL editor. Names only (the same fields already public for chairs): no emails, no matric numbers.
--- Committee members and directors stay private. Photos are unchanged (only ExCo and committee heads who chose to show one).
+-- Committee members and directors stay private. A photo shows for anyone listed here whose owner ticked "show my photo" (no level restriction).
 --
 -- This replaces records.public_leadership with the definition from sql/leader_photos.sql plus one extra condition.
 
@@ -12,7 +12,7 @@ create or replace view records.public_leadership as
         p.final_title as title,
         s.full_name,
         s.preferred_name,
-        case when s.show_photo and p.is_top and lower(p.governance_level) in ('exco', 'committee') then s.photo_url end as photo_url
+        case when s.show_photo then s.photo_url end as photo_url
    from records.participation p
    join records.bodies b on b.id = p.body_id
    join records.students s on s.matric = p.matric

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "site/plasmic-kit/policy-document.html"
+        ],
+        "createdAt": "2026-11-13T05:15:05.484Z",
+        "reason": "Claude decided, not user-confirmed: the flagged div is the sample table's border wrapper; its cells carry their own 8px 10px padding, so the text is not flush against the border"
+      }
+    ]
+  }
+}

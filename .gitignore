@@ -21,3 +21,4 @@ fonts/
 sql/policy_seed.sql
 site/scripts/policy-seed.json
 .cca-images-preview/
+.rep-photos-preview/

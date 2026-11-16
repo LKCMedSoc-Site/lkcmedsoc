@@ -5,8 +5,14 @@
     <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1600&q=80" alt="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.18; pointer-events:none;" />
     <div style="display:flex; flex-direction:column; width:100%; max-width:1152px; margin:0 auto; padding:0 16px 52px; row-gap:20px; position:relative; box-sizing:border-box;">
       <a href="/about/leadership" style="text-decoration:none; font-size:14px; font-weight:700; color:#d3a6cf;">← Leadership</a>
-      <span style="align-self:flex-start; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ffffff; background-color:#0f766e; padding:6px 12px; border-radius:999px;">Committee</span>
-      <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">[BIND: $ctx.committeePage.name]</span>
+      <div style="display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-end; column-gap:28px; row-gap:16px;">
+        <!-- Logo: visible when $ctx.committeePage.hasLogo; src = $ctx.committeePage.logo. Round, white ring, like the group page. -->
+        <img src="https://placehold.co/160x160/ffffff/0f766e?text=Logo" alt="Logo" style="width:112px; height:112px; border-radius:999px; border:4px solid #ffffff; background-color:#ffffff; object-fit:cover; flex:0 0 112px;" />
+        <div style="display:flex; flex-direction:column; row-gap:14px; min-width:0; flex:1 1 320px;">
+        <span style="align-self:flex-start; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ffffff; background-color:#0f766e; padding:6px 12px; border-radius:999px;">Committee</span>
+        <span style="font-family:'DIN Engschrift', 'Arial Narrow', sans-serif; font-size:96px; font-weight:400; line-height:0.88; letter-spacing:0.01em; text-transform:uppercase; color:#ffffff;">[BIND: $ctx.committeePage.name]</span>
+        </div>
+      </div>
       <div style="width:96px; height:6px; border-radius:999px; background-color:#0f766e;"></div>
       <span style="max-width:640px; font-size:18px; line-height:1.55; color:#ebe1fa;">[BIND: $ctx.committeePage.description]</span>
     </div>

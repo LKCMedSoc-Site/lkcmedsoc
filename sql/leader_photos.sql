@@ -55,7 +55,7 @@ create or replace view records.public_leadership as
         p.final_title as title,
         s.full_name,
         s.preferred_name,
-        case when s.show_photo and p.is_top and lower(p.governance_level) in ('exco', 'committee') then s.photo_url end as photo_url
+        case when s.show_photo then s.photo_url end as photo_url
    from records.participation p
    join records.bodies b on b.id = p.body_id
    join records.students s on s.matric = p.matric
