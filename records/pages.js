@@ -149,8 +149,7 @@
       tb('Photo row', 'Several photos side by side', function () { block(':::photos\n![](https://)\n![](https://)\n:::'); }),
       tb('Quote', 'A pull quote', function () { block(':::quote\n“What a memorable experience.”\n\n— Name, Year 3\n:::'); }),
       h('span', { class: 'sep' }),
-      tb('2 columns', 'Two columns side by side', function () { block(':::columns\n## Left column\nWrite here.\n|||\n## Right column\nWrite here.\n:::'); }),
-      tb('3 columns', 'Three columns side by side', function () { block(':::columns\n### One\nWrite here.\n|||\n### Two\nWrite here.\n|||\n### Three\nWrite here.\n:::'); }),
+      tb('Columns', 'Text side by side (a line of just ||| starts the next column)', function () { block(':::columns\n\n|||\n\n:::'); }),
       tb('Toggle', 'A section people can open and close', function () { block(':::toggle Question or title\nThe answer or details go here.\n:::'); }),
       tb('Video', 'A YouTube or Vimeo video', function () { var u = prompt('Video link (YouTube or Vimeo)'); if (u) block(':::video ' + u.trim()); }),
       tb('Divider', 'A thin line between sections', function () { block('---'); }),
@@ -193,21 +192,50 @@
     if (host === 'x.com' || host === 'twitter.com') return 'x';
     return 'website';
   }
-  function socialsField(kit, initial) {
+  /** A bare address such as abc.com becomes https://abc.com (the saved links must start with https://). Emails and Instagram @handles are left alone. */
+  function fixLink(kind, u) {
+    u = String(u || '').trim();
+    if (!u || kind === 'email' || /^(https?:|mailto:)/i.test(u) || (kind === 'instagram' && u.indexOf('/') < 0)) return u;
+    return /^[\w-]+(\.[\w-]+)+([/?#]\S*)?$/.test(u) ? 'https://' + u : u;
+  }
+  function socialsField(kit, initial, card) {
     var h = kit.h, rows = [], list = h('div', { class: 'socials' });
     function addRow(kind, url) {
       var sel = h('select', { 'aria-label': 'Type of link' }, Object.keys(SOCIALS).map(function (k) { return h('option', { value: k }, SOCIALS[k]); }));
       sel.value = SOCIALS[kind] ? kind : 'website';
-      var inp = h('input', { value: url || '', placeholder: 'Paste the link, e.g. https://t.me/yourgroup', 'aria-label': 'Link' });
-      inp.addEventListener('input', function () { if (inp.value.trim()) sel.value = guessKind(inp.value); });
+      var inp = h('input', { value: url || '', placeholder: 'Paste a link (or an @handle for Instagram), e.g. https://t.me/yourgroup', 'aria-label': 'Link' });
+      inp.addEventListener('input', function () { var v = inp.value.trim(); if (v) sel.value = /^@[\w.]+$/.test(v) ? 'instagram' : guessKind(v); });
+      inp.addEventListener('blur', function () { inp.value = fixLink(sel.value, inp.value); });
       var row = h('div', { class: 'socialrow' }, sel, inp, h('button', { class: 'ghost sm', type: 'button', title: 'Remove', onclick: function () { rows = rows.filter(function (r) { return r.el !== row; }); row.remove(); } }, 'Remove'));
       rows.push({ el: row, sel: sel, inp: inp }); list.appendChild(row);
     }
     (initial || []).forEach(function (x) { addRow(x.kind, x.kind === 'email' ? x.url : x.url); });
-    var add = h('button', { class: 'ghost sm', type: 'button', onclick: function () { if (rows.length < 10) addRow('website', ''); } }, '+ Add a link');
+    var add = h('button', { class: 'ghost sm', type: 'button', onclick: function () { if (rows.length < 12) addRow('website', ''); } }, '+ Add a link');
     return {
-      get: function () { return rows.map(function (r) { return { kind: r.sel.value, url: r.inp.value.trim() }; }).filter(function (x) { return x.url; }); },
-      el: h('div', { class: 'card' }, h('strong', null, 'Social and contact links'), h('p', { class: 'muted' }, 'Shown as small icons on your page, next to your Instagram and website. Add Telegram, TikTok, YouTube, an email address and more; the type is picked for you from the link.'), list, add)
+      get: function () { return rows.map(function (r) { return { kind: r.sel.value, url: fixLink(r.sel.value, r.inp.value) }; }).filter(function (x) { return x.url; }); },
+      el: h('div', { class: 'card' }, h('strong', null, (card && card.title) || 'Social and contact links'), (card && card.before) || null,
+        h('p', { class: 'muted' }, (card && card.lead) || 'Shown as small icons on your page, next to your Instagram and website. Add Telegram, TikTok, YouTube, an email address and more; the type is picked for you from the link.'), list, add)
+    };
+  }
+
+  /** One list for every link that shows as an icon. Instagram and the website have their own database columns, so they are listed first and split back out on save. */
+  function linksField(kit, r, join) {
+    var h = kit.h, seed = [];
+    if (r.instagram) seed.push({ kind: 'instagram', url: r.instagram });
+    if (r.website) seed.push({ kind: 'website', url: r.website });
+    (r.socials || []).forEach(function (x) { if (!seed.some(function (y) { return y.kind === x.kind && y.url === x.url; })) seed.push(x); });
+    var f = socialsField(kit, seed, {
+      title: 'Links',
+      before: [kit.field('Join / sign-up link', join), h('p', { class: 'muted' }, 'Shown as a “Join us” button on your page.')],
+      lead: 'Your Instagram, website, Telegram, TikTok, YouTube, an email address and more. They show as small icons on your page. Paste a link (or an @handle for Instagram) and the type is picked for you.'
+    });
+    return {
+      el: f.el,
+      get: function () {
+        var ig = null, web = null, rest = [];
+        f.get().forEach(function (x) { if (x.kind === 'instagram' && !ig) ig = x; else if (x.kind === 'website' && !web) web = x; else rest.push(x); });
+        return { instagram: ig ? ig.url : '', website: web ? web.url : '', socials: rest };
+      }
     };
   }
 
@@ -310,15 +338,16 @@
     var ig = h('input', { value: r.instagram || '', placeholder: '@yourgroup' });
     var web = h('input', { value: r.website || '', placeholder: 'https://…' });
     var hasSocials = Array.isArray(r.socials);
-    var socials = hasSocials ? socialsField(kit, r.socials) : null;
+    var links = hasSocials ? linksField(kit, r, join) : null;
     var about = editor(kit, r.id, r.about_md);
     var view = r.level === 'CCA/Project' && r.parent_committee ? SITE + '/student-groups/' + slug(r.parent_committee, true) + '/' + slug(r.name) : null;
     var save = h('button', { class: 'btn', type: 'button', onclick: async function () {
       save.disabled = true;
       var ok = await kit.run(async function () {
-        kit.must(await kit.sb.rpc('save_my_body', { b: r.id, p_description: blurb.value, p_about_md: about.get(), p_logo_url: logo.get(), p_header_url: header.get(), p_instagram: ig.value, p_website: web.value, p_recruitment_url: join.value }));
+        var lk = links ? links.get() : null;
+        kit.must(await kit.sb.rpc('save_my_body', { b: r.id, p_description: blurb.value, p_about_md: about.get(), p_logo_url: logo.get(), p_header_url: header.get(), p_instagram: lk ? lk.instagram : ig.value, p_website: lk ? lk.website : web.value, p_recruitment_url: join.value }));
         kit.must(await kit.sb.rpc('save_my_body_color', { b: r.id, p_color: color.get() || null }));
-        if (socials) kit.must(await kit.sb.rpc('save_my_body_socials', { b: r.id, p_socials: socials.get() }));
+        if (links) kit.must(await kit.sb.rpc('save_my_body_socials', { b: r.id, p_socials: lk.socials }));
         return true;
       }, 'Saved. The website updates within a few minutes.');
       save.disabled = false;
@@ -329,8 +358,7 @@
       h('div', { class: 'two' }, logo.el, header.el),
       color.el,
       h('div', { class: 'card' }, h('strong', null, 'Short description'), h('p', { class: 'muted' }, 'Appears on your card in the Student Groups list.'), blurb, count),
-      h('div', { class: 'card' }, h('strong', null, 'Links'), kit.field('Join / sign-up link', join), kit.field('Instagram', ig), kit.field('Website', web)),
-      socials ? socials.el : null,
+      links ? links.el : h('div', { class: 'card' }, h('strong', null, 'Links'), kit.field('Join / sign-up link', join), kit.field('Instagram', ig), kit.field('Website', web)),
       h('div', { class: 'card' }, h('strong', null, 'About your group'), h('p', { class: 'muted' }, 'The full write-up on your group’s page. Add photos, links and highlighted blocks.'), about.el),
       h('div', { class: 'row' }, save));
   }

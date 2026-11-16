@@ -16,6 +16,8 @@ import Image from 'https://esm.sh/@tiptap/extension-image@2.10.3';
 const OPENS = /^:::(callout|photos|quote|columns|toggle)(?:\s+.*)?$/;
 const CLOSE = /^:::\s*$/;
 const LABELS = { callout: 'Highlighted box', photos: 'Photo row', quote: 'Quote', columns: 'Columns', toggle: 'Toggle', button: 'Button', video: 'Video' };
+/** A bare web address such as abc.com becomes https://abc.com (the website only shows a button whose link starts with https://). */
+const withScheme = (u) => { u = String(u || '').trim(); return /^[\w-]+(\.[\w-]+)+([/?#]\S*)?$/.test(u) ? 'https://' + u : u; };
 const attr = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 // ---- Markdown <-> pieces -------------------------------------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ function runHtml(text, marked) {
 /** One ::: block as editor HTML, or null when it cannot be shown as blocks exactly (it then stays a text block). */
 function blockHtml(text, ctx) {
   const lines = text.split('\n'), head = lines[0], kind = (/^:::(\w+)/.exec(head) || [])[1];
-  if (kind === 'button') { const m = /^:::button\s+(.+?)\s*\|\s*(https?:\/\/\S+)\s*$/.exec(head); return m ? `<div data-blk="button" data-label="${attr(m[1])}" data-url="${attr(m[2])}"></div>` : null; }
+  if (kind === 'button') { const m = /^:::button\s+(.+?)\s*\|\s*(\S.*?)\s*$/.exec(head); return m ? `<div data-blk="button" data-label="${attr(m[1])}" data-url="${attr(m[2])}"></div>` : null; }
   if (kind === 'video') { const m = /^:::video\s+(\S+)\s*$/.exec(head); return m ? `<div data-blk="video" data-url="${attr(m[1])}"></div>` : null; }
   if (lines.length < 2 || !CLOSE.test(lines[lines.length - 1])) return null;
   const inner = lines.slice(1, -1);
@@ -381,6 +383,7 @@ function makeExtensions(opts) {
       });
     },
   });
+  /** A button looks like it does on the website; its text and link are in the bar that shows when you point at it. */
   const Button = Node.create({
     name: 'button', group: 'block', atom: true, selectable: true,
     addAttributes() { return { label: { default: 'Join us', parseHTML: (e) => e.getAttribute('data-label') }, url: { default: 'https://', parseHTML: (e) => e.getAttribute('data-url') } }; },
@@ -388,15 +391,16 @@ function makeExtensions(opts) {
     addNodeView() {
       return ({ node, getPos, editor }) => {
         let current = node;
-        const dom = el('div', 've-blk ve-atom'); dom.contentEditable = 'false';
-        const head = el('div', 've-blk-head'), pill = el('span', 'blk-button ve-pill'), warn = el('span', 'muted');
+        const dom = el('div', 've-blk ve-k-button'); dom.contentEditable = 'false';
+        const head = el('div', 've-blk-head'), pill = el('span', 'blk-button ve-pill'), warn = el('p', 've-warn');
         const l = field('Button text', node.attrs.label, (v) => setAttrs(editor, getPos, current, { label: v.replace(/[|\n]/g, ' ') }));
         const u = field('Goes to', node.attrs.url, (v) => setAttrs(editor, getPos, current, { url: v.trim() }), 'https://…');
-        head.append(el('strong', null, 'Button'), btn('Remove', 'Delete this block', () => removeNode(editor, getPos, current)));
-        const fields = el('div', 've-fields'); fields.append(l.wrap, u.wrap, warn); dom.append(head, pill, fields);
-        function paint() { pill.textContent = current.attrs.label || 'Button'; warn.textContent = /^https?:\/\/\S+$/.test(current.attrs.url) && current.attrs.label.trim() ? '' : 'The link must start with https:// and the button needs text, or it will not show on the website.'; }
+        u.input.addEventListener('blur', () => { const fixed = withScheme(u.input.value); if (fixed !== u.input.value) { u.input.value = fixed; setAttrs(editor, getPos, current, { url: fixed }); } });
+        head.append(el('strong', null, 'Button'), l.wrap, u.wrap, btn('Remove', 'Delete this button', () => removeNode(editor, getPos, current)));
+        dom.append(head, pill, warn);
+        function paint() { pill.textContent = current.attrs.label || 'Button'; warn.textContent = /^https?:\/\/\S+$/.test(current.attrs.url) && current.attrs.label.trim() ? '' : 'This button will not show on the website until it has text and a link that starts with https://'; }
         paint();
-        return { dom, stopEvent: (e) => dom.contains(e.target), ignoreMutation: () => true, update: (n) => { if (n.type !== current.type) return false; current = n; paint(); return true; } };
+        return { dom, stopEvent: (e) => head.contains(e.target), ignoreMutation: () => true, update: (n) => { if (n.type !== current.type) return false; current = n; paint(); return true; } };
       };
     },
   });
@@ -407,19 +411,19 @@ function makeExtensions(opts) {
     addNodeView() {
       return ({ node, getPos, editor }) => {
         let current = node;
-        const dom = el('div', 've-blk ve-atom'); dom.contentEditable = 'false';
+        const dom = el('div', 've-blk ve-k-video'); dom.contentEditable = 'false';
         const head = el('div', 've-blk-head'), view = el('div', 've-video');
         const u = field('Video link (YouTube or Vimeo)', node.attrs.url, (v) => setAttrs(editor, getPos, current, { url: v.trim() }), 'https://youtu.be/…');
-        head.append(el('strong', null, 'Video'), btn('Remove', 'Delete this block', () => removeNode(editor, getPos, current)));
-        dom.append(head, u.wrap, view);
+        head.append(el('strong', null, 'Video'), u.wrap, btn('Remove', 'Delete this video', () => removeNode(editor, getPos, current)));
+        dom.append(head, view);
         let shown = null;
         function paint() {
           const e = opts.videoEmbed ? opts.videoEmbed(current.attrs.url) : null;
           if (e === shown && view.firstChild) return; shown = e; view.replaceChildren();
-          if (e) { const f = el('iframe'); f.src = e; f.title = 'Video preview'; f.setAttribute('allowfullscreen', ''); view.append(f); } else view.append(el('span', 'muted', 'Paste a YouTube or Vimeo link (https://…) to see the video here.'));
+          if (e) { const f = el('iframe'); f.src = e; f.title = 'Video preview'; f.setAttribute('allowfullscreen', ''); view.append(f); } else view.append(el('span', 'muted', 'Point at this block and paste a YouTube or Vimeo link (https://…) to see the video here.'));
         }
         paint();
-        return { dom, stopEvent: (e) => dom.contains(e.target), ignoreMutation: () => true, update: (n) => { if (n.type !== current.type) return false; current = n; paint(); return true; } };
+        return { dom, stopEvent: (e) => head.contains(e.target), ignoreMutation: () => true, update: (n) => { if (n.type !== current.type) return false; current = n; paint(); return true; } };
       };
     },
   });
@@ -436,8 +440,7 @@ const TEMPLATES = {
   'Join button': (u) => ':::button Join us | ' + u,
   Callout: () => ':::callout\nImportant note here.\n:::',
   Quote: () => ':::quote\n“What a memorable experience.”\n\n— Name, Year 3\n:::',
-  '2 columns': () => ':::columns\n## Left column\nWrite here.\n|||\n## Right column\nWrite here.\n:::',
-  '3 columns': () => ':::columns\n### One\nWrite here.\n|||\n### Two\nWrite here.\n|||\n### Three\nWrite here.\n:::',
+  Columns: () => ':::columns\n\n|||\n\n:::',
   Toggle: () => ':::toggle Question or title\nThe answer or details go here.\n:::',
   Video: (u) => ':::video ' + u,
 };
@@ -498,16 +501,26 @@ export function create(opts) {
   const run = () => editor.chain().focus();
   // New blocks go after the top-level block the cursor is in (or replace it if it is an empty paragraph), never inside a column or box by accident.
   function insertTop(content, pos) {
-    const { selection } = editor.state, $f = typeof pos === 'number' ? editor.state.doc.resolve(Math.min(pos, editor.state.doc.content.size)) : selection.$from;
-    if ($f.depth < 1) { run().insertContent(content).run(); return; }
-    const top = $f.node(1), empty = top.type.name === 'paragraph' && top.content.size === 0;
-    run().insertContentAt(empty ? { from: $f.before(1), to: $f.after(1) } : $f.after(1), content).run();
+    const { selection, doc } = editor.state;
+    // A selected block (button, video, picture...) is never replaced: the new block goes after it.
+    if (typeof pos !== 'number' && selection.node) { run().insertContentAt(selection.to, content).run(); return selection.to; }
+    const $f = typeof pos === 'number' ? doc.resolve(Math.min(pos, doc.content.size)) : selection.$from;
+    if ($f.depth < 1) { run().insertContentAt($f.pos, content).run(); return $f.pos; }
+    const top = $f.node(1), empty = top.type.name === 'paragraph' && top.content.size === 0, at = empty ? $f.before(1) : $f.after(1);
+    run().insertContentAt(empty ? { from: $f.before(1), to: $f.after(1) } : at, content).run();
+    return at;
   }
   const insertText = (text) => insertTop(toHtml(text, marked));
+  /** Puts the cursor in the first (empty) column of the columns block just added at `from`. */
+  function focusFirstColumn(from) {
+    let target = null; editor.state.doc.descendants((n, p) => { if (target === null && n.type.name === 'columns' && p >= from && !n.textContent) target = p; return target === null; });
+    if (target !== null) editor.chain().focus().setTextSelection(target + 3).run();
+  }
   const addBlock = (name) => {
     let u = '';
-    if (name === 'Join button' || name === 'Video') { u = prompt(name === 'Video' ? 'Video link (YouTube or Vimeo)' : 'Where should the button go? (https://…)'); if (!u) return; u = u.trim(); }
-    insertText(TEMPLATES[name](u));
+    if (name === 'Join button' || name === 'Video') { u = prompt(name === 'Video' ? 'Video link (YouTube or Vimeo)' : 'Where should the button go? (https://…)'); if (!u) return; u = name === 'Video' ? u.trim() : withScheme(u); }
+    const at = insertText(TEMPLATES[name](u));
+    if (name === 'Columns' && at !== null) focusFirstColumn(at);
   };
 
   // ---- Toolbar, laid out like Google Docs: undo/redo, text style, bold/italic/link, lists, then Photo and Insert menus ----
@@ -532,8 +545,7 @@ export function create(opts) {
   ]));
   photoBtn.setAttribute('data-menu-anchor', '1');
   const insertBtn = tool(icon('plus') + '<span>Insert</span>', 'Insert something', () => showMenu(insertBtn, [
-    { label: 'Two columns', hint: 'Text side by side', run: () => addBlock('2 columns') },
-    { label: 'Three columns', hint: 'Text side by side', run: () => addBlock('3 columns') },
+    { label: 'Columns', hint: 'Text side by side (add up to 4 columns)', run: () => addBlock('Columns') },
     { label: 'Highlighted box', hint: 'A tinted box for something important', run: () => addBlock('Callout') },
     { label: 'Pull quote', hint: 'A big quote with a name under it', run: () => addBlock('Quote') },
     { label: 'Collapsible section', hint: 'A title people click to open', run: () => addBlock('Toggle') },

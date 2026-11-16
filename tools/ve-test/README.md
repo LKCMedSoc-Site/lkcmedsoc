@@ -11,3 +11,5 @@ cd tools/ve-test && npm install && ./prep.sh && node run.mjs
 
 Re-run `./prep.sh` after changing `records/visual-editor.js`. Add new pages to `cases.json`. The package versions are pinned to the
 same Tiptap version the Records app loads from esm.sh (2.10.3).
+
+Also: `node links.test.mjs` checks the single Links list on the group form (records/pages.js): it opens from the old Instagram/Website columns plus the extra links, and splits back out on save.

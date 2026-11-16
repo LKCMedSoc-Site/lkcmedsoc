@@ -30,5 +30,7 @@
  "stars text": "2 * 3 = 6 and a_b_c",
  "table in toggle": ":::toggle Q\nText\n\n| a | b |\n| - | - |\n| 1 | 2 |\n:::",
  "photos in columns": ":::columns\n![](https://x.com/1.webp)\n|||\nRight text\n:::",
- "gallery with title attr": ":::photos cols=4\n![a](https://x.com/1.webp)\n![b](https://x.com/2.webp)\n:::"
+ "gallery with title attr": ":::photos cols=4\n![a](https://x.com/1.webp)\n![b](https://x.com/2.webp)\n:::",
+ "button no scheme": ":::button Join us | abc.com",
+ "empty columns": ":::columns\n\n|||\n\n:::"
 }
