@@ -57,6 +57,7 @@ import Marquee from '@/components/blocks/Marquee';
 import PhotoTile from '@/components/blocks/PhotoTile';
 import SectionHead from '@/components/blocks/SectionHead';
 import Reveal from '@/components/blocks/Reveal';
+import HeroSlideshow from '@/components/blocks/HeroSlideshow';
 import SafeImage from '@/components/SafeImage';
 
 PLASMIC.registerComponent(Hero, {
@@ -95,6 +96,24 @@ PLASMIC.registerComponent(Reveal, {
   name: 'Reveal', displayName: 'Fade in on scroll', description: 'Wrap anything to make it fade in when it scrolls into view.',
   props: { children: 'slot', delay: { type: 'number', defaultValue: 0, displayName: 'Delay (ms)' } },
   importPath: '@/components/blocks/Reveal',
+});
+PLASMIC.registerComponent(HeroSlideshow, {
+  name: 'HeroSlideshow', displayName: 'Hero background (rotating photos)',
+  description: 'Photos that cross-fade behind a hero. Put it first inside the hero box, then add photos.',
+  props: {
+    slides: {
+      type: 'array', displayName: 'Photos',
+      itemType: { type: 'object', nameFunc: (i: { alt?: string }) => i?.alt || 'Photo', fields: { image: { type: 'imageUrl', displayName: 'Photo' }, alt: { type: 'string', displayName: 'Name (for your reference)' } } },
+      defaultValue: [
+        { image: 'https://placehold.co/1600x900/4d0a49/ffffff?text=Hero+photo+1', alt: 'Photo 1' },
+        { image: 'https://placehold.co/1600x900/8e2a88/ffffff?text=Hero+photo+2', alt: 'Photo 2' },
+        { image: 'https://placehold.co/1600x900/2a0628/ffffff?text=Hero+photo+3', alt: 'Photo 3' },
+      ],
+    },
+    seconds: { type: 'number', defaultValue: 6, displayName: 'Seconds per photo', helpText: 'At least 3.' },
+    wash: { type: 'number', defaultValue: 62, displayName: 'Plum wash (0 to 100)', helpText: 'How dark the tint over the photos is. Higher keeps the white text easier to read.' },
+  },
+  importPath: '@/components/blocks/HeroSlideshow',
 });
 // Header building blocks: behaviour from code, everything inside is designed in Studio.
 // The site's own header with its content editable. Student Groups' sub-items come from the database, so they are left empty here.
