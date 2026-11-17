@@ -795,3 +795,7 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 .tabs[hidden] { display: none !important; }
 @media (max-width: 1250px) { .pinbar .switchtext span { display: none; } }
 @media (max-width: 1250px) { .pinbar button.tb { width: 28px; height: 30px; } .pinbar .sep { margin: 0 2px; } .pinbar .zoomlabel { min-width: 38px; } .pinbar select.styles { max-width: 104px; } .pinbar .savestate { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } }
+
+/* The website's header slips away on scroll down and returns on scroll up (suite-nav.js sets --lkc-top): the pinned bar and the outline sit just under it while it shows. */
+.docbar.pinbar { top: var(--lkc-top, 0px); transition: top .25s ease; }
+@media (min-width: 1100px) { .sheetrow > .toc { top: calc(var(--lkc-top, 0px) + 76px) !important; transition: top .25s ease; } }

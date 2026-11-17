@@ -123,7 +123,8 @@
     estyle.textContent = [
       '#lkc-embed{position:absolute;top:0;left:0;right:0;height:64px;visibility:hidden;pointer-events:none;z-index:200}',
       '#lkc-embed iframe{display:block;width:100%;height:100%;border:0;background:transparent}',
-      'html.lkc-embedded #lkc-embed{position:relative;visibility:visible;pointer-events:auto}',
+      'html.lkc-embedded #lkc-embed{position:sticky;top:0;visibility:visible;pointer-events:auto;transition:transform .25s ease}',
+      'html.lkc-embedded #lkc-embed.lkc-hide{transform:translateY(-100%)}',
       'html.lkc-embedded #lkc-suite{display:none!important}',
       '@media print{#lkc-embed{display:none!important}}'
     ].join('');
@@ -144,7 +145,23 @@
     try { var memo = JSON.parse(localStorage.getItem(EKEY) || 'null'); if (memo && Date.now() - memo.t < 36e5 && EMBEDS[memo.i]) startAt = memo.i; } catch (e) { /* private mode */ }
     tryEmbed(startAt);
     // While a menu, the search or a sign-in box is open the frame covers the window (it cannot draw outside its own box); it shrinks back afterwards.
+    // Like the website: the header is pinned, slips away when you scroll down and comes straight back when you scroll up.
+    // --lkc-top (on <html>) is how much of the window it covers right now (its height, or 0): an app can keep its own pinned bars just below it with `top: var(--lkc-top, 0px)`.
+    var hid = false, isOpen = false, lastY = window.pageYOffset || 0;
+    var setHidden = function (h) {
+      if (h === hid) return; hid = h; wrap.classList.toggle('lkc-hide', h);
+      document.documentElement.style.setProperty('--lkc-top', h ? '0px' : (wrap.offsetHeight || 64) + 'px');
+    };
+    window.addEventListener('scroll', function () {
+      if (!embedReady) return;
+      var y = window.pageYOffset || 0;
+      if (isOpen || y <= 0) setHidden(false);
+      else if (y > lastY + 6 && y > (wrap.offsetHeight || 64)) setHidden(true);
+      else if (y < lastY - 6) setHidden(false);
+      lastY = y;
+    }, { passive: true });
     var setOpen = function (open) {
+      isOpen = !!open; if (open) setHidden(false);
       if (open && embedReady) {
         var top = wrap.getBoundingClientRect().top;
         frame.style.cssText = 'position:fixed;left:0;width:100%;z-index:2147483000;top:' + top + 'px;height:calc(100vh - ' + top + 'px)';
@@ -157,7 +174,7 @@
         if (window.dispatchEvent(new CustomEvent('lkc-auth-change', { cancelable: true, detail: d.auth }))) location.reload();
         return;
       }
-      if (typeof d.height === 'number' && d.height > 0) wrap.style.height = d.height + 'px';
+      if (typeof d.height === 'number' && d.height > 0) { wrap.style.height = d.height + 'px'; if (!hid) document.documentElement.style.setProperty('--lkc-top', d.height + 'px'); }
       if (d.ready && !embedReady) {
         embedReady = true; clearTimeout(embedTimer);
         try { localStorage.setItem(EKEY, JSON.stringify({ t: Date.now(), i: embedIx })); } catch (e2) { /* private mode */ }
