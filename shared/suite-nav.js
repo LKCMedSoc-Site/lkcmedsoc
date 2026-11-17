@@ -112,10 +112,12 @@
   // ---- The website's own header, shown in a frame ----
   // The website serves its header on a page of its own (/embed/header): the same header, so a change made to it (in code or in Plasmic Studio) shows up in
   // every app. Until that page has loaded, the small bar below stays; if it never loads (no network, not deployed yet) the small bar simply remains.
-  // Set window.LKC_EMBED_URL before this script to use another address, or to '' to keep the small bar only.
-  var EMBED = window.LKC_EMBED_URL !== undefined ? window.LKC_EMBED_URL : 'https://lkcmedsoc.com/embed/header';
-  var embedOrigin = ''; try { embedOrigin = EMBED ? new URL(EMBED, location.href).origin : ''; } catch (e) { /* bad address */ }
-  if (embedOrigin && window.self === window.top) {
+  // Two addresses are tried in turn: the real domain first, then the website's Vercel address (used while lkcmedsoc.com still shows the old site).
+  // The sign-in cookie belongs to lkcmedsoc.com, so a header loaded from the Vercel address cannot see who is signed in: it then has no account button
+  // (?signin=0) and the app keeps its own account strip (html.lkc-embed-nosession). Which address worked is remembered for an hour.
+  // Set window.LKC_EMBED_URL before this script to use one other address, or to '' to keep the small bar only.
+  var EMBEDS = window.LKC_EMBED_URL === '' ? [] : window.LKC_EMBED_URL ? [window.LKC_EMBED_URL] : ['https://lkcmedsoc.com/embed/header', 'https://lkcmedsoc.vercel.app/embed/header?signin=0'];
+  if (EMBEDS.length && window.self === window.top) {
     var estyle = document.createElement('style');
     estyle.textContent = [
       '#lkc-embed{position:absolute;top:0;left:0;right:0;height:64px;visibility:hidden;pointer-events:none;z-index:200}',
@@ -125,13 +127,24 @@
       '@media print{#lkc-embed{display:none!important}}'
     ].join('');
     document.head.appendChild(estyle);
-    var frame = el('iframe', { src: EMBED, title: 'LKCMedSoc menu', scrolling: 'no', allowtransparency: 'true' });
+    var frame = el('iframe', { title: 'LKCMedSoc menu', scrolling: 'no', allowtransparency: 'true' });
     var wrap = el('div', { id: 'lkc-embed' }, [frame]);
     var mountEmbed = function () { document.body.insertBefore(wrap, document.body.firstChild); };
     if (document.body) mountEmbed(); else document.addEventListener('DOMContentLoaded', mountEmbed);
+    var embedIx = 0, embedOrigin = '', embedReady = false, embedTimer = 0, EKEY = 'lkc-embed-v1';
+    var originOf = function (u) { try { return new URL(u, location.href).origin; } catch (e) { return ''; } };
+    // Start with the address that worked last time (for an hour), otherwise the first one; if it does not answer in 3 seconds, the next.
+    var tryEmbed = function (i) {
+      embedIx = i; embedOrigin = originOf(EMBEDS[i]); frame.src = EMBEDS[i];
+      clearTimeout(embedTimer);
+      if (i + 1 < EMBEDS.length) embedTimer = setTimeout(function () { if (!embedReady) tryEmbed(i + 1); }, 3000);
+    };
+    var startAt = 0;
+    try { var memo = JSON.parse(localStorage.getItem(EKEY) || 'null'); if (memo && Date.now() - memo.t < 36e5 && EMBEDS[memo.i]) startAt = memo.i; } catch (e) { /* private mode */ }
+    tryEmbed(startAt);
     // While a menu, the search or a sign-in box is open the frame covers the window (it cannot draw outside its own box); it shrinks back afterwards.
     var setOpen = function (open) {
-      if (open && document.documentElement.classList.contains('lkc-embedded')) {
+      if (open && embedReady) {
         var top = wrap.getBoundingClientRect().top;
         frame.style.cssText = 'position:fixed;left:0;width:100%;z-index:2147483000;top:' + top + 'px;height:calc(100vh - ' + top + 'px)';
       } else frame.style.cssText = '';
@@ -144,7 +157,13 @@
         return;
       }
       if (typeof d.height === 'number' && d.height > 0) wrap.style.height = d.height + 'px';
-      if (d.ready) document.documentElement.classList.add('lkc-embedded');
+      if (d.ready && !embedReady) {
+        embedReady = true; clearTimeout(embedTimer);
+        try { localStorage.setItem(EKEY, JSON.stringify({ t: Date.now(), i: embedIx })); } catch (e2) { /* private mode */ }
+        var shared = /(^|\.)lkcmedsoc\.com$/.test(new URL(embedOrigin).hostname);
+        document.documentElement.classList.add('lkc-embedded');
+        document.documentElement.classList.toggle('lkc-embed-nosession', !shared && EMBEDS.length > 1);
+      }
       setOpen(!!d.open);
     });
     // The other way round: when the app itself signs somebody in or out, the header (which only reads the sign-in when it loads) is loaded again.
@@ -156,10 +175,11 @@
         var s = JSON.parse(raw); return (s && s.user && s.user.id) || (s && s[0] && s[0].user && s[0].user.id) || 'x';
       } catch (e) { return 'x'; }
     };
+    var reloadEmbed = function () { try { frame.contentWindow.location.reload(); } catch (e) { frame.src = EMBEDS[embedIx]; } };
     var lastWho = who();
-    var recheck = function () { var w = who(); if (w !== lastWho) { lastWho = w; try { frame.contentWindow.location.reload(); } catch (e) { frame.src = EMBED; } } };
+    var recheck = function () { var w = who(); if (w !== lastWho) { lastWho = w; reloadEmbed(); } };
     setInterval(recheck, 1500); window.addEventListener('focus', recheck);
-    window.LKCHeader = { refresh: function () { lastWho = who(); try { frame.contentWindow.location.reload(); } catch (e) { frame.src = EMBED; } } };
+    window.LKCHeader = { refresh: function () { lastWho = who(); reloadEmbed(); } };
   }
 
   var API = window.LKC_NAV_API !== undefined ? window.LKC_NAV_API : 'https://lkcmedsoc.com/api/navigation';

@@ -772,4 +772,4 @@ html, body, .paperview { overflow-anchor: none; }
 @media print { .sheetcol > .paperview { display: block; } }
 
 /* The website's own header is shown above the page (in a frame, by suite-nav.js) and has the sign-in, password and sign-out: this app's own strip is then redundant. */
-html.lkc-embedded > body > header.top { display: none; }
+html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none; }

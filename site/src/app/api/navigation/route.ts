@@ -5,7 +5,7 @@ import menu from '../../../../public/menu.json';
 // It is the same menu as public/menu.json. Menus edited inside the Plasmic header block are not part of this.
 export const dynamic = 'force-dynamic'; // the CORS answer depends on who asks; the CDN cache below does the real caching
 
-const ALLOWED = ['activities', 'feedback', 'records', 'inventory', 'booking'].map((s) => `https://${s}.lkcmedsoc.com`).concat('https://lkcmedsoc.com');
+const ALLOWED = ['activities', 'feedback', 'records', 'inventory', 'booking', 'policy', 'gazette'].map((s) => `https://${s}.lkcmedsoc.com`).concat('https://lkcmedsoc.com');
 const allowOrigin = (origin: string | null) => {
   if (!origin) return null;
   if (ALLOWED.includes(origin)) return origin;
