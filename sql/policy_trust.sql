@@ -43,7 +43,8 @@ begin
   end loop;
   insert into policy_clause_versions (clause_id, doc_version, heading, body_md, repealed, amendment_id)
   select c.id, v, c.heading, c.body_md, c.repealed, p_id from policy_clauses c where c.doc_id = d.id;
-  update policy_docs set status = 'in_force', version = v, effective_on = p_effective, updated_at = now() where id = d.id;
+  -- publishing also shows the document to members: a draft is for ExCo only
+  update policy_docs set status = 'in_force', version = v, effective_on = p_effective, published = true, updated_at = now() where id = d.id;
   update policy_amendments set status = 'in_force', decided_at = coalesce(decided_at, now()), published_at = now(), effective_on = p_effective, version_after = v where id = p_id;
   return v;
 end $$;
@@ -57,3 +58,7 @@ begin
 end $$;
 grant execute on function activities.policy_doc_save(text, text, text) to authenticated;
 revoke execute on function activities.policy_doc_save(text, text, text) from public, anon;
+
+-- Members see exactly the documents in force; drafts are ExCo only. The separate "shown to members" switch is gone.
+update activities.policy_docs set published = (status = 'in_force');
+drop function if exists activities.policy_set_published(text, boolean);

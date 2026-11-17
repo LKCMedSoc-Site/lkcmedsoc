@@ -42,7 +42,7 @@ create table if not exists activities.policy_clauses (
   doc_id uuid not null references activities.policy_docs (id) on delete cascade,
   ref text not null unique check (ref ~ '^[A-Z]{1,3}-[0-9]+\.[0-9]+$'),   -- B-3.2: never reused, even after the clause is repealed
   ord integer not null default 100,
-  heading text not null check (length(trim(heading)) between 1 and 160),
+  heading text not null check (length(heading) <= 160),
   body_md text not null default '',
   repealed boolean not null default false,
   updated_at timestamptz not null default now()

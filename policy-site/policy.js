@@ -42,13 +42,17 @@
     if (!last) return ({ constitution: 'C', bylaw: 'B', guide: 'G', external: 'E' }[tier] || 'B') + '-1.1';
     return last + '.' + (max[last] + 1);
   }
+  // An Article title is stored as a clause numbered C-7.0: it groups the clauses that follow (C-7.1, C-7.2 ...).
+  function isArticle(ref) { return /\.0$/.test(ref); }
+  function artNo(ref) { var m = /-(\d+)\.0$/.exec(ref); return m ? m[1] : ''; }
+  function articleHead(c) { return h('div', { class: 'article', id: c.ref }, h('div', { class: 'artno' }, 'Article ' + artNo(c.ref)), h('h2', null, c.heading)); }
   function rpc(name, args) { return P.act.rpc(name, args || {}).then(P.must); }
   // For functions that return nothing: resolve to true so P.run reports success.
   function rpcv(name, args) { return rpc(name, args).then(function () { return true; }); }
   function longDate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? (+m[3]) + ' ' + MONTHS[+m[2] - 1] + ' ' + m[1] : ''; }
   function when(s) { return s ? longDate(String(s).slice(0, 10)) : ''; }
   function aNo(n) { return 'A-' + String(n).padStart(3, '0'); }
-  function docPill(d) { return d.status === 'in_force' ? P.pill('In force · version ' + d.version, 'dark') : P.pill('Draft', 'warn'); }
+  function docPill(d) { return d.status === 'in_force' ? P.pill('In force · version ' + d.version, 'dark') : P.pill('Draft · ExCo only', 'warn'); }
   function amPill(s) {
     var label = { proposed: 'Waiting for the President', approved: 'Approved, not yet in force', rejected: 'Rejected', withdrawn: 'Withdrawn', in_force: 'In force' }[s] || s;
     return P.pill(label, { proposed: 'warn', approved: 'ok', rejected: 'bad', withdrawn: '', in_force: 'dark' }[s]);
@@ -98,17 +102,24 @@
 
   // The provision list beside a long document: jumps to a clause and follows the reader down the page.
   function withToc(refs, stack) {
-    var links = refs.map(function (c) { return h('a', { href: '#', 'data-ref': c.ref, onclick: function (ev) { ev.preventDefault(); var el = document.getElementById(c.ref); if (el) el.scrollIntoView({ behavior: 'smooth' }); } }, h('span', null, c.ref), c.heading); });
-    var toc = h('details', { class: 'toc noprint' }, h('summary', null, 'Jump to a provision'), h('nav', { 'aria-label': 'Provisions' }, links));
+    var arts = refs.some(function (c) { return isArticle(c.ref); });
+    var items = arts ? refs.filter(function (c) { return isArticle(c.ref); }) : refs;
+    function jump(ref) { return function (ev) { ev.preventDefault(); var el = document.getElementById(ref); if (el) el.scrollIntoView({ behavior: 'smooth' }); }; }
+    var links = items.map(function (c) { return h('a', { href: '#', 'data-ref': c.ref, onclick: jump(c.ref) }, h('span', null, arts ? artNo(c.ref) : c.ref), c.heading || ''); });
+    var toc = h('details', { class: 'toc noprint' }, h('summary', null, arts ? 'Jump to an article' : 'Jump to a provision'), h('nav', { 'aria-label': 'Contents' }, links));
     var mq = window.matchMedia('(min-width: 1180px)');
     toc.open = mq.matches;
     if (mq.addEventListener) mq.addEventListener('change', function (e) { toc.open = e.matches; });
     links.forEach(function (a) { a.addEventListener('click', function () { if (!mq.matches) toc.open = false; }); });
     if (typeof IntersectionObserver === 'function') {
       var io = new IntersectionObserver(function (es) {
-        es.forEach(function (e) { if (e.isIntersecting) links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('data-ref') === e.target.id); }); });
+        es.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          var key = arts ? e.target.id.replace(/\.\d+$/, '.0') : e.target.id;   // a clause lights up its article
+          links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('data-ref') === key); });
+        });
       }, { rootMargin: '-80px 0px -70% 0px' });
-      setTimeout(function () { stack.querySelectorAll('.clause').forEach(function (n) { io.observe(n); }); }, 0);
+      setTimeout(function () { stack.querySelectorAll('.clause, .article').forEach(function (n) { io.observe(n); }); }, 0);
       P.onLeave(function () { io.disconnect(); });
     }
     return h('div', { class: 'doc-layout' }, toc, stack);
@@ -131,18 +142,15 @@
     docs = docs.slice().sort(function (a, b) { return order.indexOf(a.tier) - order.indexOf(b.tier); });
     var shown = docs.filter(function (d) { return !want || d.tier === want; });
     var chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Filter by type' },
-      [['', 'All (' + docs.length + ')']].concat(order.map(function (t) { return [t, TIER[t] + ' (' + docs.filter(function (d) { return d.tier === t; }).length + ')']; })).map(function (c) {
-        return h('a', { class: 'chip' + (want === c[0] ? ' on' : ''), href: c[0] ? '#/?t=' + c[0] : '#/', style: 'text-decoration:none', 'aria-current': want === c[0] ? 'true' : null }, c[1]);
+      order.map(function (t) { return [t, TIER[t] + ' (' + docs.filter(function (d) { return d.tier === t; }).length + ')']; }).map(function (c) {
+        var on = want === c[0];   // press the chosen type again to show everything
+        return h('a', { class: 'chip' + (on ? ' on' : ''), href: on ? '#/' : '#/?t=' + c[0], style: 'text-decoration:none', 'aria-pressed': on ? 'true' : 'false' }, c[1]);
       }));
     var list = shown.length ? h('div', { class: 'list' }, shown.map(function (d) {
       var meta = [h('span', { class: 'kind' }, TIER_ONE[d.tier]), docPill(d)];
       if (exco) {
         meta.push(h('span', { class: 'count' }, d.clauses + ' clauses'));
         if (d.open_amendments) meta.push(P.pill(d.open_amendments + ' waiting for the President', 'warn'));
-        var pub = h('input', { type: 'checkbox', checked: d.published, onchange: function (ev) {
-          P.run(function () { return rpcv('policy_set_published', { p_slug: d.slug, p_on: ev.target.checked }); }, ev.target.checked ? 'Now visible to members' : 'Hidden from members');
-        } });
-        meta.push(h('label', { class: 'chk', style: 'margin:0 0 0 auto' }, pub, 'Shown to members'));
       }
       return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + d.slug, style: 'text-decoration:none' }, d.title), h('div', { class: 's' }, d.summary), h('div', { class: 'meta' }, meta));
     })) : h('div', { class: 'list' }, h('div', { class: 'item empty' }, 'Nothing here yet.'));
@@ -184,9 +192,10 @@
       return out;
     }
     var cards = view.clauses.map(function (c) {
+      if (isArticle(c.ref)) return articleHead(c);
       var ns = notes(c.ref);
       return h('div', { class: 'card clause', id: c.ref },
-        h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), h('h3', { style: 'margin-top:0' }, c.heading), viewer(c.body_md),
+        h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), c.heading ? h('h3', { style: 'margin-top:0' }, c.heading) : null, viewer(c.body_md),
         ns.length ? h('p', { class: 'sub' }, '[' + ns.join('; ') + ']') : null,
         null);
     });
@@ -223,26 +232,18 @@
     var w = await rpc('policy_working', { p_slug: p.slug });
     if (!w) { P.show(h('p', { class: 'muted' }, 'That document does not exist.')); return; }
     var d = w.doc, draft = d.status === 'draft';
-    var head = [crumbs([['Documents', '#/'], [d.title]]), titleBox(d),
-      h('div', { class: 'row' }, docPill(d), d.effective_on ? h('span', { class: 'count' }, 'in force from ' + longDate(d.effective_on)) : null)];
-    var actions = h('div', { class: 'row' },
-      draft ? h('button', { class: 'btn', onclick: async function () {
-        if (!confirm(P.canConfirm ? 'Publish “' + d.title + '”? It comes into force as it reads now, and members will see it.' : 'Send “' + d.title + '” to the President to confirm?')) return;
-        var v = await P.run(async function () {
-          var id = await rpc('policy_propose', { p_doc: d.id, p_kind: 'adopt', p_title: 'Adopt ' + d.title, p_reason: 'First publication', p_changes: [], p_name: P.me.name || P.me.email });
-          if (P.canConfirm) await rpc('policy_publish', { p_id: id, p_effective: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10) });
-          return true;
-        }, P.canConfirm ? 'Published' : 'Sent to the President to confirm');
-        if (v) P.dispatch();
-      } }, P.canConfirm ? 'Publish' : 'Send to the President') : null,
-      (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })());
-    var note = draft
-      ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'Edit any clause directly. When it is ready, press Publish. After that, changes are suggested and the President confirms them.')
-      : h('div', { class: 'card' }, h('b', null, 'This document is in force. '), 'To change a clause, press “Suggest an edit” under it. The text only changes when the President confirms it.');
     var pending = [];
     try { pending = (await rpc('policy_amendments', { p_status: 'proposed' })).filter(function (x) { return x.doc_slug === d.slug; }); } catch (e) { /* not available: no banner */ }
-    var waiting = pending.length ? h('div', { class: 'card waiting' }, h('b', null, pending.length + (pending.length === 1 ? ' suggestion is' : ' suggestions are') + ' waiting for the President'),
-      h('ul', null, pending.map(function (x) { return h('li', null, h('a', { href: '#/a/' + x.id }, aNo(x.number) + '  ' + x.title), ' · sent by ' + (x.proposed_by_name || 'someone') + ' on ' + when(x.proposed_at)); }))) : null;
+    var adoptWait = pending.filter(function (x) { return x.kind === 'adopt'; })[0] || null;
+    var edits = pending.filter(function (x) { return x.kind !== 'adopt'; });
+    var head = [crumbs([['Documents', '#/'], [d.title]]), titleBox(d), publishSwitch(d, draft, adoptWait)];
+    var actions = h('div', { class: 'row' },
+      (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })());
+    var note = draft
+      ? h('div', { class: 'card' }, h('b', null, 'This is a draft. '), 'Edit any clause directly. When it is ready, switch it to Published. After that, changes are suggested and the President confirms them.')
+      : h('div', { class: 'card' }, h('b', null, 'This document is in force. '), 'To change a clause, press “Suggest an edit” under it. The text only changes when the President confirms it.');
+    var waiting = edits.length ? h('div', { class: 'card waiting' }, h('b', null, edits.length + (edits.length === 1 ? ' suggestion is' : ' suggestions are') + ' waiting for the President'),
+      h('ul', null, edits.map(function (x) { return h('li', null, h('a', { href: '#/a/' + x.id }, aNo(x.number) + '  ' + x.title), ' · sent by ' + (x.proposed_by_name || 'someone') + ' on ' + when(x.proposed_at)); }))) : null;
     var cards = w.clauses.map(function (c) { return clauseCard(c, d, draft); });
     var parts = [head, actions, note, waiting, cards.length ? withToc(w.clauses, h('div', { class: 'stack' }, cards)) : h('div', { class: 'stack' })];
     parts.push(addClauseForm(d, w.clauses, draft));
@@ -257,6 +258,27 @@
       }
     }
   } });
+
+  // One control for "is this document published?": off = draft, orchid = waiting for the President, green = in force.
+  function publishSwitch(d, draft, adoptWait) {
+    var state = !draft ? 'on' : adoptWait ? 'pending' : 'off';
+    var title = { on: 'Published · version ' + d.version, pending: 'Pending the President', off: 'Draft' }[state];
+    var sub = state === 'on' ? (d.effective_on ? 'In force from ' + longDate(d.effective_on) : 'In force')
+      : state === 'pending' ? (P.canConfirm ? 'Waiting for you to confirm. Switch on to publish it.' : 'Only ExCo can see it. Waiting for the President to confirm.')
+      : (P.canConfirm ? 'Only ExCo can see it. Switch on to publish it to members.' : 'Only ExCo can see it. Switch on to ask the President to publish it.');
+    var btn = h('button', { type: 'button', class: 'switch ' + state, role: 'switch', 'aria-checked': state === 'off' ? 'false' : 'true', 'aria-label': 'Published', disabled: state === 'on',
+      onclick: async function () {
+        if (state === 'pending' && !P.canConfirm) { P.toast('The President has not confirmed yet', true); return; }
+        if (!confirm(P.canConfirm ? 'Publish “' + d.title + '”? It comes into force as it reads now, and members can read it.' : 'Ask the President to publish “' + d.title + '”?')) return;
+        var ok = await P.run(async function () {
+          var id = adoptWait ? adoptWait.id : await rpc('policy_propose', { p_doc: d.id, p_kind: 'adopt', p_title: 'Publish ' + d.title, p_reason: 'First publication', p_changes: [], p_name: P.me.name || P.me.email });
+          if (P.canConfirm) await rpc('policy_publish', { p_id: id, p_effective: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10) });
+          return true;
+        }, P.canConfirm ? 'Published' : 'Sent to the President to confirm');
+        if (ok) P.dispatch();
+      } }, h('span', { class: 'knob' }));
+    return h('div', { class: 'switchrow' }, btn, h('div', { class: 'switchtext' }, h('b', null, title), h('span', null, sub)));
+  }
 
   // The document's name and description: click the text and type. Saved a moment after you stop (ExCo).
   function titleBox(d) {
@@ -277,8 +299,11 @@
     [t, sm].forEach(function (el) { el.addEventListener('input', touch); el.addEventListener('blur', function () { clearTimeout(timer); save(); }); });
     t.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); sm.focus(); } });
     P.onLeave(function () { clearTimeout(timer); if (dirty) save(); });
-    setTimeout(function () { fit(t); fit(sm); }, 0);
-    window.addEventListener('resize', function () { fit(t); fit(sm); });
+    function fitAll() { fit(t); fit(sm); }
+    setTimeout(fitAll, 0); requestAnimationFrame(function () { requestAnimationFrame(fitAll); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);   // the title font arrives late: measure again
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', fitAll);
+    window.addEventListener('resize', fitAll);
     return h('div', { class: 'titlebox' }, t, sm, h('div', { class: 'row noprint' }, status));
   }
 
@@ -293,12 +318,14 @@
   function sendLabel() { return P.canConfirm ? 'Publish this edit' : 'Send to the President'; }
 
   function clauseCard(c, d, draft) {
-    var box = h('div', { class: 'card clause' + (c.repealed ? ' repealed' : ''), id: c.ref });
+    var art = isArticle(c.ref);
+    var box = h('div', { class: (art ? 'article' : 'card clause') + (c.repealed ? ' repealed' : ''), id: c.ref });
     function show() {
-      var go = h('button', { class: 'ghost', onclick: draft ? editDraft : suggest }, draft ? ' Edit this clause' : ' Suggest an edit'); go.prepend(ic('edit'));
+      var go = h('button', { class: 'ghost', onclick: draft ? editDraft : suggest }, art ? ' Rename this article' : draft ? ' Edit this clause' : ' Suggest an edit'); go.prepend(ic('edit'));
+      if (art) { box.replaceChildren(h('div', { class: 'artno' }, 'Article ' + artNo(c.ref)), h('h2', null, c.heading), h('div', { class: 'row noprint' }, go)); return; }
       box.replaceChildren(
         h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref), c.repealed ? P.pill('repealed', 'bad') : null),
-        h('h3', { style: 'margin-top:0' }, c.heading), viewer(c.body_md),
+        c.heading ? h('h3', { style: 'margin-top:0' }, c.heading) : null, viewer(c.body_md),
         c.repealed ? null : h('div', { class: 'row' }, go));
     }
     // A draft: typed straight in, saved a moment after you stop, like Google Docs.
@@ -316,8 +343,8 @@
       title.addEventListener('input', touch);
       P.onLeave(function () { clearTimeout(timer); if (dirty) save(); });
       var done = h('button', { class: 'btn', onclick: async function () { clearTimeout(timer); if (await save()) show(); } }, 'Done');
-      box.replaceChildren(h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), P.field('Heading', title), P.field('Text', ebox), h('div', { class: 'row' }, done, status));
-      editor(ebox, c.body_md, '320px', touch).then(function (e) { ed = e; });
+      box.replaceChildren(h('div', { class: 'row' }, h('span', { class: 'ref' }, art ? 'Article ' + artNo(c.ref) : c.ref)), P.field(art ? 'Article title' : 'Heading (optional)', title), art ? null : P.field('Text', ebox), h('div', { class: 'row' }, done, status));
+      if (art) ed = { getMarkdown: function () { return ''; } }; else editor(ebox, c.body_md, '320px', touch).then(function (e) { ed = e; });
     }
     // A document in force: edit the text here, see your change against the current wording, then send it.
     function suggest() {
@@ -339,17 +366,17 @@
         var body = ed.getMarkdown();
         if (plain(c.heading + '\n\n' + c.body_md) === plain(title.value + '\n\n' + body) && c.heading === title.value && c.body_md.trim() === body.trim()) { P.toast('Nothing has changed yet', true); return; }
         send.disabled = true;
-        var ok = await submitChange(d, [{ ref: c.ref, action: 'edit', heading: title.value, body_md: body }], 'Change to ' + c.ref + ' ' + c.heading, reason.value);
+        var ok = await submitChange(d, [{ ref: c.ref, action: 'edit', heading: title.value, body_md: body }], 'Change to ' + c.ref + (c.heading ? ' ' + c.heading : ''), reason.value);
         send.disabled = false; if (ok) P.dispatch();
       } }, sendLabel());
       var repeal = h('button', { class: 'danger', style: 'margin-left:auto', onclick: async function () {
         if (!confirm('Remove ' + c.ref + '? Its number is kept and never reused.')) return;
-        var ok = await submitChange(d, [{ ref: c.ref, action: 'repeal' }], 'Remove ' + c.ref + ' ' + c.heading, reason.value);
+        var ok = await submitChange(d, [{ ref: c.ref, action: 'repeal' }], 'Remove ' + c.ref + (c.heading ? ' ' + c.heading : ''), reason.value);
         if (ok) P.dispatch();
       } }, 'Remove this clause');
-      box.replaceChildren(h('div', { class: 'row' }, h('span', { class: 'ref' }, c.ref)), P.field('Heading', title), P.field('Text', ebox), diffWrap, P.field('Note for the President', reason),
+      box.replaceChildren(h('div', { class: 'row' }, h('span', { class: 'ref' }, art ? 'Article ' + artNo(c.ref) : c.ref)), P.field(art ? 'Article title' : 'Heading (optional)', title), art ? null : P.field('Text', ebox), diffWrap, P.field('Note for the President', reason),
         h('div', { class: 'row' }, send, h('button', { class: 'ghost', onclick: show }, 'Cancel'), repeal));
-      editor(ebox, c.body_md, '320px', refresh).then(function (e) { ed = e; });
+      if (art) ed = { getMarkdown: function () { return ''; } }; else editor(ebox, c.body_md, '320px', refresh).then(function (e) { ed = e; });
     }
     c._open = function () { (draft ? editDraft : suggest)(); };
     show();
@@ -357,16 +384,16 @@
   }
 
   function addClauseForm(d, clauses, draft) {
-    var title = h('input', { class: 'grow', placeholder: 'Heading' }), ebox = h('div'), ed = null;
+    var title = h('input', { class: 'grow', placeholder: 'Heading (optional)' }), ebox = h('div'), ed = null;
     editor(ebox, '', '220px').then(function (e) { ed = e; });
     return h('div', { class: 'card' }, h('h3', { style: 'margin-top:0' }, 'Add a clause'),
       P.field('Heading', title), P.field('Text', ebox),
       h('div', { class: 'row' }, h('button', { class: 'btn', onclick: async function () {
         if (!ed) return;
-        if (title.value.trim().length < 2) { P.toast('Give the clause a heading', true); return; }
+        if (!title.value.trim() && !ed.getMarkdown().trim()) { P.toast('Write the clause first', true); return; }
         var ref = nextRef(clauses.map(function (c) { return c.ref; }), d.tier);
         var ok = draft ? await P.run(function () { return rpc('policy_draft_add', { p_doc: d.id, p_ref: ref, p_heading: title.value, p_body: ed.getMarkdown() }); }, 'Clause added as ' + ref)
-          : await submitChange(d, [{ ref: ref, action: 'add', heading: title.value, body_md: ed.getMarkdown() }], 'Add ' + ref + ' ' + title.value, '');
+          : await submitChange(d, [{ ref: ref, action: 'add', heading: title.value, body_md: ed.getMarkdown() }], 'Add ' + ref + (title.value.trim() ? ' ' + title.value : ''), '');
         if (ok) P.dispatch();
       } }, draft ? 'Add clause' : sendLabel())));
   }
