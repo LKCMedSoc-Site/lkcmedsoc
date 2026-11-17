@@ -124,5 +124,7 @@
 
   sb.auth.onAuthStateChange(function (ev) { if (ev === 'PASSWORD_RECOVERY') newPasswordView(); });
   window.addEventListener('hashchange', function () { if (ready) P.dispatch(); });
+  // Somebody signed in or out in the website's header (shown above the page by suite-nav.js): read the session again instead of reloading.
+  window.addEventListener('lkc-auth-change', function (ev) { ev.preventDefault(); boot(); });
   boot();
 })();

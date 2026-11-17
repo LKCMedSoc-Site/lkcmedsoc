@@ -54,6 +54,12 @@ const config: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' }],
   },
+  // The framed header (/embed/header) may only be shown by LKCMedSoc's own sites (and by localhost while developing).
+  async headers() {
+    const dev = process.env.NODE_ENV !== 'production';
+    const ancestors = ["'self'", 'https://lkcmedsoc.com', 'https://*.lkcmedsoc.com', ...(dev ? ['http://localhost:*', 'http://127.0.0.1:*'] : [])].join(' ');
+    return [{ source: '/embed/:path*', headers: [{ key: 'Content-Security-Policy', value: `frame-ancestors ${ancestors}` }] }];
+  },
   async redirects() {
     return redirects.map(([source, destination]) => ({ source, destination, permanent: true }));
   },

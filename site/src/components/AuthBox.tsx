@@ -19,7 +19,8 @@ export default function AuthBox({ onSignedIn }: { onSignedIn: () => void }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const sb = browserClient();
-  const back = typeof window !== 'undefined' ? window.location.href.split('#')[0] : undefined;
+  // inside the framed header (/embed/header) email links go to the sign-in page, not back into the little frame
+  const back = typeof window !== 'undefined' ? (window.location.pathname.startsWith('/embed') ? `${window.location.origin}/sign-in` : window.location.href.split('#')[0]) : undefined;
 
   async function go() {
     const e = email.trim().toLowerCase();

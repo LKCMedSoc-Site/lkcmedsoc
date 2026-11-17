@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { LogOut } from 'lucide-react';
+import { KeyRound, LogOut } from 'lucide-react';
 import { browserClient } from '@/lib/supabase';
 import { useSession } from '@/lib/useSession';
 import SignInDialog from './SignInDialog';
+import ChangePasswordDialog from './ChangePasswordDialog';
 
 // The header's account control. Signed out: a "Sign in" button that opens the lightbox. Signed in: the person's initials, with a small menu to sign out.
 // Used in the site header (desktop). The phone menu has its own row (MobileMenu) that opens the same lightbox.
@@ -11,6 +12,7 @@ export default function AccountButton({ label = 'Sign in', className = '' }: { l
   const user = useSession();
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!menu) return;
@@ -35,9 +37,11 @@ export default function AccountButton({ label = 'Sign in', className = '' }: { l
       {menu ? (
         <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-p900 bg-p950 p-2 text-white shadow-2xl">
           <p className="truncate px-3 py-2 text-sm text-mist">{email}</p>
+          <button type="button" role="menuitem" onClick={() => { setMenu(false); setPwOpen(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-bold hover:bg-p900"><KeyRound aria-hidden className="h-4 w-4" />Change password</button>
           <button type="button" role="menuitem" onClick={async () => { await browserClient().auth.signOut(); setMenu(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-bold hover:bg-p900"><LogOut aria-hidden className="h-4 w-4" />Sign out</button>
         </div>
       ) : null}
+      <ChangePasswordDialog open={pwOpen} onClose={() => setPwOpen(false)} />
     </div>
   );
 }

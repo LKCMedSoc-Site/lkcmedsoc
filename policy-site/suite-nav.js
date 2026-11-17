@@ -1,4 +1,4 @@
-// The LKCMedSoc menu bar shown on top of every app (records, activities, feedback). Master copies live in shared/ at the repo root;
+// The LKCMedSoc menu bar shown on top of every app (records, activities, feedback, gazette, policy). It shows the website's own header in a frame (see "The website's own header" below); the small bar is the fallback. Master copies live in shared/ at the repo root;
 // after changing them run `node tools/sync-shared.mjs` so every site gets the update. Include it with:
 //   <script src="suite-nav.js" defer></script>
 // Where the menu comes from: the website's /api/navigation (always current, Student Groups included), with the copy of menu.json next to
@@ -107,6 +107,59 @@
           names.forEach(function (n) { groupsItem.appendChild(el('a', { href: site + '/student-groups/' + slug(n) }, [el('b', { text: n })])); });
         }).catch(function () { /* the fallback list stays */ });
     }
+  }
+
+  // ---- The website's own header, shown in a frame ----
+  // The website serves its header on a page of its own (/embed/header): the same header, so a change made to it (in code or in Plasmic Studio) shows up in
+  // every app. Until that page has loaded, the small bar below stays; if it never loads (no network, not deployed yet) the small bar simply remains.
+  // Set window.LKC_EMBED_URL before this script to use another address, or to '' to keep the small bar only.
+  var EMBED = window.LKC_EMBED_URL !== undefined ? window.LKC_EMBED_URL : 'https://lkcmedsoc.com/embed/header';
+  var embedOrigin = ''; try { embedOrigin = EMBED ? new URL(EMBED, location.href).origin : ''; } catch (e) { /* bad address */ }
+  if (embedOrigin && window.self === window.top) {
+    var estyle = document.createElement('style');
+    estyle.textContent = [
+      '#lkc-embed{position:absolute;top:0;left:0;right:0;height:64px;visibility:hidden;pointer-events:none;z-index:200}',
+      '#lkc-embed iframe{display:block;width:100%;height:100%;border:0;background:transparent}',
+      'html.lkc-embedded #lkc-embed{position:relative;visibility:visible;pointer-events:auto}',
+      'html.lkc-embedded #lkc-suite{display:none!important}',
+      '@media print{#lkc-embed{display:none!important}}'
+    ].join('');
+    document.head.appendChild(estyle);
+    var frame = el('iframe', { src: EMBED, title: 'LKCMedSoc menu', scrolling: 'no', allowtransparency: 'true' });
+    var wrap = el('div', { id: 'lkc-embed' }, [frame]);
+    var mountEmbed = function () { document.body.insertBefore(wrap, document.body.firstChild); };
+    if (document.body) mountEmbed(); else document.addEventListener('DOMContentLoaded', mountEmbed);
+    // While a menu, the search or a sign-in box is open the frame covers the window (it cannot draw outside its own box); it shrinks back afterwards.
+    var setOpen = function (open) {
+      if (open && document.documentElement.classList.contains('lkc-embedded')) {
+        var top = wrap.getBoundingClientRect().top;
+        frame.style.cssText = 'position:fixed;left:0;width:100%;z-index:2147483000;top:' + top + 'px;height:calc(100vh - ' + top + 'px)';
+      } else frame.style.cssText = '';
+    };
+    window.addEventListener('message', function (e) {
+      if (e.origin !== embedOrigin || e.source !== frame.contentWindow) return;
+      var d = e.data; if (!d || d.lkc !== 'header') return;
+      if (d.auth) {   // someone signed in or out in the header: the app refreshes its own data (an app can listen for this and call preventDefault to do it itself)
+        if (window.dispatchEvent(new CustomEvent('lkc-auth-change', { cancelable: true, detail: d.auth }))) location.reload();
+        return;
+      }
+      if (typeof d.height === 'number' && d.height > 0) wrap.style.height = d.height + 'px';
+      if (d.ready) document.documentElement.classList.add('lkc-embedded');
+      setOpen(!!d.open);
+    });
+    // The other way round: when the app itself signs somebody in or out, the header (which only reads the sign-in when it loads) is loaded again.
+    var who = function () {
+      try {
+        var c = document.cookie.split('; ').filter(function (x) { return /^sb-[^=]*-auth-token\.\d+=/.test(x); }).sort();
+        if (!c.length) return '';
+        var raw = c.map(function (x) { return decodeURIComponent(x.slice(x.indexOf('=') + 1)); }).join('');
+        var s = JSON.parse(raw); return (s && s.user && s.user.id) || (s && s[0] && s[0].user && s[0].user.id) || 'x';
+      } catch (e) { return 'x'; }
+    };
+    var lastWho = who();
+    var recheck = function () { var w = who(); if (w !== lastWho) { lastWho = w; try { frame.contentWindow.location.reload(); } catch (e) { frame.src = EMBED; } } };
+    setInterval(recheck, 1500); window.addEventListener('focus', recheck);
+    window.LKCHeader = { refresh: function () { lastWho = who(); try { frame.contentWindow.location.reload(); } catch (e) { frame.src = EMBED; } } };
   }
 
   var API = window.LKC_NAV_API !== undefined ? window.LKC_NAV_API : 'https://lkcmedsoc.com/api/navigation';
