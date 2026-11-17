@@ -112,11 +112,12 @@
   // ---- The website's own header, shown in a frame ----
   // The website serves its header on a page of its own (/embed/header): the same header, so a change made to it (in code or in Plasmic Studio) shows up in
   // every app. Until that page has loaded, the small bar below stays; if it never loads (no network, not deployed yet) the small bar simply remains.
-  // Two addresses are tried in turn: the real domain first, then the website's Vercel address (used while lkcmedsoc.com still shows the old site).
+  // Addresses are tried in turn: preview.lkcmedsoc.com (the new website under a name inside lkcmedsoc.com, so it can read the shared sign-in), then the real
+  // domain itself, then the website's Vercel address (last resort).
   // The sign-in cookie belongs to lkcmedsoc.com, so a header loaded from the Vercel address cannot see who is signed in: it then has no account button
   // (?signin=0) and the app keeps its own account strip (html.lkc-embed-nosession). Which address worked is remembered for an hour.
   // Set window.LKC_EMBED_URL before this script to use one other address, or to '' to keep the small bar only.
-  var EMBEDS = window.LKC_EMBED_URL === '' ? [] : window.LKC_EMBED_URL ? [window.LKC_EMBED_URL] : ['https://lkcmedsoc.com/embed/header', 'https://lkcmedsoc.vercel.app/embed/header?signin=0'];
+  var EMBEDS = window.LKC_EMBED_URL === '' ? [] : window.LKC_EMBED_URL ? [window.LKC_EMBED_URL] : ['https://preview.lkcmedsoc.com/embed/header', 'https://lkcmedsoc.com/embed/header', 'https://lkcmedsoc.vercel.app/embed/header?signin=0'];
   if (EMBEDS.length && window.self === window.top) {
     var estyle = document.createElement('style');
     estyle.textContent = [
