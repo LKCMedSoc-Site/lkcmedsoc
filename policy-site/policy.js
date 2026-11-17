@@ -207,7 +207,7 @@
     function rootEl() { return canEdit ? sheetBody.querySelector('.toastui-editor-ww-container .ProseMirror') : sheetBody.querySelector('.toastui-editor-contents'); }
 
     // ---- publishing bar ----
-    var bar = canEdit && !draft ? h('div', { class: 'pubbar quiet' }) : null;
+    var bar = canEdit && !draft ? h('div', { class: 'pubbar quiet', hidden: true }) : null;
     var publishedNorm = null;                                   // the published text as the editor would write it, so formatting-only differences do not count as changes
     function normalizeMd(T, md) {
       var box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-9999px;top:0;width:700px'; document.body.appendChild(box);
@@ -217,8 +217,8 @@
     function unpublished() { return publishedNorm !== null && currentMd().trim() !== publishedNorm.trim(); }
     function drawBar() {
       if (!bar) return;
-      if (!unpublished()) { bar.className = 'pubbar quiet'; bar.replaceChildren(h('span', { class: 'count' }, 'Everything you see here is published.')); return; }
-      bar.className = 'pubbar';
+      if (!unpublished()) { bar.hidden = true; bar.replaceChildren(); return; }
+      bar.hidden = false; bar.className = 'pubbar';
       var head = h('div', { class: 'pubhead' }, h('b', null, 'This document has changes that members cannot see yet'),
         h('span', { class: 'count' }, 'Members keep reading version ' + d.version + ' until the President publishes your changes.'));
       if (!P.canConfirm) { bar.replaceChildren(head); return; }
@@ -680,7 +680,8 @@
         ed.focus();
       } }, h('option', { value: '' }, 'Text style'), h('option', { value: 'p' }, 'Normal text'), h('option', { value: 'ct' }, 'Clause title (bold)'), h('option', { value: '2' }, 'Article title'));
       function fmt(fn) { return function () { if (caretIn('h2')) { P.toast('An article title has one fixed style.', true); return; } fn(); }; }
-      return h('div', { class: 'docbar noprint', role: 'toolbar', 'aria-label': 'Formatting' },
+      return h('div', { class: 'docbar pinbar noprint', role: 'toolbar', 'aria-label': 'Formatting' },
+        leadItems(),
         btn('undo', 'Undo', 'undo', function () { undoSafe(); }), btn('redo', 'Redo', 'redo', function () { ed.exec('redo'); }), h('span', { class: 'sep' }),
         styles, h('span', { class: 'sep' }),
         btn('bold', 'Bold', 'bold', fmt(function () { ed.exec('bold'); })), btn('italic', 'Italic', 'italic', fmt(function () { ed.exec('italic'); })),
@@ -694,7 +695,9 @@
     // ---- build the page ----
     var titlePart = canEdit ? titleBox(d) : h('div', { class: 'titlebox' }, h('h2', { class: 'doc-title' }, d.title), d.summary ? h('p', { class: 'muted' }, d.summary) : null);
     var topLine = canEdit ? publishSwitch(d, draft) : h('div', { class: 'row' }, past ? P.pill('Version ' + d.shown_version + ' (superseded)', 'warn') : docPill(d), d.effective_on ? h('span', { class: 'count' }, 'in force from ' + longDate(d.effective_on)) : null);
-    var printBtn = (function () { var b = h('button', { class: 'ghost', onclick: function () { window.print(); } }, ' Print or save as PDF'); b.prepend(ic('print')); return b; })();
+    var printBtn = (function () { var b = h('button', { type: 'button', class: 'tb', title: 'Print or save as PDF', 'aria-label': 'Print or save as PDF', onclick: function () { window.print(); } }); b.appendChild(ic('print')); return b; })();
+    // The start of the pinned bar: whether the document is published (or a draft), and print.
+    function leadItems() { return h('span', { class: 'leadgrp' }, topLine, printBtn, h('span', { class: 'sep' })); }
     var note = past ? h('div', { class: 'card' }, 'You are reading an older version. ', h('a', { href: '#/d/' + d.slug }, 'Go to the current version'), '.')
       : canEdit ? null : draft ? h('div', { class: 'card' }, 'This is a draft.') : null;
     var hist = versions.length ? [h('h3', null, 'History'), h('div', { class: 'list' }, versions.map(function (x) {
@@ -717,9 +720,10 @@
     }
     var paperView = h('div', { class: 'paperview' }, h('div', { class: 'sheet' }, foldLayer, tableLayer, titlePart, sheetBody));
     function syncColumn() { stage.style.setProperty('--colw', paperView.clientWidth + 'px'); }
+    var pinBar = canEdit ? toolbar() : h('div', { class: 'docbar pinbar noprint', role: 'toolbar', 'aria-label': 'View' }, leadItems(), foldButtons(), h('span', { class: 'grow' }), zoomControls());
     var stage = h('div', { class: 'stage' },
-      h('div', { class: 'sheetrow' }, outline, h('div', { class: 'sheetcol' }, canEdit ? toolbar() : h('div', { class: 'docbar noprint', role: 'toolbar', 'aria-label': 'View' }, foldButtons(), h('span', { class: 'grow' }), zoomControls()), paperView), notesCol));
-    P.show(h('div', null, crumbs([['Documents', '#/'], [d.title]]), topLine, h('div', { class: 'row noprint' }, printBtn), note, banner, bar, stage, h('div', { class: 'histwrap' }, hist, canEdit ? earlierSaves() : null), cmBtn));
+      h('div', { class: 'sheetrow' }, outline, h('div', { class: 'sheetcol' }, paperView), notesCol));
+    P.show(h('div', null, pinBar, crumbs([['Documents', '#/'], [d.title]]), note, banner, bar, stage, h('div', { class: 'histwrap' }, hist, canEdit ? earlierSaves() : null), cmBtn));
 
     // The editor (or the read-only viewer) needs the rich-text library, so it starts once that has loaded.
     stage.style.setProperty('--z', zoom); applyOutW(); syncColumn();
@@ -904,14 +908,15 @@
   function publishSwitch(d, draft) {
     var state = draft ? 'off' : 'on';
     var title = draft ? 'Draft · ExCo only' : 'Published · version ' + d.version;
-    var sub = draft ? (P.canConfirm ? 'Members cannot see it yet. Switch on to publish it.' : 'Members cannot see it yet. The President publishes it.')
-      : (d.effective_on ? 'Members see the published version. In force from ' + longDate(d.effective_on) + '.' : 'Members see the published version.');
+    var sub = draft ? (P.canConfirm ? 'Switch on to publish' : 'The President publishes it')
+      : (d.effective_on ? 'In force from ' + longDate(d.effective_on) : 'Members can read it');
+    var tip = draft ? 'Members cannot see it yet.' + (P.canConfirm ? ' Switch on to publish it.' : ' The President publishes it.') : 'Members see the published version.';
     var btn = h('button', { type: 'button', class: 'switch ' + state, role: 'switch', 'aria-checked': draft ? 'false' : 'true', 'aria-label': 'Published', disabled: !draft || !P.canConfirm,
       onclick: async function () {
         if (!confirm('Publish “' + d.title + '”? It comes into force as it reads now, and members can read it.')) return;
         var ok = await P.run(function () { return rpc('policy_text_publish', { p_slug: d.slug, p_note: 'First publication', p_effective: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10), p_name: myName() }); }, 'Published');
         if (ok) P.dispatch();
       } }, h('span', { class: 'knob' }));
-    return h('div', { class: 'switchrow' }, btn, h('div', { class: 'switchtext' }, h('b', null, title), h('span', null, sub)));
+    return h('div', { class: 'switchrow', title: tip }, btn, h('div', { class: 'switchtext' }, h('b', null, title), h('span', null, sub)));
   }
 })();

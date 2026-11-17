@@ -95,7 +95,7 @@
       tabs.push(['docs', 'Documents', '#/']);
     }
     var cur = P.current && P.current.opts && P.current.opts.nav;
-    $tabs.hidden = !P.me;
+    $tabs.hidden = true;   // one tab was left (Documents); the breadcrumbs and the title already lead back
     $tabs.replaceChildren(tabs.map(function (t) { return h('a', { class: t[0] === cur ? 'on' : '', href: t[2] }, t[1]); }));
   }
   P.onRoute = function () { drawTabs(); };
