@@ -93,7 +93,6 @@
     var tabs = [];
     if (P.me) {
       tabs.push(['docs', 'Documents', '#/']);
-      if (P.exco) tabs.push(['amend', 'To confirm' + (P.badge ? ' (' + P.badge + ')' : ''), '#/a']);
     }
     var cur = P.current && P.current.opts && P.current.opts.nav;
     $tabs.hidden = !P.me;
@@ -118,9 +117,6 @@
     if (P.me && P.exco) { try { P.canConfirm = !!P.must(await P.act.rpc('policy_is_confirmer')); } catch (e) { /* function not installed yet: fall back to any ExCo member */ } }
     ready = true;
     drawChrome();
-    if (P.me && P.exco) {
-      try { P.badge = (P.must(await P.act.rpc('policy_amendments', { p_status: 'proposed' })) || []).length; drawTabs(); } catch (e) { /* policy.sql not installed yet */ }
-    }
     var ret = P.prefs.get('return');
     if (P.me && ret) { P.prefs.del('return'); P.nav(ret); return; }
     P.dispatch();
