@@ -492,7 +492,7 @@ mark.cm.draft { background: #f7c9ee; }
 /* legal numbering: Article 1, clauses 1.1, 1.2, sub-items (a), (b), then (i), (ii) */
 .sheetbody.legal .toastui-editor-contents { counter-reset: art; }
 .sheetbody.legal .toastui-editor-contents h2 { counter-increment: art; counter-reset: cl; }
-.sheetbody.legal .toastui-editor-contents h2::before { content: 'Article ' counter(art); display: block; font-size: 14px; font-weight: 700; color: var(--p500); letter-spacing: 0; margin-bottom: 2px; }
+.sheetbody.legal .toastui-editor-contents h2::before { content: counter(art); }
 .sheetbody.legal .toastui-editor-contents > ol > li { counter-increment: cl; padding-left: 3.4em !important; margin: 0 0 12px !important; }
 .sheetbody.legal .toastui-editor-contents > ol > li::before { content: counter(art) '.' counter(cl) !important; width: 3.2em !important; }
 .sheetbody.legal .toastui-editor-contents > ol { counter-reset: none !important; }
@@ -507,3 +507,269 @@ mark.cm.draft { background: #f7c9ee; }
 }
 .sheetbody.legal .toastui-editor-contents > ol > li > ol > li::before { content: '(' counter(sub, lower-alpha) ')' !important; }
 .sheetbody.legal .toastui-editor-contents > ol > li > ol > li > ol > li::before { content: '(' counter(sub, lower-roman) ')' !important; }
+
+/* Nothing on the page may show through the tab bar or the toolbar, and nothing inside the sheet may sit above them */
+.tabs { background: #fff !important; backdrop-filter: none !important; z-index: 30 !important; }
+.docbar { background: #fff !important; z-index: 20 !important; }
+.sheet { position: relative; isolation: isolate; z-index: 0; }
+.sheetbody table, .sheetbody th, .sheetbody td { position: static !important; z-index: auto !important; }
+
+
+/* ===== folding ===== */
+.sheet { position: relative; }
+.foldlayer { position: absolute; left: 14px; top: 0; width: 34px; height: 0; z-index: 2; }
+.foldbtn { position: absolute; left: 0; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--p300); cursor: pointer; display: grid; place-items: center; transition: background .15s, color .15s, transform .2s var(--ease); transform: rotate(90deg); }
+.foldbtn.shut { transform: rotate(0deg); color: var(--p500); }
+.sheet:hover .foldbtn { color: var(--p500); }
+.foldbtn:hover { background: var(--mist); }
+.foldbtn .ic { margin: 0; vertical-align: 0; }
+.fold-hide { display: none !important; }
+.sheetbody .folded::after { content: ' …'; color: var(--muted); font-weight: 400; }
+.foldall { font-size: 13px; margin: 0 0 6px; color: var(--muted); }
+@media print { .foldlayer { display: none; } .fold-hide { display: block !important; } .sheetbody .folded::after { content: ''; } }
+
+/* numbering control in the toolbar */
+.numwrap { display: inline-flex; align-items: center; margin-right: 8px; }
+.sheetbody .toastui-editor-contents li > p { margin: 0 0 6px !important; }
+.sheetbody .toastui-editor-contents li { margin-top: 0 !important; }
+
+.foldbtn.small { width: 22px; height: 22px; left: 3px; }
+.foldbtn.small .ic svg { width: 15px; height: 15px; }
+
+/* in a numbered document, tables and text that follow a clause line up with the clause's text, not the page edge */
+.sheetbody.legal .toastui-editor-contents > table, .sheetbody.legal .toastui-editor-contents > p, .sheetbody.legal .toastui-editor-contents > blockquote, .sheetbody.legal .toastui-editor-contents > hr { margin-left: 3.4em; max-width: calc(100% - 3.4em); }
+.sheetbody.legal .toastui-editor-contents > table { width: calc(100% - 3.4em); }
+
+/* numbered clauses: the number hangs at the left edge, the text sits in one straight column */
+.sheetbody.legal .toastui-editor-contents > ol { padding-left: 0 !important; margin: 0 0 4px !important; }
+.sheetbody.legal .toastui-editor-contents > ol > li { padding-left: 3.6em !important; margin: 0 0 10px !important; }
+.sheetbody.legal .toastui-editor-contents > ol > li::before { left: 0 !important; width: 3.1em !important; text-align: left !important; }
+.sheetbody.legal .toastui-editor-contents > ol > li > ol { padding-left: 0 !important; margin: 6px 0 8px !important; }
+.sheetbody.legal .toastui-editor-contents h2 { margin-top: 30px; }
+.sheetbody.legal .toastui-editor-contents > ol + h2, .sheetbody.legal .toastui-editor-contents > h2:first-child { margin-top: 26px; }
+.foldbtn.small { left: 0 !important; }
+
+/* every chevron is the same size and sits on the same vertical line */
+.foldbtn, .foldbtn.small { width: 24px !important; height: 24px !important; left: 2px !important; }
+.foldbtn .ic svg { width: 16px; height: 16px; }
+
+/* sub-items: the number starts exactly where the clause text starts, at every depth, and sits on the same baseline as its text */
+.sheetbody.legal .toastui-editor-contents li > ol, .sheetbody.legal .toastui-editor-contents li > ul { padding-left: 0 !important; margin-left: 0 !important; }
+.sheetbody.legal .toastui-editor-contents li li { padding-left: 2.7em !important; margin-top: 0 !important; margin-bottom: 4px !important; }
+.sheetbody.legal .toastui-editor-contents li li > p { margin: 0 !important; }
+.sheetbody.legal .toastui-editor-contents li ol > li::before { left: 0 !important; top: 0 !important; line-height: inherit !important; height: auto !important; width: 2.5em !important; text-align: left !important; }
+
+/* an article's number is big, in the number column; its title starts where the clause text starts */
+.sheetbody.legal .toastui-editor-contents h2 { position: relative; padding-left: 61.2px !important; }
+.sheetbody.legal .toastui-editor-contents h2::before { position: absolute; left: 0; top: 0; font-size: inherit; line-height: inherit; font-weight: 700; color: var(--p500); letter-spacing: -.02em; }
+
+/* table column drag handles */
+.tablelayer { position: absolute; left: 0; top: 0; width: 100%; height: 0; z-index: 3; pointer-events: none; }
+.colhandle { position: absolute; width: 11px; margin-left: -5px; cursor: col-resize; pointer-events: auto; }
+.colhandle::after { content: ''; position: absolute; left: 4px; top: 0; bottom: 0; width: 3px; border-radius: 2px; background: transparent; transition: background .15s; }
+.colhandle:hover::after { background: var(--p500); }
+@media print { .tablelayer { display: none; } }
+
+/* the table menu: solid, wide enough for its labels, above the page */
+.toastui-editor-context-menu { background: #fff !important; width: auto !important; min-width: 250px; z-index: 50 !important; border-radius: 12px; box-shadow: 0 12px 32px -10px rgba(40,10,38,.45), 0 0 0 1px var(--line) !important; padding: 6px 0; }
+.toastui-editor-context-menu .menu-item, .toastui-editor-context-menu .menu-item span { white-space: nowrap !important; }
+.toastui-editor-context-menu .menu-group { margin: 0; }
+.tablelayer { z-index: 40 !important; }
+.colhandle::after { background: rgba(134, 48, 111, .22); }
+.colhandle:hover::after, .colhandle:active::after { background: var(--p500); }
+
+.titlebox .row:empty, .titlebox .row:has(> .savestate:empty) { display: none; }
+
+/* article titles have one fixed look: any mark inside them (from older text or a paste) cannot change the size or spacing */
+.sheetbody .toastui-editor-contents h2 strong, .sheetbody .toastui-editor-contents h2 em, .sheetbody .toastui-editor-contents h2 a, .sheetbody .toastui-editor-contents h2 b, .sheetbody .toastui-editor-contents h2 i { font: inherit !important; line-height: inherit !important; color: inherit !important; text-decoration: none !important; }
+
+/* ===== Spacing scale for a document (one place to tune it) ===== */
+.sheetbody {
+  --lh: 1.72;            /* line height of body text */
+  --gap-para: 10px;      /* between paragraphs inside a clause */
+  --gap-clause: 20px;    /* between one clause and the next */
+  --gap-sub: 9px;        /* between sub-items (a), (b), (c) */
+  --gap-list: 12px;      /* above and below a list of sub-items */
+  --gap-art-top: 52px;   /* space above an article title */
+  --gap-art-bottom: 18px;/* space between an article title and its first clause */
+  --gap-block: 16px;     /* above and below a table */
+}
+.sheetbody .ProseMirror, .sheetbody .toastui-editor-contents { line-height: var(--lh) !important; }
+.sheetbody .toastui-editor-contents h2 { margin: var(--gap-art-top) 0 var(--gap-art-bottom) !important; line-height: 1.25 !important; }
+.sheetbody .toastui-editor-contents > h2:first-child { margin-top: 34px !important; }
+.sheetbody.legal .toastui-editor-contents > ol { margin: 0 !important; }
+.sheetbody.legal .toastui-editor-contents > ol > li { margin: 0 0 var(--gap-clause) !important; }
+.sheetbody.legal .toastui-editor-contents > ol > li > p { margin: 0 0 var(--gap-para) !important; }
+.sheetbody.legal .toastui-editor-contents > ol > li > p:last-child { margin-bottom: 0 !important; }
+.sheetbody.legal .toastui-editor-contents li > ol, .sheetbody.legal .toastui-editor-contents li > ul { margin: var(--gap-list) 0 var(--gap-list) !important; }
+.sheetbody.legal .toastui-editor-contents li li { margin: 0 0 var(--gap-sub) !important; }
+.sheetbody.legal .toastui-editor-contents li li:last-child { margin-bottom: 0 !important; }
+.sheetbody.legal .toastui-editor-contents li li > p { margin: 0 !important; }
+.sheetbody .toastui-editor-contents li > table { margin: var(--gap-block) 0 !important; }
+.sheetbody .toastui-editor-contents table { margin-top: var(--gap-block); margin-bottom: var(--gap-block); }
+.sheetbody .toastui-editor-contents p { margin-bottom: var(--gap-para); }
+
+/* ===== Page layout: a full-width lilac band, a wider sheet, and the toolbar on the sheet ===== */
+.wrap:has(.stage) { max-width: 1640px; }
+.stage { background: #f1ecf2; box-shadow: 0 0 0 100vmax #f1ecf2; clip-path: inset(0 -100vmax); margin: 14px 0 0; padding: 14px 0 70px; }
+.sheetcol { min-width: 0; }
+.sheetcol > .docbar { max-width: none; margin: 0 0 14px; }
+.sheetcol > .sheet { max-width: none; margin: 0; }
+.sheetrow { justify-content: center; }
+@media (min-width: 1100px) { .sheetrow { grid-template-columns: minmax(0, 1000px) 320px; } }
+@media (min-width: 1500px) { .sheetrow { grid-template-columns: 210px minmax(0, 1000px) 320px; } }
+@media (max-width: 1099px) { .sheetcol > .sheet { margin: 0 auto; } }
+@media (max-width: 700px) { .stage { padding: 8px 0 50px; } .sheetcol > .docbar { border-radius: 0; } }
+.histwrap { max-width: 1000px; }
+
+/* ===== zoom: the paper grows and shrinks; the toolbar, outline and comments stay where they are ===== */
+.stage { --z: 1; }
+.sheetcol > .paperview { overflow-x: auto; overflow-y: hidden; padding: 0 0 40px; margin-bottom: -40px; scrollbar-width: thin; }
+.paperview > .sheet { zoom: var(--z); width: min(1000px, var(--colw, 1000px)); max-width: none; margin: 0 auto; }
+.sheet .titlebox, .sheet .sheetbody { zoom: 1 !important; }
+.zoomwrap { display: inline-flex; align-items: center; gap: 0; margin-right: 8px; }
+.zoomlabel { background: transparent; border: 0; font: inherit; font-size: 13px; font-weight: 600; color: #333; min-width: 46px; height: 32px; border-radius: 6px; cursor: pointer; }
+.zoomlabel:hover { background: var(--mist); }
+@media (min-width: 1100px) { .sheetrow { grid-template-columns: minmax(0, 1000px) 320px; } }
+@media (min-width: 1500px) { .sheetrow { grid-template-columns: 210px minmax(0, 1000px) 320px; } }
+/* wide screens: the sheet area and its toolbar sit exactly in the middle, with the outline on its left and comments on its right */
+@media (min-width: 1700px) {
+  .sheetrow { grid-template-columns: minmax(238px, 1fr) minmax(0, 1000px) minmax(348px, 1fr); gap: 0; }
+  .sheetrow > .toc { justify-self: end; width: 210px; margin-right: 28px; }
+  .notes-col { justify-self: start; width: 320px; margin-left: 28px; }
+}
+@media print { .paperview > .sheet { zoom: 1 !important; width: auto; } .zoomwrap { display: none; } }
+
+/* the document row spans the whole window so the sheet is truly centred, whatever the page's text width */
+body { overflow-x: clip; }
+@media (min-width: 1700px) { .sheetrow { margin-left: calc(50% - 50vw + 24px); margin-right: calc(50% - 50vw + 24px); } }
+
+/* outline: articles with their clauses */
+.toc nav { max-height: 62vh; overflow-y: auto; }
+.oart { margin: 0 0 2px; }
+.oarthead { display: flex; align-items: flex-start; gap: 2px; }
+.otog { flex: none; width: 22px; height: 28px; padding: 0; border: 0; background: transparent; color: var(--p500); cursor: pointer; display: grid; place-items: center; transform: rotate(90deg); transition: transform .15s; }
+.otog.shut { transform: rotate(0); }
+.otog.none { cursor: default; }
+.otog .ic { margin: 0; vertical-align: 0; } .otog svg { width: 14px; height: 14px; }
+.toc a.oa, .toc a.oc { display: flex; gap: 8px; padding: 4px 8px; margin: 0; border-radius: 8px; color: var(--ink); text-decoration: none; line-height: 1.3; font-size: 14px; }
+.toc a.oa { font-weight: 700; flex: 1; }
+.toc a.oa span { color: var(--p500); min-width: 1.6em; }
+.oclauses { margin: 0 0 6px 24px; }
+.toc a.oc { font-size: 13px; color: #4b3a49; font-weight: 400; }
+.toc a.oc span { color: var(--p500); font-weight: 700; min-width: 3.1em; }
+.toc a.oa:hover, .toc a.oc:hover { background: var(--mist); }
+.toc a.on { background: var(--mist); color: var(--p900); }
+.toc a.oc.on { font-weight: 600; }
+@media (min-width: 1500px) { .toc nav { max-height: none; overflow: visible; } }
+
+/* text lays out at its exact size at every zoom, so a line holds the same words whether you zoom in or out (no rounding of letter widths) */
+.paperview > .sheet, .paperview > .sheet * { text-rendering: geometricPrecision; font-kerning: normal; }
+.sheetbody p, .sheetbody li, .titlebox textarea { text-wrap: wrap; }
+
+/* outline rows: the number, then the title or opening words on at most two lines (the width of the panel decides where the text ends) */
+.toc a.oa, .toc a.oc { align-items: flex-start; }
+.toc a .onum { flex: none; }
+.toc a .otext { flex: 1; min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+
+/* drag the left edge of the outline to change its width */
+.outresize { display: none; }
+@media (min-width: 1500px) {
+  .sheetrow { grid-template-columns: var(--outw, 210px) minmax(0, 1000px) 320px; }
+  .sheetrow > .toc { width: var(--outw, 210px); }
+  .outresize { display: block; position: absolute; left: -2px; top: 0; bottom: 0; width: 10px; cursor: col-resize; z-index: 5; }
+  .outresize::after { content: ''; position: absolute; left: 3px; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: transparent; transition: background .15s; }
+  .toc:hover .outresize::after { background: rgba(134, 48, 111, .22); }
+  .outresize:hover::after { background: var(--p500) !important; }
+}
+@media (min-width: 1700px) {
+  .sheetrow { grid-template-columns: minmax(max(calc(var(--outw, 210px) + 28px), 348px), 1fr) minmax(0, 1000px) minmax(max(calc(var(--outw, 210px) + 28px), 348px), 1fr); }
+  .sheetrow > .toc { width: var(--outw, 210px); }
+}
+
+/* ===== The outline as a card ===== */
+.sheetrow > .toc { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 22px -16px rgba(58, 10, 46, .5); padding: 14px 10px 12px !important; margin-bottom: 14px; }
+.sheetrow > .toc summary { padding: 0 6px 10px; margin: 0 0 8px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sheetrow > .toc nav { padding: 0; }
+.sheetrow > .toc .foldall { font-size: 12px; line-height: 1.7; margin: 0 6px 12px; color: var(--muted); }
+.sheetrow > .toc .foldall .linkbtn { font-size: 12px; }
+.sheetrow > .toc .oart { margin: 0 0 8px; }
+.sheetrow > .toc .oarthead { gap: 0; }
+.sheetrow > .toc .otog { width: 22px; height: 30px; }
+/* articles and clauses share two columns: the number, then the text, so everything lines up */
+.sheetrow > .toc a.oa, .sheetrow > .toc a.oc { gap: 10px; padding: 5px 8px; border-radius: 8px; line-height: 1.35; color: var(--ink); }
+.sheetrow > .toc a.oa { font-size: 14px; font-weight: 700; color: var(--p900); }
+.sheetrow > .toc a.oc { font-size: 13px; font-weight: 400; color: #4b3a49; }
+.sheetrow > .toc a .onum { width: 2.9em; text-align: left; color: var(--p500); font-weight: 700; }
+.sheetrow > .toc .oclauses { margin: 1px 0 0 22px; }
+.sheetrow > .toc a.oc.on, .sheetrow > .toc a.oa.on { background: var(--mist); color: var(--p900); }
+.sheetrow > .toc a.oc.on { font-weight: 600; }
+@media (min-width: 1500px) {
+  .sheetrow > .toc { max-height: calc(100vh - 150px); overflow: auto; }
+  .sheetrow > .toc summary { pointer-events: none; cursor: default; }
+  .sheetrow > .toc summary::after { display: none; }
+}
+@media (max-width: 1499px) { .sheetrow > .toc summary { cursor: pointer; } }
+
+/* outline text is black; only the numbers are purple */
+.sheetrow > .toc a.oa, .sheetrow > .toc a.oc, .sheetrow > .toc a.oa.on, .sheetrow > .toc a.oc.on { color: #1a1a1a !important; }
+.sheetrow > .toc a .otext { color: #1a1a1a !important; font-weight: inherit !important; min-width: 0 !important; }
+.sheetrow > .toc a.oa .otext { font-weight: 700 !important; }
+.sheetrow > .toc a.oc .otext { font-weight: 400 !important; }
+.sheetrow > .toc a.oc.on .otext { font-weight: 600 !important; }
+.sheetrow > .toc a .onum { color: var(--p500) !important; font-weight: 700 !important; }
+
+/* Scrolling the outline never scrolls the document once the outline reaches its top or bottom */
+.toc, .toc nav, .sheetrow > .toc { overscroll-behavior: contain; }
+
+/* The line you jumped to from the outline: a soft purple wash that fades out */
+.jumpflash { position: absolute; z-index: 1; pointer-events: none; border-radius: 6px; background: rgba(139, 61, 120, .22); box-shadow: 0 0 0 2px rgba(139, 61, 120, .45); animation: jumpflash 1.8s ease-out forwards; }
+@keyframes jumpflash { 0% { opacity: 0; } 12% { opacity: 1; } 55% { opacity: 1; } 100% { opacity: 0; } }
+@media print, (prefers-reduced-motion: reduce) { .jumpflash { animation-duration: .01s; display: none; } }
+
+/* The outline's title and its Collapse/Expand links stay at the top of the card while its list scrolls */
+@media (min-width: 1500px) {
+  .sheetrow > .toc summary { position: sticky; top: -14px; z-index: 3; background: #fff; margin: -14px -10px 0; padding: 14px 16px 10px; border-bottom: 0; box-shadow: 0 1px 0 var(--line); }
+  .sheetrow > .toc .foldall { position: sticky; top: calc(var(--sumh, 44px) - 14px); z-index: 2; background: #fff; margin: 0 -10px 4px; padding: 10px 16px 8px; }
+}
+
+/* The outline card (wide windows): minimise to its title bar, drag it by the title bar */
+.outmin { display: none; }
+@media (min-width: 1500px) {
+  .sheetrow > .toc summary { display: flex; align-items: center; justify-content: space-between; pointer-events: auto; cursor: grab; user-select: none; }
+  .sheetrow > .toc.dragging summary { cursor: grabbing; }
+  .sheetrow > .toc.moved { z-index: 30; box-shadow: 0 16px 36px -14px rgba(58, 10, 46, .55); }
+  .outmin { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin: -4px -4px -4px 8px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
+  .outmin:hover { background: var(--mist); color: var(--p900); }
+  .outmin svg { width: 16px; height: 16px; transition: transform .15s; transform: rotate(-90deg); }
+  .sheetrow > .toc.min .outmin svg { transform: rotate(90deg); }
+  .sheetrow > .toc.min nav { display: none; }
+  .sheetrow > .toc.min summary { box-shadow: none; padding-bottom: 0; }
+  .sheetrow > .toc.min { padding-bottom: 14px !important; }
+}
+@media (max-width: 1499px) { .sheetrow > .toc { translate: none !important; } }
+
+/* Cell colour picker and the document's own fold buttons */
+.foldbtns { display: inline-flex; gap: 2px; }
+.fillpop { position: fixed; z-index: 60; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; box-shadow: 0 14px 34px -12px rgba(58, 10, 46, .45); }
+.fillhead { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 0 2px 8px; }
+.fillgrid { display: grid; grid-template-columns: repeat(4, 28px); gap: 6px; }
+.fillsw { width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(58, 10, 46, .22); padding: 0; cursor: pointer; }
+.fillsw:hover { outline: 2px solid var(--p500); outline-offset: 1px; }
+.fillsw.none { background: linear-gradient(135deg, #fff 46%, #c0392b 47%, #c0392b 53%, #fff 54%); }
+@media print { .fillpop { display: none; } }
+
+/* Zooming moves the page by hand; the browser must not also "anchor" it */
+html, body, .paperview { overflow-anchor: none; }
+
+/* during a pinch / Ctrl+scroll zoom the scaled sheet may spill over the column for a moment */
+.sheetcol > .paperview.zooming { overflow: visible; }
+
+/* When the paper is wider than its column it must overflow to the right only (where it can be scrolled to), never off the left edge:
+   in a flex row, auto margins never go negative, so the paper stays centred while it fits and starts at the left edge once it does not. */
+.sheetcol > .paperview { display: flex; }
+.paperview > .sheet { flex: none; }
+@media print { .sheetcol > .paperview { display: block; } }
+
+/* The website's own header is shown above the page (in a frame, by suite-nav.js) and has the sign-in, password and sign-out: this app's own strip is then redundant. */
+html.lkc-embedded > body > header.top { display: none; }
