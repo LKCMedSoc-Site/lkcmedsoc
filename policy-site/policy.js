@@ -786,6 +786,42 @@
       tr.setSelection(st.selection.constructor.near(tr.doc.resolve(at + 3), 1));
       view.dispatch(tr.scrollIntoView());
     }
+    // A table is a block that belongs to a clause or a sub-item, so Tab and Shift+Tab move it between levels the way they move text:
+    //  Tab        the table goes under the last sub-item of the clause it is in (it needs a sub-item above it to go under);
+    //  Shift+Tab  the table comes out from under its sub-item to the level above (only when it is the last thing in the last sub-item, so nothing changes order).
+    // (The editor's own Tab-between-cells fails in this setup and fell through to "indent", which moved the whole clause.)
+    function tableAt(view, tableEl) {
+      var $in = view.state.doc.resolve(view.posAtDOM(tableEl, 0)), d = $in.depth;
+      while (d > 0 && $in.node(d).type.name !== 'table') d--;
+      return d > 0 ? { $in: $in, depth: d, node: $in.node(d), pos: $in.before(d) } : null;
+    }
+    function indentTable(view, tableEl) {
+      var t = tableAt(view, tableEl); if (!t) return;
+      var st = view.state, li = t.$in.node(t.depth - 1), idx = t.$in.index(t.depth - 1);
+      if (li.type.name !== 'listItem') return;
+      var prev = idx > 0 ? li.child(idx - 1) : null;
+      if (!isList(prev)) { P.toast('There is no sub-item above this table to put it under.', true); return; }
+      var items = []; prev.forEach(function (x) { items.push(x); });
+      var last = items.pop(); items.push(last.type.create(last.attrs, last.content.addToEnd(t.node)));
+      var newPrev = prev.type.create(prev.attrs, items), prevPos = t.pos - prev.nodeSize;
+      var tr = st.tr.replaceWith(prevPos, t.pos + t.node.nodeSize, newPrev);
+      var tableStart = prevPos + 1; for (var i = 0; i < items.length - 1; i++) tableStart += items[i].nodeSize;
+      tableStart += 1 + (items[items.length - 1].content.size - t.node.nodeSize);
+      try { tr.setSelection(st.selection.constructor.near(tr.doc.resolve(tableStart + 1), 1)); } catch (e) { /* the cursor stays */ }
+      view.dispatch(tr.scrollIntoView());
+    }
+    function outdentTable(view, tableEl) {
+      var t = tableAt(view, tableEl); if (!t) return;
+      var st = view.state, x = t.$in.node(t.depth - 1);                               // the clause or sub-item the table is in
+      if (x.type.name !== 'listItem') return;
+      var list = t.depth - 2 >= 0 ? t.$in.node(t.depth - 2) : null, parent = t.depth - 3 >= 0 ? t.$in.node(t.depth - 3) : null;
+      if (!isList(list) || !parent || parent.type.name !== 'listItem') { P.toast('A table has to stay inside a clause.', true); return; }
+      if (t.$in.index(t.depth - 1) !== x.childCount - 1 || t.$in.index(t.depth - 2) !== list.childCount - 1) { P.toast('A table can only come out from under the last sub-item, so nothing changes order.', true); return; }
+      var listEnd = t.$in.after(t.depth - 2), tr = st.tr.delete(t.pos, t.pos + t.node.nodeSize), at = tr.mapping.map(listEnd);
+      tr.insert(at, t.node);
+      try { tr.setSelection(st.selection.constructor.near(tr.doc.resolve(at + 1), 1)); } catch (e) { /* the cursor stays */ }
+      view.dispatch(tr.scrollIntoView());
+    }
     function indentLevel() {
       var v = pmView(); if (!v) return; var lv = levelAt(v.state); if (lv < 0) return;
       if (lv === 0) { var r = articleToClause(v); if (r !== true) P.toast(r, true); return; }
@@ -994,7 +1030,10 @@
     if (canEdit) {
       sheetBody.addEventListener('keydown', function (ev) {
         if (ev.key !== 'Tab' || ev.ctrlKey || ev.metaKey || ev.altKey || !ed) return;
-        var v = pmView(); if (!v || levelAt(v.state) < 0) return;
+        var v = pmView(); if (!v) return;
+        var dsel = window.getSelection(), dn = dsel && dsel.anchorNode, del = dn && (dn.nodeType === 3 ? dn.parentElement : dn), dcell = del && del.closest && del.closest('td,th');
+        if (dcell && rootEl() && rootEl().contains(dcell)) { ev.preventDefault(); ev.stopPropagation(); var tEl = dcell.closest('table'); if (ev.shiftKey) outdentTable(v, tEl); else indentTable(v, tEl); return; }
+        if (levelAt(v.state) < 0) return;
         ev.preventDefault(); ev.stopPropagation(); if (ev.shiftKey) outdentLevel(); else indentLevel();
       }, true);
     }
