@@ -31,6 +31,10 @@
     ".lkcsi-form p.lkcsi-msg.ok{color:#1d7a4d;background:#dcfce7}",
     ".lkcsi-form input{width:100%;margin:0;border:1px solid #d3a6cf;border-radius:8px;background:#fff;padding:10px 12px;font:inherit;color:#2a0f28}",
     ".lkcsi-form input:focus-visible,.lkcsi button:focus-visible{outline:2px solid #8e2a88;outline-offset:2px}",
+    ".lkcsi-pw{position:relative}",
+    ".lkcsi-form .lkcsi-pw input{padding-right:64px}",
+    ".lkcsi-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;border-radius:6px;background:transparent;padding:4px 8px;font:inherit;font-size:13px;font-weight:700;color:#4d0a49;cursor:pointer}",
+    ".lkcsi-eye:hover{background:#ebe1fa}",
     ".lkcsi-row{display:flex;flex-wrap:wrap;gap:8px}",
     ".lkcsi-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #4d0a49;border-radius:8px;background:#4d0a49;padding:10px 16px;font:inherit;font-weight:700;color:#fff;cursor:pointer}",
     ".lkcsi-btn.out{background:#fff;color:#4d0a49}",
@@ -46,6 +50,18 @@
     for (var k in attrs || {}) { if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]); }
     for (var i = 2; i < arguments.length; i++) if (arguments[i]) n.appendChild(arguments[i]);
     return n;
+  }
+  // a password box with a Show / Hide button
+  function secret(input) {
+    var b = el('button', { type: 'button', 'class': 'lkcsi-eye', 'aria-pressed': 'false', text: 'Show' });
+    b.addEventListener('click', function () {
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      b.textContent = show ? 'Hide' : 'Show'; b.setAttribute('aria-pressed', String(show));
+      b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+    b.setAttribute('aria-label', 'Show password');
+    return el('div', { 'class': 'lkcsi-pw' }, input, b);
   }
   function ensureStyle() {
     if (document.getElementById('lkcsi-style')) return;
@@ -74,7 +90,7 @@
     document.body.appendChild(root);
     draw('signin', o.note ? { text: o.note, ok: true } : null);
 
-    function draw(mode, msg, keep) {
+    function draw(mode, msg, keep) {   // keep: what was typed, put back after an error
       var email = el('input', { type: 'email', placeholder: 'you@e.ntu.edu.sg', autocomplete: 'username', 'aria-label': 'Email' });
       var pw = el('input', { type: 'password', placeholder: 'Password', autocomplete: mode === 'signup' ? 'new-password' : 'current-password', 'aria-label': 'Password' });
       var pw2 = el('input', { type: 'password', placeholder: 'Repeat password', autocomplete: 'new-password', 'aria-label': 'Repeat password' });
@@ -87,13 +103,13 @@
       var form = el('form', { 'class': 'lkcsi-form', novalidate: '' },
         el('h3', { text: mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Reset password' : 'Sign in with your NTU email' }),
         mode === 'signup' ? el('p', { text: 'Use your NTU email. We send a link to confirm it is yours. Same account on every LKCMedSoc site.' }) : null,
-        note, email, mode !== 'forgot' ? pw : null, mode === 'signup' ? pw2 : null, row);
+        note, email, mode !== 'forgot' ? secret(pw) : null, mode === 'signup' ? secret(pw2) : null, row);
       var close_ = el('button', { type: 'button', 'class': 'lkcsi-x', 'aria-label': 'Close' }); close_.innerHTML = X;
       close_.addEventListener('click', function () { close(false, o); });
       panel.replaceChildren(close_, el('p', { 'class': 'lkcsi-intro', text: 'One sign-in works on every LKCMedSoc site.' }), form);
-      if (keep) { email.value = keep; (mode === 'forgot' ? email : pw).focus(); } else email.focus();
+      if (keep) { email.value = keep.email; pw.value = keep.pw; pw2.value = keep.pw2; (mode === 'forgot' || !keep.email ? email : pw).focus(); } else email.focus();
 
-      function fail(m) { draw(mode, { text: m, ok: false }, email.value); }
+      function fail(m) { draw(mode, { text: m, ok: false }, { email: email.value, pw: pw.value, pw2: pw2.value }); }
       function say(e) { return o.friendly ? o.friendly(e) : (e && e.message) || 'Something went wrong'; }
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();

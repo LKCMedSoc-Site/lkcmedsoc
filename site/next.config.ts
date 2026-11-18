@@ -54,10 +54,10 @@ const config: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' }],
   },
-  // The framed header (/embed/header) may only be shown by LKCMedSoc's own sites (and by localhost while developing).
+  // The framed header (/embed/header) may only be shown by LKCMedSoc's own sites, and by localhost (also on the deployed site, so an app
+  // being worked on locally shows the real header from preview.lkcmedsoc.com instead of the small fallback bar).
   async headers() {
-    const dev = process.env.NODE_ENV !== 'production';
-    const ancestors = ["'self'", 'https://lkcmedsoc.com', 'https://*.lkcmedsoc.com', ...(dev ? ['http://localhost:*', 'http://127.0.0.1:*'] : [])].join(' ');
+    const ancestors = ["'self'", 'https://lkcmedsoc.com', 'https://*.lkcmedsoc.com', 'http://localhost:*', 'http://127.0.0.1:*'].join(' ');
     return [{ source: '/embed/:path*', headers: [{ key: 'Content-Security-Policy', value: `frame-ancestors ${ancestors}` }] }];
   },
   async redirects() {
