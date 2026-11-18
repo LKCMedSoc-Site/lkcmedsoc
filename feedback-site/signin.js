@@ -91,7 +91,7 @@
     draw('signin', o.note ? { text: o.note, ok: true } : null);
 
     function draw(mode, msg, keep) {   // keep: what was typed, put back after an error
-      var email = el('input', { type: 'email', placeholder: 'you@e.ntu.edu.sg', autocomplete: 'username', 'aria-label': 'Email' });
+      var email = el('input', { type: 'email', placeholder: 'yourname@e.ntu.edu.sg', autocomplete: 'username', 'aria-label': 'Email' });
       var pw = el('input', { type: 'password', placeholder: 'Password', autocomplete: mode === 'signup' ? 'new-password' : 'current-password', 'aria-label': 'Password' });
       var pw2 = el('input', { type: 'password', placeholder: 'Repeat password', autocomplete: 'new-password', 'aria-label': 'Repeat password' });
       var go = el('button', { type: 'submit', 'class': 'lkcsi-btn', text: mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Email me a reset link' : 'Sign in' });
@@ -114,7 +114,8 @@
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
         var e = email.value.trim().toLowerCase();
-        if (e.indexOf('@') < 0) { fail('Enter your email'); return; }
+        if (!e) { fail('Enter your email'); return; }
+        if (e.indexOf('@') < 0) e += '@e.ntu.edu.sg';   // just the name was typed: students' NTU address (anyone else types the whole address)
         var auth = o.sb.auth, back = o.redirect || location.origin + location.pathname;
         go.disabled = true;
         var again = function (m) { go.disabled = false; fail(m); };
