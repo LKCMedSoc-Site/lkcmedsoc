@@ -107,13 +107,22 @@
       function to(m) { return function () { draw(m); }; }
       var row = el('div', { 'class': 'lkcsi-row' }, go);
       if (mode === 'signin') { row.appendChild(link('Create account', to('signup'))); row.appendChild(link('Forgot password', to('forgot'))); }
-      else if (mode === 'code') {
+      else if (mode === 'forgot') {
+        row.appendChild(link('I already have a code', function () {
+          var e = email.value.trim().toLowerCase();
+          if (!e) { fail('Enter your email first'); return; }
+          draw('code', null, null, { email: e.indexOf('@') < 0 ? e + '@e.ntu.edu.sg' : e, kind: 'recovery' });
+        }));
+        row.appendChild(link('Back to sign in', to('signin')));
+      } else if (mode === 'code') {
         row.appendChild(link('Send a new code', function () { resend(); }));
         row.appendChild(link('Back', to(ctx.kind === 'signup' ? 'signup' : 'forgot')));
       } else row.appendChild(link('Back to sign in', to('signin')));
       var intro = mode === 'signup' ? 'Use your NTU email. We email you a 6-digit code to confirm it is yours. Same account on every LKCMedSoc site.'
         : mode === 'forgot' ? 'We email you a 6-digit code. Type it here, then choose a new password.'
-        : mode === 'code' ? 'We sent a 6-digit code to ' + ctx.email + '. It can take a minute; check junk mail too.' : '';
+        : mode === 'code' ? (ctx.kind === 'recovery'
+            ? 'If ' + ctx.email + ' has an account, a 6-digit code is on its way. It can take a minute; check junk mail too.'
+            : 'We sent a 6-digit code to ' + ctx.email + '. It can take a minute; check junk mail too. Nothing arrived? You may already have an account: go Back and use Forgot password.') : '';
       var form = el('form', { 'class': 'lkcsi-form', novalidate: '' },
         el('h3', { text: titles[mode] }),
         intro ? el('p', { text: intro }) : null,

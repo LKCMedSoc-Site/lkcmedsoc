@@ -148,6 +148,9 @@
     var tabs = [['record', 'My record']];
     if (me.can_manage || me.is_admin) tabs.push(['manage', 'Manage body']);
     if (me.is_admin) tabs.push(['admin', 'Admin']);
+    var canAccounts = false;   // ExCo (and admins): the People table, student records and accounts. The database checks this again on every call.
+    try { canAccounts = (await sb.rpc('accounts_ok')).data === true; } catch (e) { /* sql/accounts_admin.sql not run yet */ }
+    if (canAccounts) tabs.push(['accounts', 'People']);
     if (!tabs.some(function (t) { return t[0] === tab; })) tab = 'record';
     $tabs.hidden = false;
     $tabs.replaceChildren.apply($tabs, tabs.map(function (t) {
@@ -159,6 +162,7 @@
         roster: rosterInto, pageEditor: function (slot, body) { window.GroupPages.edit(kit, body, slot); } };
       window.ManageBody.view(kit);
     }
+    else if (tab === 'accounts') window.Accounts.view({ h: h, sb: sb, must: must, run: run, toast: toast, show: show, me: me });
     else adminView();
   }
 

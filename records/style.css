@@ -204,3 +204,27 @@ label.check { display: flex; gap: 8px; align-items: center; font-size: 15px; col
 
 /* Elements the scripts hide with the hidden attribute must stay hidden even when a rule above sets display */
 .toolbar[hidden], .ve[hidden], .md-preview[hidden], .ve-page[hidden] { display: none; }
+
+/* Accounts tab (ExCo) */
+.acct-sub { display: block; color: var(--muted); font-size: 12px; font-weight: 400; word-break: break-all; }
+.acct-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.acct-actions button { padding: 5px 10px; font-size: 13px; }
+.acct-edit { display: grid; gap: 6px; min-width: 220px; }
+.acct-edit .chk { font-size: 13px; display: flex; gap: 6px; align-items: center; }
+
+.pp-table tbody tr { cursor: pointer; }
+.pp-table tbody tr:hover, .pp-table tbody tr:focus-visible { background: var(--p50); outline: none; }
+.pp-back { position: fixed; inset: 0; z-index: 90; background: rgba(42, 6, 40, .55); display: flex; justify-content: flex-end; }
+.pp-panel { width: min(460px, 100%); height: 100%; background: #fff; overflow-y: auto; box-shadow: -18px 0 40px -20px rgba(0,0,0,.4); }
+.pp-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 16px 18px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: #fff; z-index: 1; }
+.pp-head h3 { margin: 0; }
+.pp-x { border: 0; background: var(--p100); color: var(--p700); width: 34px; height: 34px; border-radius: 999px; font-size: 22px; line-height: 1; cursor: pointer; flex: none; }
+.pp-body { padding: 4px 18px 28px; }
+.pp-sec { border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 6px; }
+.pp-body h4 { margin: 16px 0 6px; }
+.pp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.pp-field { display: grid; gap: 3px; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.pp-field input, .pp-field select, .pp-field textarea { width: 100%; font-size: 15px; color: var(--ink); }
+.pp-list { margin: 0; padding-left: 18px; font-size: 14px; }
+.pp-list li { margin: 4px 0; }
+@media (max-width: 480px) { .pp-grid { grid-template-columns: 1fr; } }
