@@ -285,7 +285,11 @@ function makeExtensions(opts) {
           btn('Remove', 'Delete this picture', () => removeNode(editor, getPos, current)));
         box.append(img, handle, bar); dom.append(box);
         // Dragging moves whatever is selected if the grab is inside the selection. Make the picture the whole selection first, so no text comes along with it.
-        dom.addEventListener('dragstart', () => { const p = getPos(); if (typeof p === 'number') editor.commands.setNodeSelection(p); });
+        // The browser draws the drag ghost from its own text selection, which can run on into the next paragraph, so the ghost is set to the picture alone.
+        dom.addEventListener('dragstart', (e) => {
+          const p = getPos(); if (typeof p === 'number') editor.commands.setNodeSelection(p);
+          if (e.dataTransfer && e.dataTransfer.setDragImage) { const r = img.getBoundingClientRect(); e.dataTransfer.setDragImage(img, Math.max(0, e.clientX - r.left), Math.max(0, e.clientY - r.top)); }
+        });
         function paint() {
           img.src = current.attrs.src; img.alt = current.attrs.alt || '';
           box.style.width = (current.attrs.width || 100) + '%';
