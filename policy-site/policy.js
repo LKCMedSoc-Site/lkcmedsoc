@@ -847,6 +847,26 @@
       // Coming out from under a sub-item would leave the table after the sub-items with no number, which is not allowed (see numberAfterSubitems).
       P.toast('A table cannot come after the sub-items without a number of its own. Keep it under this sub-item.', true);
     }
+    // Backspace at the very start of a clause (or sub-item) that has things under it (sub-items, a table, more text) joins it into the clause above:
+    // its text joins the end of the one above, and what was under it moves up with it (sub-items are added after the ones already there). The editor's own
+    // Backspace here deletes the clause AND everything under it. With nothing under it, the editor's normal Backspace is kept.
+    function joinIntoPrevious(view) {
+      var st = view.state, sel = st.selection; if (!sel.empty) return false;
+      var $f = sel.$from, pDepth = $f.depth, liDepth = pDepth - 1;
+      if (pDepth < 2 || $f.parent.type.name !== 'paragraph' || $f.parentOffset !== 0 || $f.index(liDepth) !== 0) return false;
+      var B = $f.node(liDepth); if (B.type.name !== 'listItem' || B.childCount < 2) return false;                  // nothing under it: leave it to the editor
+      var idx = $f.index(liDepth - 1); if (idx < 1) return false;                                                // the first item has nothing above to join
+      var list = $f.node(liDepth - 1), A = list.child(idx - 1);
+      if (!A.firstChild || A.firstChild.type.name !== 'paragraph' || !B.firstChild || B.firstChild.type.name !== 'paragraph') return false;
+      var para = A.firstChild.type.create(A.firstChild.attrs, A.firstChild.content.append(B.firstChild.content));
+      var extras = [], lists = [], listType = null;
+      [A, B].forEach(function (n) { n.forEach(function (c, off, i) { if (i === 0) return; if (isList(c)) { if (!listType) listType = c; c.forEach(function (it) { lists.push(it); }); } else extras.push(c); }); });
+      var kids = [para].concat(extras); if (lists.length) kids.push(listType.type.create(listType.attrs, lists));
+      var merged = A.type.create(A.attrs, kids), start = $f.before(liDepth) - A.nodeSize, end = $f.after(liDepth);
+      var tr = st.tr.replaceWith(start, end, merged);
+      try { tr.setSelection(sel.constructor.near(tr.doc.resolve(start + 2 + A.firstChild.content.size), -1)); } catch (e) { /* the cursor stays */ }
+      view.dispatch(tr.scrollIntoView()); return true;
+    }
     function indentLevel() {
       var v = pmView(); if (!v) return; var lv = levelAt(v.state); if (lv < 0) return;
       if (lv === 0) { var r = articleToClause(v); if (r !== true) P.toast(r, true); return; }
@@ -1050,6 +1070,13 @@
       var top = fillRedo[fillRedo.length - 1];
       if (top && top.depth === histDepth()) { fillRedo.pop(); fillUndo.push(top); fillRestore(top.after); return; }
       inHistory = true; ed.exec('redo'); inHistory = false;
+    }
+    // Backspace at the start of a clause with things under it: join it into the clause above instead of deleting them all.
+    if (canEdit) {
+      sheetBody.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Backspace' || ev.ctrlKey || ev.metaKey || ev.altKey || ev.shiftKey || !ed) return;
+        var v = pmView(); if (v && joinIntoPrevious(v)) { ev.preventDefault(); ev.stopPropagation(); }
+      }, true);
     }
     // Tab goes down a level, Shift+Tab up (inside a table they keep moving between cells).
     if (canEdit) {
