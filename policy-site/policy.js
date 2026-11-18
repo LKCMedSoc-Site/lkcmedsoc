@@ -542,8 +542,8 @@
       var s = window.getSelection(), n = s && s.anchorNode, el = n && (n.nodeType === 3 ? n.parentElement : n), c = el && root.contains(el) && el.closest('td,th');
       return c ? [c] : [];
     }
-    function setFill(hex) {
-      var root = rootEl(), cells = selectedCells(); if (!root) return;
+    function setFill(hex, cellsGiven) {
+      var root = rootEl(), cells = cellsGiven && cellsGiven.length ? cellsGiven.filter(function (c) { return c.isConnected; }) : selectedCells(); if (!root) return;
       if (!cells.length) { P.toast('Click inside a table cell first.', true); return; }
       var rows = tableRows(root), beforeFills = fillSnap();
       cells.forEach(function (c) {
@@ -569,12 +569,12 @@
       var v = pmView(), pl = v && v.state.plugins.filter(function (p) { return p.key === 'history$'; })[0], hs = pl && pl.getState(v.state);
       return hs && hs.done ? hs.done.eventCount : -1;
     }
-    function fillMenu(anchor) {
+    function fillMenu(anchor, target) {
       var old = document.querySelector('.fillpop'); if (old) { old.remove(); return; }
       var r = anchor.getBoundingClientRect(), pop = h('div', { class: 'fillpop noprint', role: 'menu', style: 'left:' + Math.round(r.left) + 'px;top:' + Math.round(r.bottom + 6) + 'px' },
         h('div', { class: 'fillhead' }, 'Cell colour'),
         h('div', { class: 'fillgrid' }, FILLS.map(function (f) {
-          return h('button', { type: 'button', class: 'fillsw' + (f[1] ? '' : ' none'), title: f[0], 'aria-label': f[0], style: f[1] ? 'background:' + f[1] : '', onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { setFill(f[1]); pop.remove(); } });
+          return h('button', { type: 'button', class: 'fillsw' + (f[1] ? '' : ' none'), title: f[0], 'aria-label': f[0], style: f[1] ? 'background:' + f[1] : '', onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { setFill(f[1], target); pop.remove(); } });
         })));
       document.body.appendChild(pop);
       setTimeout(function () { document.addEventListener('mousedown', function away(ev) { if (!pop.contains(ev.target) && !anchor.contains(ev.target)) { pop.remove(); } if (!pop.isConnected) document.removeEventListener('mousedown', away); }); }, 0);
@@ -991,8 +991,8 @@
           var item = h('li', { class: 'menu-item', 'aria-role': 'menuitem' }, h('span', { class: 'cell-colour' }, 'Cell colour…')), group = h('ul', { class: 'menu-group' }, item);
           item.addEventListener('mousedown', function (e) { e.stopPropagation(); });
           item.addEventListener('click', function (e) {
-            e.stopPropagation(); var r = item.getBoundingClientRect(); menu.style.display = 'none';
-            fillMenu({ getBoundingClientRect: function () { return { left: r.right + 6, bottom: r.top - 6, right: r.right, top: r.top }; }, contains: function () { return false; } });
+            e.stopPropagation(); var r = item.getBoundingClientRect(), target = selectedCells(); menu.style.display = 'none';
+            fillMenu({ getBoundingClientRect: function () { return { left: r.right + 6, bottom: r.top - 6, right: r.right, top: r.top }; }, contains: function () { return false; } }, target);
           });
           menu.insertBefore(group, menu.lastElementChild);
         }, 30);
@@ -1017,7 +1017,7 @@
       sheetBody.addEventListener('mousedown', function (ev) {
         if (ev.button !== 0 || !rootEl()) return;
         var c = ev.target.closest && ev.target.closest('td,th');
-        if (!c || !rootEl().contains(c)) { clearCellSel(); return; }
+        if (!c || !rootEl().contains(c)) { if (!(ev.target.closest && ev.target.closest('.toastui-editor-context-menu, .fillpop'))) clearCellSel(); return; }
         if (ev.shiftKey && cellSel) { var a = cellSelCells()[0]; if (a && selectBetween(a, c)) { ev.preventDefault(); return; } }
         clearCellSel(); dragFrom = c;
         document.addEventListener('mousemove', dragMove); document.addEventListener('mouseup', dragEnd);
