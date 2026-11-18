@@ -162,8 +162,37 @@
       needArticle();
       addLoose(line, /^\|/.test(line));
     });
-    var res = out.join('\n');
+    var res = numberAfterSubitems(out.join('\n'));
     return res.replace(/\n{3,}/g, '\n\n') === String(md || '').replace(/\n{3,}/g, '\n\n') ? md : res;
+  }
+
+  // The rule for what sits inside a clause: its first line, then lead-in text and tables, then its numbered sub-items. Nothing unnumbered comes after the first sub-item,
+  // because it could not be cited and it is unclear which sub-item it belongs to. So a paragraph that ends up after the sub-items becomes the next sub-item, and a table
+  // there is wrapped in a new sub-item with a placeholder line to introduce it. (Text that is already inside a sub-item is indented deeper and is left alone.)
+  var TABLE_LEAD = 'Add a line here to introduce this table.';
+  function numberAfterSubitems(md) {
+    var lines = String(md || '').split('\n'), out = [], ci = -1, afterSub = false, joinTo = false, changed = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^#{1,6}\s/.test(line) || /^\d+\.(\s|$)/.test(line)) { ci = -1; afterSub = false; joinTo = false; out.push(line); continue; }      // an article, or a clause
+      var m = /^( +)(\S.*)$/.exec(line);
+      if (!m) { joinTo = false; out.push(line); continue; }                                                                                    // a blank line
+      var len = m[1].length; if (ci < 0) ci = len;
+      if (len !== ci) { out.push(line); continue; }                                                                                            // deeper: belongs to a sub-item above
+      var text = m[2], pad = m[1];
+      if (/^(\d+\.|[-*+])(\s|$)/.test(text)) { afterSub = true; joinTo = false; out.push(line); continue; }                                       // a sub-item
+      if (!afterSub) { out.push(line); continue; }                                                                                            // lead-in text or a table: where it belongs
+      changed = true;
+      if (/^\|/.test(text)) {                                                                                                                  // a table after the sub-items: give it a numbered item of its own
+        var run = [text]; while (i + 1 < lines.length && new RegExp('^ {' + ci + '}\\|').test(lines[i + 1])) { i++; run.push(lines[i].slice(ci)); }
+        out.push(pad + '1. ' + TABLE_LEAD, '');
+        run.forEach(function (r) { out.push(pad + '    ' + r); });
+        joinTo = false; continue;
+      }
+      if (joinTo) { out.push(pad + '   ' + text); continue; }                                                                                 // the next line of the same paragraph
+      out.push(pad + '1. ' + text); joinTo = true;                                                                                            // a paragraph after the sub-items becomes one
+    }
+    return changed ? out.join('\n') : md;
   }
 
   async function docPage(p, q) {
@@ -274,7 +303,8 @@
       var sel = null; try { sel = ed.getSelection(); } catch (e) { /* no selection */ }
       ed.setMarkdown(fixed, false);
       try { if (sel && sel.length === 2 && typeof sel[0] === 'number') ed.setSelection(sel[0], sel[1]); } catch (e) { /* the cursor stays where the editor put it */ }
-      if (!enforce.told) { enforce.told = true; P.toast('Everything has to sit inside an article and a numbered clause, so it was moved there.'); }
+      if (numberAfterSubitems(md) !== md && !enforce.toldNumber) { enforce.toldNumber = true; P.toast('Text and tables after the sub-items need a number of their own, so they became sub-items.'); }
+      else if (!enforce.told) { enforce.told = true; P.toast('Everything has to sit inside an article and a numbered clause, so it was moved there.'); }
     }
     function touch() {
       if (conflict) return;
@@ -812,15 +842,10 @@
     }
     function outdentTable(view, tableEl) {
       var t = tableAt(view, tableEl); if (!t) return;
-      var st = view.state, x = t.$in.node(t.depth - 1);                               // the clause or sub-item the table is in
-      if (x.type.name !== 'listItem') return;
-      var list = t.depth - 2 >= 0 ? t.$in.node(t.depth - 2) : null, parent = t.depth - 3 >= 0 ? t.$in.node(t.depth - 3) : null;
-      if (!isList(list) || !parent || parent.type.name !== 'listItem') { P.toast('A table has to stay inside a clause.', true); return; }
-      if (t.$in.index(t.depth - 1) !== x.childCount - 1 || t.$in.index(t.depth - 2) !== list.childCount - 1) { P.toast('A table can only come out from under the last sub-item, so nothing changes order.', true); return; }
-      var listEnd = t.$in.after(t.depth - 2), tr = st.tr.delete(t.pos, t.pos + t.node.nodeSize), at = tr.mapping.map(listEnd);
-      tr.insert(at, t.node);
-      try { tr.setSelection(st.selection.constructor.near(tr.doc.resolve(at + 1), 1)); } catch (e) { /* the cursor stays */ }
-      view.dispatch(tr.scrollIntoView());
+      var x = t.$in.node(t.depth - 1), list = t.depth - 2 >= 0 ? t.$in.node(t.depth - 2) : null;
+      if (x.type.name !== 'listItem' || !isList(list)) { P.toast('A table has to stay inside a clause.', true); return; }
+      // Coming out from under a sub-item would leave the table after the sub-items with no number, which is not allowed (see numberAfterSubitems).
+      P.toast('A table cannot come after the sub-items without a number of its own. Keep it under this sub-item.', true);
     }
     function indentLevel() {
       var v = pmView(); if (!v) return; var lv = levelAt(v.state); if (lv < 0) return;
