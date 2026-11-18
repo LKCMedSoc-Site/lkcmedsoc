@@ -284,6 +284,8 @@ function makeExtensions(opts) {
           btn('Caption / alt text', 'Add a caption. It is also read aloud for people who cannot see the picture', () => { const t = prompt('Caption / alt text: describe the picture. It is shown as the caption and read aloud for people who cannot see it.', current.attrs.alt || ''); if (t !== null) set({ alt: t }); }),
           btn('Remove', 'Delete this picture', () => removeNode(editor, getPos, current)));
         box.append(img, handle, bar); dom.append(box);
+        // Dragging moves whatever is selected if the grab is inside the selection. Make the picture the whole selection first, so no text comes along with it.
+        dom.addEventListener('dragstart', () => { const p = getPos(); if (typeof p === 'number') editor.commands.setNodeSelection(p); });
         function paint() {
           img.src = current.attrs.src; img.alt = current.attrs.alt || '';
           box.style.width = (current.attrs.width || 100) + '%';
