@@ -535,6 +535,23 @@
       var t = tableOfCell(a); if (!t || t.el !== b.closest('table')) return false;
       setCellSel(t, a.parentElement.rowIndex, a.cellIndex, b.parentElement.rowIndex, b.cellIndex); return true;
     }
+    // Bold / italic on the selected cells: the editor only knows its own text selection (which can be a stretch of text running through other cells),
+    // so with a block of cells selected the mark goes on exactly the text in those cells, in one step. If all of it already has the mark, it is taken off.
+    function markCells(markName) {
+      var cells = cellSelCells(), v = pmView(); if (!cells.length || !v) return false;
+      var st = v.state, type = st.schema.marks[markName]; if (!type) return false;
+      var ranges = [], all = true;
+      cells.forEach(function (c) {
+        var $p = st.doc.resolve(v.posAtDOM(c, 0)); if (!/Cell$/.test($p.parent.type.name)) return;
+        var from = $p.start(), to = $p.end(); ranges.push([from, to]);
+        st.doc.nodesBetween(from, to, function (n) { if (n.isText && !type.isInSet(n.marks)) all = false; });
+      });
+      if (!ranges.length) return false;
+      var tr = st.tr; ranges.forEach(function (r) { if (all) tr.removeMark(r[0], r[1], type); else tr.addMark(r[0], r[1], type.create()); });
+      holdSel = true; setTimeout(function () { holdSel = false; }, 600);      // the change this makes must not clear the selection: it stays so the next press toggles it back
+      v.dispatch(tr); return true;
+    }
+    var holdSel = false;
     function selectedCells() {
       var root = rootEl(); if (!root) return [];
       var own = cellSelCells(); if (own.length) return own;
@@ -793,6 +810,7 @@
       }
       // Bold with just a cursor (nothing selected) inside a clause makes the clause's first line a bold clause title, or takes it away.
       function boldAction() {
+        if (markCells('strong')) return;
         var sel = window.getSelection();
         if (sel && sel.isCollapsed && caretIn('li > p')) {
           var n = sel.anchorNode, el = n.nodeType === 3 ? n.parentElement : n, p = el.closest('li > p'), len = [].slice.call(p.querySelectorAll('strong')).reduce(function (a, x) { return a + x.textContent.length; }, 0);
@@ -805,7 +823,7 @@
         leadItems(),
         btn('undo', 'Undo', 'undo', function () { undoSafe(); }), btn('redo', 'Redo', 'redo', function () { redoSafe(); }), h('span', { class: 'sep' }),
         btn('outdent', 'Go up a level (Shift+Tab): a clause becomes an article, a sub-item becomes a clause', 'outdent', function () { outdentLevel(); }), btn('indent', 'Go down a level (Tab): an article becomes a clause, a clause becomes a sub-item', 'indent', function () { indentLevel(); }), h('span', { class: 'sep' }),
-        btn('bold', 'Bold (with the cursor in a clause and nothing selected: bold clause title)', 'bold', fmt(boldAction)), btn('italic', 'Italic', 'italic', fmt(function () { ed.exec('italic'); })),
+        btn('bold', 'Bold (with the cursor in a clause and nothing selected: bold clause title)', 'bold', fmt(boldAction)), btn('italic', 'Italic', 'italic', fmt(function () { if (!markCells('emph')) ed.exec('italic'); })),
         btn('link', 'Link', 'link', fmt(function () { var url = prompt('Link address'); if (!url) return; var sel = window.getSelection().toString(); ed.exec('addLink', { linkUrl: url, linkText: sel || url }); })), h('span', { class: 'sep' }),
         btn('ul', 'Bulleted list', 'ul', function () { ed.exec('bulletList'); }), btn('ol', 'Numbered list', 'ol', function () { ed.exec('orderedList'); }), h('span', { class: 'sep' }),
         btn('table', 'Insert table', 'table', function () { ed.exec('addTable', { rowCount: 3, columnCount: 3, data: ['', '', '', '', '', '', '', '', ''] }); }), btn('hr', 'Divider', 'hr', function () { ed.exec('hr'); }),
@@ -899,7 +917,7 @@
       var host = h('div'); sheetBody.appendChild(host);
       if (canEdit) {
         ed = new T({ el: host, height: 'auto', minHeight: '60vh', initialEditType: 'wysiwyg', hideModeSwitch: true, usageStatistics: false, initialValue: text0, toolbarItems: [], placeholder: 'Start typing…' });
-        ed.on('change', function () { if (!inHistory) fillRedo = []; clearCellSel(); touch(); });
+        ed.on('change', function () { if (!inHistory) fillRedo = []; if (!holdSel) clearCellSel(); touch(); });
         if (repairedOnLoad) { P.toast('Some loose content was moved inside an article and a clause.'); touch(); }
       } else if (T.factory) { T.factory({ el: host, viewer: true, initialValue: text0 }); }
       else host.textContent = text0;
@@ -1014,7 +1032,12 @@
         if (!c || !dragFrom || c.closest('table') !== dragFrom.closest('table') || (c === dragFrom && !cellSel)) return;
         selectBetween(dragFrom, c); var sel = window.getSelection(); if (sel && sel.rangeCount) sel.collapse(dragFrom, 0);
       };
-      var dragEnd = function () { dragFrom = null; document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragEnd); };
+      var dragEnd = function () {
+        if (cellSel && dragFrom) {
+          var sel = window.getSelection(); if (sel && sel.rangeCount) sel.collapse(dragFrom, 0);
+          var v = pmView(); try { if (v) v.dispatch(v.state.tr.setSelection(v.state.selection.constructor.near(v.state.doc.resolve(v.posAtDOM(dragFrom, 0)), 1))); } catch (e) { /* the cursor stays where it is */ }
+        }
+        dragFrom = null; document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragEnd); };
       sheetBody.addEventListener('mousedown', function (ev) {
         if (ev.button !== 0 || !rootEl()) return;
         var c = ev.target.closest && ev.target.closest('td,th');
@@ -1023,7 +1046,9 @@
         clearCellSel(); dragFrom = c;
         document.addEventListener('mousemove', dragMove); document.addEventListener('mouseup', dragEnd);
       }, true);
-      sheetBody.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') clearCellSel(); else if (cellSel && ev.key.length === 1 && !ev.metaKey && !ev.ctrlKey) clearCellSel(); }, true);
+      sheetBody.addEventListener('keydown', function (ev) {
+        if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && cellSel && (ev.key === 'b' || ev.key === 'i')) { ev.preventDefault(); ev.stopPropagation(); markCells(ev.key === 'b' ? 'strong' : 'emph'); return; }
+        if (ev.key === 'Escape') clearCellSel(); else if (cellSel && ev.key.length === 1 && !ev.metaKey && !ev.ctrlKey) clearCellSel(); }, true);
     }
     // Undo and redo: Cmd or Ctrl + Z, Ctrl + Y, Shift + Z. All of them go through undoSafe / redoSafe, so undoing can never empty the page.
     if (canEdit) {
