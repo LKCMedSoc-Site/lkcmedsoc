@@ -661,6 +661,66 @@
       function fb(tip, icon, fn) { var b = h('button', { type: 'button', class: 'tb', title: tip, 'aria-label': tip, onmousedown: function (ev) { ev.preventDefault(); }, onclick: fn }); b.appendChild(ic(icon)); return b; }
       return h('span', { class: 'foldbtns' }, fb('Collapse the document to its articles', 'foldarticles', function () { foldAll('articles'); }), fb('Collapse every clause to its first line', 'foldclauses', function () { foldAll('clauses'); }), fb('Expand the whole document', 'unfold', function () { foldAll(null); }));
     }
+    // ---- levels: article title > clause (1.1) > sub-item (a) > sub-item (i). One button goes down a level, one goes up. ----
+    function pmView() { return ed && ed.wwEditor && ed.wwEditor.view; }
+    var isList = function (n) { return !!n && /List$/.test(n.type.name); };
+    function levelAt(state) {      // 0 = an article title, 1..3 = clause, (a), (i); -1 = anywhere else (a table, say)
+      var $f = state.selection.$from, n = 0;
+      for (var d = $f.depth; d > 0; d--) { var t = $f.node(d).type.name; if (t === 'table') return -1; if (t === 'listItem') n++; }
+      if (n === 0) return $f.depth >= 1 && $f.node(1).type.name === 'heading' ? 0 : -1;
+      return n;
+    }
+    function listDepth(list) {     // how many list levels are inside (a list with no nested list is 1)
+      var deepest = 0; list.forEach(function (item) { item.forEach(function (c) { if (isList(c)) deepest = Math.max(deepest, listDepth(c)); }); });
+      return 1 + deepest;
+    }
+    // A clause goes up to become an article title. Its sub-items become its clauses; the clauses after it in the same article come along.
+    function clauseToArticle(view) {
+      var st = view.state, $f = st.selection.$from, S = st.schema, N = S.nodes, ol = $f.node(1), olPos = $f.before(1), idx = $f.index(1);
+      if (!isList(ol) || $f.node(2).type.name !== 'listItem') return false;
+      var li = ol.child(idx), first = li.firstChild;
+      var title = first && first.type.name === 'paragraph' ? first.textContent : li.textContent;            // an article title carries no formatting
+      var heading = N.heading.create({ level: 2 }, title ? S.text(title) : null);
+      var sub = [], extra = [];
+      li.forEach(function (c, off, i) { if (i === 0) return; if (isList(c)) c.forEach(function (it) { sub.push(it); }); else extra.push(c); });
+      var items = []; if (extra.length) items.push(N.listItem.create(null, extra)); items = items.concat(sub);
+      for (var i = idx + 1; i < ol.childCount; i++) items.push(ol.child(i));
+      if (!items.length) items.push(N.listItem.create(null, N.paragraph.create()));
+      var parts = [];
+      if (idx > 0) { var before = []; for (i = 0; i < idx; i++) before.push(ol.child(i)); parts.push(ol.type.create(ol.attrs, before)); }
+      parts.push(heading, ol.type.create(ol.attrs, items));
+      var tr = st.tr.replaceWith(olPos, olPos + ol.nodeSize, parts), hPos = olPos + (idx > 0 ? parts[0].nodeSize : 0);
+      tr.setSelection(st.selection.constructor.near(tr.doc.resolve(hPos + 1 + heading.content.size), -1));
+      view.dispatch(tr.scrollIntoView()); return true;
+    }
+    // An article title goes down to become the last clause of the article above. Its clauses become that clause's sub-items.
+    function articleToClause(view) {
+      var st = view.state, $f = st.selection.$from, S = st.schema, N = S.nodes, doc = st.doc, hi = $f.index(0);
+      if (hi === 0) return 'This is the first article: there is nothing above it to go under.';
+      var prev = doc.child(hi - 1); if (!isList(prev)) return 'There is no clause above to put it under.';
+      var head = doc.child(hi), next = hi + 1 < doc.childCount ? doc.child(hi + 1) : null, hasNext = isList(next);
+      if (hasNext && listDepth(next) > 2) return 'It has too many levels under it to go down any further.';
+      var kids = [N.paragraph.create(null, head.content)]; if (hasNext) kids.push(next);
+      var li = N.listItem.create(null, kids), items = []; prev.forEach(function (x) { items.push(x); }); items.push(li);
+      var posPrev = 0, posHead = 0; doc.forEach(function (n, off, i) { if (i === hi - 1) posPrev = off; if (i === hi) posHead = off; });
+      var end = posHead + head.nodeSize + (hasNext ? next.nodeSize : 0);
+      var tr = st.tr.replaceWith(posPrev, end, prev.type.create(prev.attrs, items));
+      var liStart = posPrev + 1; for (var i = 0; i < items.length - 1; i++) liStart += items[i].nodeSize;
+      tr.setSelection(st.selection.constructor.near(tr.doc.resolve(liStart + 2 + head.content.size), -1));
+      view.dispatch(tr.scrollIntoView()); return true;
+    }
+    function indentLevel() {
+      var v = pmView(); if (!v) return; var lv = levelAt(v.state); if (lv < 0) return;
+      if (lv === 0) { var r = articleToClause(v); if (r !== true) P.toast(r, true); return; }
+      if (lv >= 3) { P.toast('That is the lowest level.', true); return; }
+      var before = v.state.doc; ed.exec('indent');
+      if (v.state.doc.eq(before)) P.toast('A clause can only go under the clause above it.', true);
+    }
+    function outdentLevel() {
+      var v = pmView(); if (!v) return; var lv = levelAt(v.state); if (lv < 0) return;
+      if (lv === 0) { P.toast('This is the top level: an article title.', true); return; }
+      if (lv === 1) clauseToArticle(v); else ed.exec('outdent');
+    }
     function toolbar() {
       function btn(name, tip, icon, fn) { var b = h('button', { type: 'button', class: 'tb', title: tip, 'aria-label': tip, onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { if (ed) fn(); } }); b.appendChild(ic(icon)); return b; }
       // Three fixed styles: an article title (always the same), a clause title (bold), and normal text. Words inside normal text can still be bold or italic.
@@ -671,22 +731,23 @@
         var strongLen = [].slice.call(p.querySelectorAll('strong')).reduce(function (a, x) { return a + x.textContent.length; }, 0), all = strongLen >= p.textContent.length && strongLen > 0, some = strongLen > 0;
         if (on) { if (all) return; if (some) ed.exec('bold'); ed.exec('bold'); } else if (some) ed.exec('bold');
       }
-      var styles = h('select', { class: 'styles', 'aria-label': 'Text style', onchange: function () {
-        if (!ed) return; var val = styles.value; styles.value = '';
-        if (val === '2') ed.exec('heading', { level: 2 });
-        else if (caretIn('h2')) P.toast('An article title has one fixed style.', true);
-        else if (val === 'ct') setParagraphBold(true);
-        else if (val === 'p') setParagraphBold(false);
-        ed.focus();
-      } }, h('option', { value: '' }, 'Text style'), h('option', { value: 'p' }, 'Normal text'), h('option', { value: 'ct' }, 'Clause title (bold)'), h('option', { value: '2' }, 'Article title'));
+      // Bold with just a cursor (nothing selected) inside a clause makes the clause's first line a bold clause title, or takes it away.
+      function boldAction() {
+        var sel = window.getSelection();
+        if (sel && sel.isCollapsed && caretIn('li > p')) {
+          var n = sel.anchorNode, el = n.nodeType === 3 ? n.parentElement : n, p = el.closest('li > p'), len = [].slice.call(p.querySelectorAll('strong')).reduce(function (a, x) { return a + x.textContent.length; }, 0);
+          setParagraphBold(!(len > 0 && len >= p.textContent.length)); return;
+        }
+        ed.exec('bold');
+      }
       function fmt(fn) { return function () { if (caretIn('h2')) { P.toast('An article title has one fixed style.', true); return; } fn(); }; }
       return h('div', { class: 'docbar pinbar noprint', role: 'toolbar', 'aria-label': 'Formatting' },
         leadItems(),
         btn('undo', 'Undo', 'undo', function () { undoSafe(); }), btn('redo', 'Redo', 'redo', function () { ed.exec('redo'); }), h('span', { class: 'sep' }),
-        styles, h('span', { class: 'sep' }),
-        btn('bold', 'Bold', 'bold', fmt(function () { ed.exec('bold'); })), btn('italic', 'Italic', 'italic', fmt(function () { ed.exec('italic'); })),
+        btn('outdent', 'Go up a level (Shift+Tab): a clause becomes an article, a sub-item becomes a clause', 'outdent', function () { outdentLevel(); }), btn('indent', 'Go down a level (Tab): an article becomes a clause, a clause becomes a sub-item', 'indent', function () { indentLevel(); }), h('span', { class: 'sep' }),
+        btn('bold', 'Bold (with the cursor in a clause and nothing selected: bold clause title)', 'bold', fmt(boldAction)), btn('italic', 'Italic', 'italic', fmt(function () { ed.exec('italic'); })),
         btn('link', 'Link', 'link', fmt(function () { var url = prompt('Link address'); if (!url) return; var sel = window.getSelection().toString(); ed.exec('addLink', { linkUrl: url, linkText: sel || url }); })), h('span', { class: 'sep' }),
-        btn('ul', 'Bulleted list (Tab to nest, Shift+Tab to un-nest)', 'ul', function () { ed.exec('bulletList'); }), btn('ol', 'Numbered list (Tab to nest, Shift+Tab to un-nest)', 'ol', function () { ed.exec('orderedList'); }), h('span', { class: 'sep' }),
+        btn('ul', 'Bulleted list', 'ul', function () { ed.exec('bulletList'); }), btn('ol', 'Numbered list', 'ol', function () { ed.exec('orderedList'); }), h('span', { class: 'sep' }),
         btn('table', 'Insert table', 'table', function () { ed.exec('addTable', { rowCount: 3, columnCount: 3, data: ['', '', '', '', '', '', '', '', ''] }); }), btn('hr', 'Divider', 'hr', function () { ed.exec('hr'); }),
         (function () { var b = btn('fill', 'Colour the selected table cells', 'fill', function () { fillMenu(b); }); return b; })(), h('span', { class: 'sep' }), foldButtons(),
         h('span', { class: 'grow' }), zoomControls(), status);
@@ -841,6 +902,14 @@
       if (!ed) return; var before = ed.getMarkdown();
       ed.exec('undo');
       if (!ed.getMarkdown().trim() && before.trim()) { ed.exec('redo'); P.toast('Nothing more to undo.'); }
+    }
+    // Tab goes down a level, Shift+Tab up (inside a table they keep moving between cells).
+    if (canEdit) {
+      sheetBody.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Tab' || ev.ctrlKey || ev.metaKey || ev.altKey || !ed) return;
+        var v = pmView(); if (!v || levelAt(v.state) < 0) return;
+        ev.preventDefault(); ev.stopPropagation(); if (ev.shiftKey) outdentLevel(); else indentLevel();
+      }, true);
     }
     // Undo and redo: Cmd or Ctrl + Z, Ctrl + Y, Shift + Z. All of them go through undoSafe / redoSafe, so undoing can never empty the page.
     if (canEdit) {
