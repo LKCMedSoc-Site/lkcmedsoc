@@ -286,7 +286,12 @@ function makeExtensions(opts) {
         box.append(img, handle, bar); dom.append(box);
         // Dragging moves whatever is selected if the grab is inside the selection. Make the picture the whole selection first, so no text comes along with it.
         // The browser draws the drag ghost from its own text selection, which can run on into the next paragraph, so the ghost is set to the picture alone.
+        // Cancelling the pointer press alone does not stop the browser starting a native drag of the whole picture, so the mouse press is cancelled too and any drag from the corner handle is refused.
+        let sizing = false;
+        handle.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); sizing = true; });
+        window.addEventListener('mouseup', () => { sizing = false; });
         dom.addEventListener('dragstart', (e) => {
+          if (sizing) { e.preventDefault(); e.stopPropagation(); return; }
           const p = getPos(); if (typeof p === 'number') editor.commands.setNodeSelection(p);
           if (e.dataTransfer && e.dataTransfer.setDragImage) { const r = img.getBoundingClientRect(); e.dataTransfer.setDragImage(img, Math.max(0, e.clientX - r.left), Math.max(0, e.clientY - r.top)); }
         });
