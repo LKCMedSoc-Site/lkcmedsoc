@@ -825,7 +825,6 @@
         btn('outdent', 'Go up a level (Shift+Tab): a clause becomes an article, a sub-item becomes a clause', 'outdent', function () { outdentLevel(); }), btn('indent', 'Go down a level (Tab): an article becomes a clause, a clause becomes a sub-item', 'indent', function () { indentLevel(); }), h('span', { class: 'sep' }),
         btn('bold', 'Bold (with the cursor in a clause and nothing selected: bold clause title)', 'bold', fmt(boldAction)), btn('italic', 'Italic', 'italic', fmt(function () { if (!markCells('emph')) ed.exec('italic'); })),
         btn('link', 'Link', 'link', fmt(function () { var url = prompt('Link address'); if (!url) return; var sel = window.getSelection().toString(); ed.exec('addLink', { linkUrl: url, linkText: sel || url }); })), h('span', { class: 'sep' }),
-        btn('ul', 'Bulleted list', 'ul', function () { ed.exec('bulletList'); }), btn('ol', 'Numbered list', 'ol', function () { ed.exec('orderedList'); }), h('span', { class: 'sep' }),
         btn('table', 'Insert table', 'table', function () { ed.exec('addTable', { rowCount: 3, columnCount: 3, data: ['', '', '', '', '', '', '', '', ''] }); }), btn('hr', 'Divider', 'hr', function () { ed.exec('hr'); }),
         h('span', { class: 'sep' }), foldButtons(),
         h('span', { class: 'grow' }), zoomControls(), status);
