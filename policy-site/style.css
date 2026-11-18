@@ -575,7 +575,7 @@ mark.cm.draft { background: #f7c9ee; }
 .toastui-editor-context-menu .menu-item, .toastui-editor-context-menu .menu-item span { white-space: nowrap !important; }
 .toastui-editor-context-menu .menu-group { margin: 0; }
 .tablelayer { z-index: 40 !important; }
-.colhandle::after { background: rgba(134, 48, 111, .22); }
+.colhandle::after { background: transparent; }
 .colhandle:hover::after, .colhandle:active::after { background: var(--p500); }
 
 .titlebox .row:empty, .titlebox .row:has(> .savestate:empty) { display: none; }
@@ -800,10 +800,5 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 .docbar.pinbar { top: var(--lkc-top, 0px); transition: top .25s ease; }
 @media (min-width: 1100px) { .sheetrow > .toc { top: calc(var(--lkc-top, 0px) + 76px) !important; transition: top .25s ease; } }
 
-/* Selecting table cells: grips above each column and beside each row (see the selection code in policy.js) */
-.cellgrip { position: absolute; z-index: 41; pointer-events: auto; cursor: pointer; background: rgba(139, 61, 120, .16); border-radius: 3px; transition: background .12s; }
-.cellgrip:hover { background: rgba(139, 61, 120, .5); }
-.colgrip { height: 7px; }
-.rowgrip { width: 7px; }
+/* Selecting table cells (see the selection code in policy.js): the tint is drawn by a generated stylesheet; the editor's own text highlight is hidden meanwhile */
 .cellsel-on ::selection { background: transparent; }
-@media print { .cellgrip { display: none; } }

@@ -506,7 +506,7 @@
     var FILLS = [['No colour', null], ['Lilac', '#ece0f0'], ['Rose', '#f9dde3'], ['Orange', '#fde6cf'], ['Yellow', '#fdf2c2'], ['Green', '#dcf0dc'], ['Blue', '#d9e8f8'], ['Grey', '#e7e4e8']];
     // ---- selecting table cells ----
     // The editor's own cell selection fails to start in this setup (its drag handler throws on every move), so dragging across cells only selected text, row by row.
-    // This is a small selection of our own: drag from one cell to another to select the block between them, or press the grips above a column / beside a row.
+    // This is a small selection of our own: drag from one cell to another (or shift-click) to select the block between them.
     // It is a block of whole cells (r0..r1 rows, c0..c1 columns; row 0 is the header row), shown with a stylesheet so the editor never sees it.
     var cellSel = null, cellSelStyle = document.createElement('style'); document.head.appendChild(cellSelStyle);
     function tableOfCell(c) { var root = rootEl(); return root ? tableRows(root).filter(function (x) { return x.el === c.closest('table'); })[0] : null; }
@@ -586,17 +586,6 @@
       tableRows(root).forEach(function (t) {
         if (t.el.offsetParent === null || !t.el.rows.length) return;
         var tr = t.el.getBoundingClientRect(), cells = [].slice.call(t.el.rows[0].cells);
-        // grips: press one above a column, or beside a row, to select all of it
-        cells.forEach(function (cell, ci) {
-          var cb = cell.getBoundingClientRect(), g = h('div', { class: 'cellgrip colgrip', title: 'Select this column', style: 'left:' + Math.round((cb.left - sr.left) / zoom + 2) + 'px;top:' + Math.round((tr.top - sr.top) / zoom - 11) + 'px;width:' + Math.round(cb.width / zoom - 4) + 'px' });
-          g.addEventListener('mousedown', function (ev) { ev.preventDefault(); ev.stopPropagation(); setCellSel(t, 0, ci, t.el.rows.length - 1, ci); });
-          out.push(g);
-        });
-        [].slice.call(t.el.rows).forEach(function (row, ri) {
-          var rb = row.getBoundingClientRect(), g = h('div', { class: 'cellgrip rowgrip', title: 'Select this row', style: 'left:' + Math.round((tr.left - sr.left) / zoom - 11) + 'px;top:' + Math.round((rb.top - sr.top) / zoom + 2) + 'px;height:' + Math.round(rb.height / zoom - 4) + 'px' });
-          g.addEventListener('mousedown', function (ev) { ev.preventDefault(); ev.stopPropagation(); setCellSel(t, ri, 0, ri, row.cells.length - 1); });
-          out.push(g);
-        });
         for (var i = 0; i < cells.length - 1; i++) (function (i) {
           var cr = cells[i].getBoundingClientRect();
           var hd = h('div', { class: 'colhandle', title: 'Drag to change the column width', style: 'left:' + Math.round((cr.right - sr.left) / zoom) + 'px;top:' + Math.round((tr.top - sr.top) / zoom) + 'px;height:' + Math.round(tr.height / zoom) + 'px' });
@@ -766,6 +755,19 @@
       tr.setSelection(st.selection.constructor.near(tr.doc.resolve(liStart + 2 + head.content.size), -1));
       view.dispatch(tr.scrollIntoView()); return true;
     }
+    // A new empty row straight below the row the cursor is in (below the header row: at the top of the body). Done by hand rather than with the editor's own
+    // command, which does nothing unless its own cursor is exactly inside a cell.
+    function addRowBelow(view, cellEl) {
+      var row = cellEl.parentElement, st = view.state, S = st.schema, N = S.nodes, inHead = !!row.closest('thead'), tbody = row.closest('table').querySelector('tbody');
+      var at, rowNode;
+      if (inHead) { if (!tbody) return; at = view.posAtDOM(tbody, 0); rowNode = st.doc.resolve(view.posAtDOM(row, 0)).parent; }
+      else { var $r = st.doc.resolve(view.posAtDOM(row, 0)); rowNode = $r.parent; at = $r.after(); }
+      if (!rowNode || rowNode.type.name !== 'tableRow') return;
+      var cells = []; rowNode.forEach(function (c) { var nc = N.tableBodyCell.createAndFill(c.attrs); if (nc) cells.push(nc); });
+      var tr = st.tr.insert(at, N.tableRow.create(null, cells));
+      tr.setSelection(st.selection.constructor.near(tr.doc.resolve(at + 3), 1));
+      view.dispatch(tr.scrollIntoView());
+    }
     function indentLevel() {
       var v = pmView(); if (!v) return; var lv = levelAt(v.state); if (lv < 0) return;
       if (lv === 0) { var r = articleToClause(v); if (r !== true) P.toast(r, true); return; }
@@ -806,7 +808,7 @@
         btn('link', 'Link', 'link', fmt(function () { var url = prompt('Link address'); if (!url) return; var sel = window.getSelection().toString(); ed.exec('addLink', { linkUrl: url, linkText: sel || url }); })), h('span', { class: 'sep' }),
         btn('ul', 'Bulleted list', 'ul', function () { ed.exec('bulletList'); }), btn('ol', 'Numbered list', 'ol', function () { ed.exec('orderedList'); }), h('span', { class: 'sep' }),
         btn('table', 'Insert table', 'table', function () { ed.exec('addTable', { rowCount: 3, columnCount: 3, data: ['', '', '', '', '', '', '', '', ''] }); }), btn('hr', 'Divider', 'hr', function () { ed.exec('hr'); }),
-        (function () { var b = btn('fill', 'Colour the selected table cells', 'fill', function () { fillMenu(b); }); return b; })(), h('span', { class: 'sep' }), foldButtons(),
+        h('span', { class: 'sep' }), foldButtons(),
         h('span', { class: 'grow' }), zoomControls(), status);
     }
 
@@ -976,6 +978,31 @@
         if (ev.key !== 'Tab' || ev.ctrlKey || ev.metaKey || ev.altKey || !ed) return;
         var v = pmView(); if (!v || levelAt(v.state) < 0) return;
         ev.preventDefault(); ev.stopPropagation(); if (ev.shiftKey) outdentLevel(); else indentLevel();
+      }, true);
+    }
+    // Cell colour lives in the table's right-click menu (the editor's own menu: Add row, Remove column...). Right-clicking a cell outside the selection selects just that cell.
+    if (canEdit) {
+      sheetBody.addEventListener('contextmenu', function (ev) {
+        var c = ev.target.closest && ev.target.closest('td,th'); if (!c || !rootEl() || !rootEl().contains(c)) return;
+        if (cellSelCells().indexOf(c) < 0) { var t = tableOfCell(c); if (t) setCellSel(t, c.parentElement.rowIndex, c.cellIndex, c.parentElement.rowIndex, c.cellIndex); }
+        setTimeout(function () {
+          var menu = [].slice.call(document.querySelectorAll('.toastui-editor-context-menu')).filter(function (m) { return m.style.display !== 'none'; })[0];
+          if (!menu || menu.querySelector('.cell-colour')) return;
+          var item = h('li', { class: 'menu-item', 'aria-role': 'menuitem' }, h('span', { class: 'cell-colour' }, 'Cell colour…')), group = h('ul', { class: 'menu-group' }, item);
+          item.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+          item.addEventListener('click', function (e) {
+            e.stopPropagation(); var r = item.getBoundingClientRect(); menu.style.display = 'none';
+            fillMenu({ getBoundingClientRect: function () { return { left: r.right + 6, bottom: r.top - 6, right: r.right, top: r.top }; }, contains: function () { return false; } });
+          });
+          menu.insertBefore(group, menu.lastElementChild);
+        }, 30);
+      }, true);
+      // Ctrl (or Cmd) + Enter in a table adds a row below.
+      sheetBody.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'Enter' || !(ev.ctrlKey || ev.metaKey) || ev.shiftKey || ev.altKey || !ed) return;
+        var v = pmView(); if (!v) return;
+        var sel = window.getSelection(), n = sel && sel.anchorNode, el = n && (n.nodeType === 3 ? n.parentElement : n), cellEl = el && el.closest('td,th'); if (!cellEl || !rootEl().contains(cellEl)) return;
+        ev.preventDefault(); ev.stopPropagation(); addRowBelow(v, cellEl);
       }, true);
     }
     // Dragging from one cell to another selects the block between them; a plain click clears it. Esc clears it too.
