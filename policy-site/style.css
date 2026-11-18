@@ -799,3 +799,11 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 /* The website's header slips away on scroll down and returns on scroll up (suite-nav.js sets --lkc-top): the pinned bar and the outline sit just under it while it shows. */
 .docbar.pinbar { top: var(--lkc-top, 0px); transition: top .25s ease; }
 @media (min-width: 1100px) { .sheetrow > .toc { top: calc(var(--lkc-top, 0px) + 76px) !important; transition: top .25s ease; } }
+
+/* Selecting table cells: grips above each column and beside each row (see the selection code in policy.js) */
+.cellgrip { position: absolute; z-index: 41; pointer-events: auto; cursor: pointer; background: rgba(139, 61, 120, .16); border-radius: 3px; transition: background .12s; }
+.cellgrip:hover { background: rgba(139, 61, 120, .5); }
+.colgrip { height: 7px; }
+.rowgrip { width: 7px; }
+.cellsel-on ::selection { background: transparent; }
+@media print { .cellgrip { display: none; } }

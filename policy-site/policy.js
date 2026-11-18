@@ -504,8 +504,39 @@
       clearTimeout(saveWidthsT); saveWidthsT = setTimeout(function () { rpcv('policy_table_widths', { p_slug: d.slug, p_widths: tableWidths }).catch(function () { P.toast('Could not save the table layout', true); }); }, 300);
     }
     var FILLS = [['No colour', null], ['Lilac', '#ece0f0'], ['Rose', '#f9dde3'], ['Orange', '#fde6cf'], ['Yellow', '#fdf2c2'], ['Green', '#dcf0dc'], ['Blue', '#d9e8f8'], ['Grey', '#e7e4e8']];
+    // ---- selecting table cells ----
+    // The editor's own cell selection fails to start in this setup (its drag handler throws on every move), so dragging across cells only selected text, row by row.
+    // This is a small selection of our own: drag from one cell to another to select the block between them, or press the grips above a column / beside a row.
+    // It is a block of whole cells (r0..r1 rows, c0..c1 columns; row 0 is the header row), shown with a stylesheet so the editor never sees it.
+    var cellSel = null, cellSelStyle = document.createElement('style'); document.head.appendChild(cellSelStyle);
+    function tableOfCell(c) { var root = rootEl(); return root ? tableRows(root).filter(function (x) { return x.el === c.closest('table'); })[0] : null; }
+    function cellSelCells() {
+      var root = rootEl(); if (!cellSel || !root) return [];
+      var t = tableRows(root).filter(function (x) { return x.key === cellSel.key; })[0], out = []; if (!t) return out;
+      for (var r = cellSel.r0; r <= cellSel.r1; r++) for (var c = cellSel.c0; c <= cellSel.c1; c++) { var cell = t.el.rows[r] && t.el.rows[r].cells[c]; if (cell) out.push(cell); }
+      return out;
+    }
+    function drawCellSel() {
+      var root = rootEl(); if (!cellSel || !root) { cellSelStyle.textContent = ''; sheetBody.classList.remove('cellsel-on'); return; }
+      var t = tableRows(root).filter(function (x) { return x.key === cellSel.key; })[0];
+      if (!t) { cellSel = null; cellSelStyle.textContent = ''; sheetBody.classList.remove('cellsel-on'); return; }
+      var css = [];
+      for (var r = cellSel.r0; r <= cellSel.r1; r++) for (var c = cellSel.c0; c <= cellSel.c1; c++)
+        css.push(t.sel + (r === 0 ? ' > thead > tr' : ' > tbody > tr:nth-child(' + r + ')') + ' > :nth-child(' + (c + 1) + ') { box-shadow: inset 0 0 0 200px rgba(139, 61, 120, .24) !important; outline: 1px solid rgba(139, 61, 120, .7); outline-offset: -1px; }');
+      cellSelStyle.textContent = '@media screen {\n' + css.join('\n') + '\n}';
+      sheetBody.classList.add('cellsel-on');
+    }
+    function setCellSel(t, r0, c0, r1, c1) {
+      cellSel = { key: t.key, r0: Math.min(r0, r1), c0: Math.min(c0, c1), r1: Math.max(r0, r1), c1: Math.max(c0, c1) }; drawCellSel();
+    }
+    function clearCellSel() { if (!cellSel) return; cellSel = null; drawCellSel(); }
+    function selectBetween(a, b) {     // the block of cells from cell a to cell b of the same table
+      var t = tableOfCell(a); if (!t || t.el !== b.closest('table')) return false;
+      setCellSel(t, a.parentElement.rowIndex, a.cellIndex, b.parentElement.rowIndex, b.cellIndex); return true;
+    }
     function selectedCells() {
       var root = rootEl(); if (!root) return [];
+      var own = cellSelCells(); if (own.length) return own;
       var sel = [].slice.call(root.querySelectorAll('td.selectedCell, th.selectedCell, td[class*="selected"], th[class*="selected"]'));
       if (sel.length) return sel;
       var s = window.getSelection(), n = s && s.anchorNode, el = n && (n.nodeType === 3 ? n.parentElement : n), c = el && root.contains(el) && el.closest('td,th');
@@ -553,8 +584,19 @@
       var root = rootEl(); if (!root) return; var sheet = tableLayer.parentNode; if (!sheet) return; var sr = sheet.getBoundingClientRect();
       var out = [];
       tableRows(root).forEach(function (t) {
-        if (t.el.offsetParent === null || !t.el.rows.length || t.cols < 2) return;
+        if (t.el.offsetParent === null || !t.el.rows.length) return;
         var tr = t.el.getBoundingClientRect(), cells = [].slice.call(t.el.rows[0].cells);
+        // grips: press one above a column, or beside a row, to select all of it
+        cells.forEach(function (cell, ci) {
+          var cb = cell.getBoundingClientRect(), g = h('div', { class: 'cellgrip colgrip', title: 'Select this column', style: 'left:' + Math.round((cb.left - sr.left) / zoom + 2) + 'px;top:' + Math.round((tr.top - sr.top) / zoom - 11) + 'px;width:' + Math.round(cb.width / zoom - 4) + 'px' });
+          g.addEventListener('mousedown', function (ev) { ev.preventDefault(); ev.stopPropagation(); setCellSel(t, 0, ci, t.el.rows.length - 1, ci); });
+          out.push(g);
+        });
+        [].slice.call(t.el.rows).forEach(function (row, ri) {
+          var rb = row.getBoundingClientRect(), g = h('div', { class: 'cellgrip rowgrip', title: 'Select this row', style: 'left:' + Math.round((tr.left - sr.left) / zoom - 11) + 'px;top:' + Math.round((rb.top - sr.top) / zoom + 2) + 'px;height:' + Math.round(rb.height / zoom - 4) + 'px' });
+          g.addEventListener('mousedown', function (ev) { ev.preventDefault(); ev.stopPropagation(); setCellSel(t, ri, 0, ri, row.cells.length - 1); });
+          out.push(g);
+        });
         for (var i = 0; i < cells.length - 1; i++) (function (i) {
           var cr = cells[i].getBoundingClientRect();
           var hd = h('div', { class: 'colhandle', title: 'Drag to change the column width', style: 'left:' + Math.round((cr.right - sr.left) / zoom) + 'px;top:' + Math.round((tr.top - sr.top) / zoom) + 'px;height:' + Math.round(tr.height / zoom) + 'px' });
@@ -854,7 +896,7 @@
       var host = h('div'); sheetBody.appendChild(host);
       if (canEdit) {
         ed = new T({ el: host, height: 'auto', minHeight: '60vh', initialEditType: 'wysiwyg', hideModeSwitch: true, usageStatistics: false, initialValue: text0, toolbarItems: [], placeholder: 'Start typing…' });
-        ed.on('change', function () { if (!inHistory) fillRedo = []; touch(); });
+        ed.on('change', function () { if (!inHistory) fillRedo = []; clearCellSel(); touch(); });
         if (repairedOnLoad) { P.toast('Some loose content was moved inside an article and a clause.'); touch(); }
       } else if (T.factory) { T.factory({ el: host, viewer: true, initialValue: text0 }); }
       else host.textContent = text0;
@@ -935,6 +977,25 @@
         var v = pmView(); if (!v || levelAt(v.state) < 0) return;
         ev.preventDefault(); ev.stopPropagation(); if (ev.shiftKey) outdentLevel(); else indentLevel();
       }, true);
+    }
+    // Dragging from one cell to another selects the block between them; a plain click clears it. Esc clears it too.
+    if (canEdit) {
+      var dragFrom = null;
+      var dragMove = function (ev) {
+        var el = document.elementFromPoint(ev.clientX, ev.clientY), c = el && el.closest && el.closest('td,th');
+        if (!c || !dragFrom || c.closest('table') !== dragFrom.closest('table') || (c === dragFrom && !cellSel)) return;
+        selectBetween(dragFrom, c); var sel = window.getSelection(); if (sel && sel.rangeCount) sel.collapse(dragFrom, 0);
+      };
+      var dragEnd = function () { dragFrom = null; document.removeEventListener('mousemove', dragMove); document.removeEventListener('mouseup', dragEnd); };
+      sheetBody.addEventListener('mousedown', function (ev) {
+        if (ev.button !== 0 || !rootEl()) return;
+        var c = ev.target.closest && ev.target.closest('td,th');
+        if (!c || !rootEl().contains(c)) { clearCellSel(); return; }
+        if (ev.shiftKey && cellSel) { var a = cellSelCells()[0]; if (a && selectBetween(a, c)) { ev.preventDefault(); return; } }
+        clearCellSel(); dragFrom = c;
+        document.addEventListener('mousemove', dragMove); document.addEventListener('mouseup', dragEnd);
+      }, true);
+      sheetBody.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') clearCellSel(); else if (cellSel && ev.key.length === 1 && !ev.metaKey && !ev.ctrlKey) clearCellSel(); }, true);
     }
     // Undo and redo: Cmd or Ctrl + Z, Ctrl + Y, Shift + Z. All of them go through undoSafe / redoSafe, so undoing can never empty the page.
     if (canEdit) {
