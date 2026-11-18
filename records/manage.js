@@ -76,7 +76,7 @@
       kit.show(h('div', null,
         h('button', { class: 'ghost sm', type: 'button', onclick: function () { go({ cat: null }); } }, '← Manage body'),
         h('h2', null, c.many),
-        h('div', { class: 'row' }, items.length > 8 ? q : null, me.is_admin ? h('button', { class: 'btn', type: 'button', onclick: function () { go({ isNew: true, bodyId: null, section: 'details' }); } }, 'New ' + c.noun) : null),
+        h('div', { class: 'row' }, items.length > 8 ? q : null, me.is_admin && c.key !== 'exco' ? h('button', { class: 'btn', type: 'button', onclick: function () { go({ isNew: true, bodyId: null, section: 'details' }); } }, 'New ' + c.noun) : null),
         out));
     }
 
