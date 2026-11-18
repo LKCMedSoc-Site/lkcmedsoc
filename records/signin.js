@@ -90,52 +90,89 @@
     document.body.appendChild(root);
     draw('signin', o.note ? { text: o.note, ok: true } : null);
 
-    function draw(mode, msg, keep) {   // keep: what was typed, put back after an error
+    // Steps (mode): signin, signup, forgot, then code (type the 6-digit code from the email) and newpw (after a reset code).
+    // keep: what was typed, put back after an error. ctx: { email, kind: 'signup' | 'recovery' } for the code step.
+    function draw(mode, msg, keep, ctx) {
+      keep = keep || {};
       var email = el('input', { type: 'email', placeholder: 'yourname@e.ntu.edu.sg', autocomplete: 'username', 'aria-label': 'Email' });
-      var pw = el('input', { type: 'password', placeholder: 'Password', autocomplete: mode === 'signup' ? 'new-password' : 'current-password', 'aria-label': 'Password' });
+      var pw = el('input', { type: 'password', placeholder: mode === 'newpw' ? 'New password' : 'Password', autocomplete: mode === 'signup' || mode === 'newpw' ? 'new-password' : 'current-password', 'aria-label': 'Password' });
       var pw2 = el('input', { type: 'password', placeholder: 'Repeat password', autocomplete: 'new-password', 'aria-label': 'Repeat password' });
-      var go = el('button', { type: 'submit', 'class': 'lkcsi-btn', text: mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Email me a reset link' : 'Sign in' });
+      var code = el('input', { type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '10', placeholder: '6-digit code', 'aria-label': 'Code from your email' });
+      code.addEventListener('input', function () { code.value = code.value.replace(/\D/g, ''); });
+      var labels = { signin: 'Sign in', signup: 'Create account', forgot: 'Email me a code', code: 'Confirm', newpw: 'Save password' };
+      var titles = { signin: 'Sign in with your NTU email', signup: 'Create account', forgot: 'Reset password', code: 'Enter the code we emailed you', newpw: 'Set a new password' };
+      var go = el('button', { type: 'submit', 'class': 'lkcsi-btn', text: labels[mode] });
       var note = msg ? el('p', { 'class': 'lkcsi-msg' + (msg.ok ? ' ok' : ''), role: 'status', text: msg.text }) : null;
-      function link(label, m) { var b = el('button', { type: 'button', 'class': 'lkcsi-btn out', text: label }); b.addEventListener('click', function () { draw(m); }); return b; }
+      function link(label, fn) { var b = el('button', { type: 'button', 'class': 'lkcsi-btn out', text: label }); b.addEventListener('click', fn); return b; }
+      function to(m) { return function () { draw(m); }; }
       var row = el('div', { 'class': 'lkcsi-row' }, go);
-      if (mode !== 'signin') row.appendChild(link('Back to sign in', 'signin'));
-      if (mode === 'signin') { row.appendChild(link('Create account', 'signup')); row.appendChild(link('Forgot password', 'forgot')); }
+      if (mode === 'signin') { row.appendChild(link('Create account', to('signup'))); row.appendChild(link('Forgot password', to('forgot'))); }
+      else if (mode === 'code') {
+        row.appendChild(link('Send a new code', function () { resend(); }));
+        row.appendChild(link('Back', to(ctx.kind === 'signup' ? 'signup' : 'forgot')));
+      } else row.appendChild(link('Back to sign in', to('signin')));
+      var intro = mode === 'signup' ? 'Use your NTU email. We email you a 6-digit code to confirm it is yours. Same account on every LKCMedSoc site.'
+        : mode === 'forgot' ? 'We email you a 6-digit code. Type it here, then choose a new password.'
+        : mode === 'code' ? 'We sent a 6-digit code to ' + ctx.email + '. It can take a minute; check junk mail too.' : '';
       var form = el('form', { 'class': 'lkcsi-form', novalidate: '' },
-        el('h3', { text: mode === 'signup' ? 'Create account' : mode === 'forgot' ? 'Reset password' : 'Sign in with your NTU email' }),
-        mode === 'signup' ? el('p', { text: 'Use your NTU email. We send a link to confirm it is yours. Same account on every LKCMedSoc site.' }) : null,
-        note, email, mode !== 'forgot' ? secret(pw) : null, mode === 'signup' ? secret(pw2) : null, row);
+        el('h3', { text: titles[mode] }),
+        intro ? el('p', { text: intro }) : null,
+        note,
+        mode === 'signin' || mode === 'signup' || mode === 'forgot' ? email : null,
+        mode === 'code' ? code : null,
+        mode === 'signin' || mode === 'signup' || mode === 'newpw' ? secret(pw) : null,
+        mode === 'signup' || mode === 'newpw' ? secret(pw2) : null,
+        row);
       var close_ = el('button', { type: 'button', 'class': 'lkcsi-x', 'aria-label': 'Close' }); close_.innerHTML = X;
       close_.addEventListener('click', function () { close(false, o); });
       panel.replaceChildren(close_, el('p', { 'class': 'lkcsi-intro', text: 'One sign-in works on every LKCMedSoc site.' }), form);
-      if (keep) { email.value = keep.email; pw.value = keep.pw; pw2.value = keep.pw2; (mode === 'forgot' || !keep.email ? email : pw).focus(); } else email.focus();
+      email.value = keep.email || ''; pw.value = keep.pw || ''; pw2.value = keep.pw2 || '';
+      (mode === 'code' ? code : mode === 'newpw' ? pw : keep.email && mode !== 'forgot' ? pw : email).focus();
 
-      function fail(m) { draw(mode, { text: m, ok: false }, { email: email.value, pw: pw.value, pw2: pw2.value }); }
+      var auth = o.sb.auth, back = o.redirect || location.origin + location.pathname;
+      function typed() { return { email: email.value, pw: pw.value, pw2: pw2.value }; }
+      function fail(m) { draw(mode, { text: m, ok: false }, typed(), ctx); }
       function say(e) { return o.friendly ? o.friendly(e) : (e && e.message) || 'Something went wrong'; }
+      function done() { close(true); if (o.onSignedIn) o.onSignedIn(); }
+      function resend() {
+        var p = ctx.kind === 'signup' ? auth.resend({ type: 'signup', email: ctx.email, options: { emailRedirectTo: back } }) : auth.resetPasswordForEmail(ctx.email, { redirectTo: back });
+        p.then(function (r) { draw('code', r.error ? { text: say(r.error), ok: false } : { text: 'A new code is on its way. Only the newest one works.', ok: true }, null, ctx); });
+      }
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
-        var e = email.value.trim().toLowerCase();
-        if (!e) { fail('Enter your email'); return; }
-        if (e.indexOf('@') < 0) e += '@e.ntu.edu.sg';   // just the name was typed: students' NTU address (anyone else types the whole address)
-        var auth = o.sb.auth, back = o.redirect || location.origin + location.pathname;
         go.disabled = true;
         var again = function (m) { go.disabled = false; fail(m); };
-        if (mode === 'signin') {
-          auth.signInWithPassword({ email: e, password: pw.value }).then(function (r) {
-            if (r.error) return again(say(r.error));
-            close(true); if (o.onSignedIn) o.onSignedIn();
+        if (mode === 'code') {
+          if (code.value.length < 6) return again('Type the code from the email');
+          auth.verifyOtp({ email: ctx.email, token: code.value, type: ctx.kind }).then(function (r) {
+            if (r.error) return again(/expired|invalid/i.test(r.error.message || '') ? 'That code is wrong or has expired. Check it, or send a new one.' : say(r.error));
+            if (ctx.kind === 'signup') done(); else draw('newpw');
           });
+          return;
+        }
+        if (mode === 'newpw') {
+          if (pw.value.length < 8) return again('Use at least 8 characters');
+          if (pw.value !== pw2.value) return again('The two passwords differ');
+          auth.updateUser({ password: pw.value }).then(function (r) { if (r.error) return again(say(r.error)); done(); });
+          return;
+        }
+        var e = email.value.trim().toLowerCase();
+        if (!e) return again('Enter your email');
+        if (e.indexOf('@') < 0) e += '@e.ntu.edu.sg';   // just the name was typed: students' NTU address (anyone else types the whole address)
+        if (mode === 'signin') {
+          auth.signInWithPassword({ email: e, password: pw.value }).then(function (r) { if (r.error) return again(say(r.error)); done(); });
         } else if (mode === 'signup') {
           if (pw.value.length < 8) return again('Use at least 8 characters');
           if (pw.value !== pw2.value) return again('The two passwords differ');
           auth.signUp({ email: e, password: pw.value, options: { emailRedirectTo: back } }).then(function (r) {
             if (r.error) return again(say(r.error));
-            if (r.data && r.data.session) { close(true); if (o.onSignedIn) o.onSignedIn(); return; }
-            draw('signin', { text: 'Check your email for a confirmation link. Open it, then sign in here.', ok: true });
+            if (r.data && r.data.session) return done();
+            draw('code', null, null, { email: e, kind: 'signup' });
           });
         } else {
           auth.resetPasswordForEmail(e, { redirectTo: back }).then(function (r) {
             if (r.error) return again(say(r.error));
-            draw('signin', { text: 'If that email has an account, a reset link is on its way.', ok: true });
+            draw('code', null, null, { email: e, kind: 'recovery' });
           });
         }
       });
