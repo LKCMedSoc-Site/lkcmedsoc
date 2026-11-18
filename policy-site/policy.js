@@ -514,14 +514,29 @@
     function setFill(hex) {
       var root = rootEl(), cells = selectedCells(); if (!root) return;
       if (!cells.length) { P.toast('Click inside a table cell first.', true); return; }
-      var rows = tableRows(root);
+      var rows = tableRows(root), beforeFills = fillSnap();
       cells.forEach(function (c) {
         var t = rows.filter(function (x) { return x.el === c.closest('table'); })[0]; if (!t) return;
         var k = '~fill|' + t.key, fl = tableWidths[k] || (tableWidths[k] = {}), rc = c.parentElement.rowIndex + ',' + c.cellIndex;
         if (hex) fl[rc] = hex; else delete fl[rc];
         if (!Object.keys(fl).length) delete tableWidths[k];
       });
+      var afterFills = fillSnap();
+      if (JSON.stringify(afterFills) !== JSON.stringify(beforeFills)) { fillUndo.push({ before: beforeFills, after: afterFills, depth: histDepth() }); fillRedo = []; }
       applyTableWidths(); saveTableData();
+    }
+    // Cell colours are kept beside the text, so the editor's own undo cannot see them. They get a history of their own, interleaved with the editor's:
+    // a colour change is undone first when nothing has been typed since (the editor's history depth is the same as when the colour was set).
+    var fillUndo = [], fillRedo = [], inHistory = false;
+    function fillSnap() { var o = {}; Object.keys(tableWidths).forEach(function (k) { if (k.indexOf('~fill|') === 0) o[k] = JSON.parse(JSON.stringify(tableWidths[k])); }); return o; }
+    function fillRestore(snap) {
+      Object.keys(tableWidths).forEach(function (k) { if (k.indexOf('~fill|') === 0) delete tableWidths[k]; });
+      Object.keys(snap).forEach(function (k) { tableWidths[k] = snap[k]; });
+      applyTableWidths(); saveTableData();
+    }
+    function histDepth() {
+      var v = pmView(), pl = v && v.state.plugins.filter(function (p) { return p.key === 'history$'; })[0], hs = pl && pl.getState(v.state);
+      return hs && hs.done ? hs.done.eventCount : -1;
     }
     function fillMenu(anchor) {
       var old = document.querySelector('.fillpop'); if (old) { old.remove(); return; }
@@ -743,7 +758,7 @@
       function fmt(fn) { return function () { if (caretIn('h2')) { P.toast('An article title has one fixed style.', true); return; } fn(); }; }
       return h('div', { class: 'docbar pinbar noprint', role: 'toolbar', 'aria-label': 'Formatting' },
         leadItems(),
-        btn('undo', 'Undo', 'undo', function () { undoSafe(); }), btn('redo', 'Redo', 'redo', function () { ed.exec('redo'); }), h('span', { class: 'sep' }),
+        btn('undo', 'Undo', 'undo', function () { undoSafe(); }), btn('redo', 'Redo', 'redo', function () { redoSafe(); }), h('span', { class: 'sep' }),
         btn('outdent', 'Go up a level (Shift+Tab): a clause becomes an article, a sub-item becomes a clause', 'outdent', function () { outdentLevel(); }), btn('indent', 'Go down a level (Tab): an article becomes a clause, a clause becomes a sub-item', 'indent', function () { indentLevel(); }), h('span', { class: 'sep' }),
         btn('bold', 'Bold (with the cursor in a clause and nothing selected: bold clause title)', 'bold', fmt(boldAction)), btn('italic', 'Italic', 'italic', fmt(function () { ed.exec('italic'); })),
         btn('link', 'Link', 'link', fmt(function () { var url = prompt('Link address'); if (!url) return; var sel = window.getSelection().toString(); ed.exec('addLink', { linkUrl: url, linkText: sel || url }); })), h('span', { class: 'sep' }),
@@ -839,7 +854,7 @@
       var host = h('div'); sheetBody.appendChild(host);
       if (canEdit) {
         ed = new T({ el: host, height: 'auto', minHeight: '60vh', initialEditType: 'wysiwyg', hideModeSwitch: true, usageStatistics: false, initialValue: text0, toolbarItems: [], placeholder: 'Start typing…' });
-        ed.on('change', touch);
+        ed.on('change', function () { if (!inHistory) fillRedo = []; touch(); });
         if (repairedOnLoad) { P.toast('Some loose content was moved inside an article and a clause.'); touch(); }
       } else if (T.factory) { T.factory({ el: host, viewer: true, initialValue: text0 }); }
       else host.textContent = text0;
@@ -899,9 +914,19 @@
     P.onLeave(function () { document.removeEventListener('wheel', onWheelZoom); document.removeEventListener('gesturestart', gStart); document.removeEventListener('gesturechange', gChange); document.removeEventListener('gestureend', gEnd); });
     // The editor's history starts from an empty page, so one undo too many would blank the document. If an undo would do that, take it back.
     function undoSafe() {
-      if (!ed) return; var before = ed.getMarkdown();
+      if (!ed) return;
+      var top = fillUndo[fillUndo.length - 1];
+      if (top && top.depth === histDepth()) { fillUndo.pop(); fillRedo.push(top); fillRestore(top.before); return; }   // a cell colour was the last thing done
+      var before = ed.getMarkdown(); inHistory = true;
       ed.exec('undo');
       if (!ed.getMarkdown().trim() && before.trim()) { ed.exec('redo'); P.toast('Nothing more to undo.'); }
+      inHistory = false;
+    }
+    function redoSafe() {
+      if (!ed) return;
+      var top = fillRedo[fillRedo.length - 1];
+      if (top && top.depth === histDepth()) { fillRedo.pop(); fillUndo.push(top); fillRestore(top.after); return; }
+      inHistory = true; ed.exec('redo'); inHistory = false;
     }
     // Tab goes down a level, Shift+Tab up (inside a table they keep moving between cells).
     if (canEdit) {
@@ -917,7 +942,7 @@
         if (!(ev.ctrlKey || ev.metaKey) || ev.altKey || !ed) return;
         var k = (ev.key || '').toLowerCase();
         if (k === 'z' && !ev.shiftKey) { ev.preventDefault(); ev.stopPropagation(); undoSafe(); }
-        else if (k === 'y' || (k === 'z' && ev.shiftKey)) { ev.preventDefault(); ev.stopPropagation(); ed.exec('redo'); }
+        else if (k === 'y' || (k === 'z' && ev.shiftKey)) { ev.preventDefault(); ev.stopPropagation(); redoSafe(); }
       }, true);
     }
     // Listeners and cleanup go after P.show: showing the page clears what the previous page registered.
