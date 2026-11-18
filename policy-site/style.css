@@ -802,3 +802,7 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 
 /* Selecting table cells (see the selection code in policy.js): the tint is drawn by a generated stylesheet; the editor's own text highlight is hidden meanwhile */
 .cellsel-on ::selection { background: transparent; }
+
+/* No special header row in tables: a header cell looks like any other cell, and no text in a table is ever white (the editor makes header cells dark with white text). */
+.sheetbody table th { background-color: transparent !important; color: #222 !important; font-weight: 400 !important; }
+.sheetbody table th p, .sheetbody table th span, .sheetbody table th a { color: inherit !important; font-weight: 400; }

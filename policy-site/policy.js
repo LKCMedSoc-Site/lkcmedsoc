@@ -491,7 +491,8 @@
       var root = rootEl(); if (!root) return; var css = [], fillCss = [];
       tableRows(root).forEach(function (t) {
         var fl = tableWidths['~fill|' + t.key];
-        if (fl) Object.keys(fl).forEach(function (rc) { var p = rc.split(','); if (/^#[0-9a-f]{6}$/i.test(fl[rc])) fillCss.push(t.sel + (+p[0] === 0 ? ' > thead > tr' : ' > tbody > tr:nth-child(' + p[0] + ')') + ' > :nth-child(' + (+p[1] + 1) + ') { background-color: ' + fl[rc] + ' !important; }'); });
+        if (fl) Object.keys(fl).forEach(function (rc) { var p = rc.split(','); if (/^#[0-9a-f]{6}$/i.test(fl[rc])) { var cs = t.sel + (+p[0] === 0 ? ' > thead > tr' : ' > tbody > tr:nth-child(' + p[0] + ')') + ' > :nth-child(' + (+p[1] + 1) + ')';
+          fillCss.push(cs + ' { background-color: ' + fl[rc] + ' !important; }', cs + ', ' + cs + ' * { color: #26121f !important; }'); } });
         var w = tableWidths[t.key]; if (!w || w.length !== t.cols) return;
         css.push(t.sel + ' { table-layout: fixed !important; width: 100% !important; }');
         w.forEach(function (pc, i) { css.push(t.sel + ' tr > :nth-child(' + (i + 1) + ') { width: ' + pc + '% !important; overflow-wrap: anywhere; }'); });
