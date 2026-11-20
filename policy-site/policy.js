@@ -167,30 +167,25 @@
   }
 
   // The rule for what sits inside a clause: its first line, then lead-in text and tables, then its numbered sub-items. Nothing unnumbered comes after the first sub-item,
-  // because it could not be cited and it is unclear which sub-item it belongs to. So a paragraph that ends up after the sub-items becomes the next sub-item, and a table
-  // there is wrapped in a new sub-item with a placeholder line to introduce it. (Text that is already inside a sub-item is indented deeper and is left alone.)
+  // because it could not be cited and it is unclear what it belongs to. Text that ends up there is NOT added to the list (that would change what the list says: a separate
+  // sentence would read as one more item). It becomes a new clause of its own, straight after the clause it followed. A table there becomes a new clause whose first line is a
+  // placeholder to introduce it. (Text that is already inside a sub-item is indented deeper and is left alone.)
   var TABLE_LEAD = 'Add a line here to introduce this table.';
   function numberAfterSubitems(md) {
-    var lines = String(md || '').split('\n'), out = [], ci = -1, afterSub = false, joinTo = false, changed = false;
+    var lines = String(md || '').split('\n'), out = [], ci = -1, afterSub = false, changed = false;
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i];
-      if (/^#{1,6}\s/.test(line) || /^\d+\.(\s|$)/.test(line)) { ci = -1; afterSub = false; joinTo = false; out.push(line); continue; }      // an article, or a clause
+      if (/^#{1,6}\s/.test(line) || /^\d+\.(\s|$)/.test(line)) { ci = -1; afterSub = false; out.push(line); continue; }                           // an article, or a clause
       var m = /^( +)(\S.*)$/.exec(line);
-      if (!m) { joinTo = false; out.push(line); continue; }                                                                                    // a blank line
+      if (!m) { out.push(line); continue; }                                                                                                       // a blank line
       var len = m[1].length; if (ci < 0) ci = len;
-      if (len !== ci) { out.push(line); continue; }                                                                                            // deeper: belongs to a sub-item above
-      var text = m[2], pad = m[1];
-      if (/^(\d+\.|[-*+])(\s|$)/.test(text)) { afterSub = true; joinTo = false; out.push(line); continue; }                                       // a sub-item
-      if (!afterSub) { out.push(line); continue; }                                                                                            // lead-in text or a table: where it belongs
-      changed = true;
-      if (/^\|/.test(text)) {                                                                                                                  // a table after the sub-items: give it a numbered item of its own
-        var run = [text]; while (i + 1 < lines.length && new RegExp('^ {' + ci + '}\\|').test(lines[i + 1])) { i++; run.push(lines[i].slice(ci)); }
-        out.push(pad + '1. ' + TABLE_LEAD, '');
-        run.forEach(function (r) { out.push(pad + '    ' + r); });
-        joinTo = false; continue;
-      }
-      if (joinTo) { out.push(pad + '   ' + text); continue; }                                                                                 // the next line of the same paragraph
-      out.push(pad + '1. ' + text); joinTo = true;                                                                                            // a paragraph after the sub-items becomes one
+      if (len !== ci) { out.push(line); continue; }                                                                                               // deeper: belongs to a sub-item above
+      var text = m[2];
+      if (/^(\d+\.|[-*+])(\s|$)/.test(text)) { afterSub = true; out.push(line); continue; }                                                           // a sub-item
+      if (!afterSub) { out.push(line); continue; }                                                                                               // lead-in text or a table: where it belongs
+      changed = true; afterSub = false;                                                                                                          // from here on it is a new clause
+      if (/^\|/.test(text)) out.push('1. ' + TABLE_LEAD, '', line);                                                                               // a table: a new clause that introduces it
+      else out.push('1. ' + text);                                                                                                               // a paragraph: a new clause (later lines of it follow as they are)
     }
     return changed ? out.join('\n') : md;
   }
@@ -303,7 +298,7 @@
       var sel = null; try { sel = ed.getSelection(); } catch (e) { /* no selection */ }
       ed.setMarkdown(fixed, false);
       try { if (sel && sel.length === 2 && typeof sel[0] === 'number') ed.setSelection(sel[0], sel[1]); } catch (e) { /* the cursor stays where the editor put it */ }
-      if (numberAfterSubitems(md) !== md && !enforce.toldNumber) { enforce.toldNumber = true; P.toast('Text and tables after the sub-items need a number of their own, so they became sub-items.'); }
+      if (numberAfterSubitems(md) !== md && !enforce.toldNumber) { enforce.toldNumber = true; P.toast('Text and tables after the sub-items need a number of their own, so they became a new clause.'); }
       else if (!enforce.told) { enforce.told = true; P.toast('Everything has to sit inside an article and a numbered clause, so it was moved there.'); }
     }
     function touch() {

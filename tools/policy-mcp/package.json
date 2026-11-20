@@ -1,0 +1,14 @@
+{
+  "name": "lkcmedsoc-policy-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A connector that lets Claude read, search, comment on and draft the LKCMedSoc policy documents, signed in as you. It writes working copies only; publishing stays with the President.",
+  "bin": { "lkcmedsoc-policy-mcp": "./index.mjs" },
+  "scripts": { "login": "node index.mjs login", "start": "node index.mjs", "test": "node --test test/connector.test.mjs" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.45.4",
+    "zod": "^3.23.8"
+  }
+}
