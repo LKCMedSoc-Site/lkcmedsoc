@@ -357,7 +357,7 @@
     function refreshMeta(w) {
       if (!w || !w.doc) return; if (metaFirst) { docInfo.summary = w.doc.summary || ''; metaFirst = false; }
       meta.versions = w.versions || []; meta.status = w.doc.status; meta.version = w.doc.version; meta.effective_on = w.doc.effective_on;
-      meta.published_md = typeof w.published_md === 'string' ? w.published_md : null; updateToken(); drawLog();
+      meta.published_md = typeof w.published_md === 'string' ? w.published_md : null; updateToken(); drawLog(); if (typeof updatePdfBtn === 'function' && typeof pdfBtn !== 'undefined') updatePdfBtn();
     }
     function loadMeta() { return rpc('policy_live_info', { p_slug: slug }).then(refreshMeta).catch(function () { /* none */ }); }
     var sumP = loadMeta();
@@ -400,12 +400,17 @@
       document.body.appendChild(overlay); nm.focus();
     }
     var infoBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Name and description', 'aria-label': 'Name and description', onclick: openDetails }); infoBtn.appendChild(svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 20));
+    // Save as PDF is only for published documents, and it always makes the published version (what members read), never the working copy.
     var pdfBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Save as PDF', 'aria-label': 'Save as PDF', onclick: async function () {
-      pdfBtn.disabled = true; P.toast('Preparing the PDF\u2026');
-      try { await LE.savePdf(ed.getJSON(), { org: "LKCMedicine Students' Medical Society", title: docInfo.title, summary: docInfo.summary, versionLine: tokenT.textContent, filename: slug + (meta.version > 0 ? '-v' + meta.version : '-working-copy')  }, { resolveImage: resolveImage }); }
-      catch (e) { P.toast('Could not make the PDF. Check your connection and try again.', true); }
+      if (!(meta.status === 'in_force' && meta.version > 0)) { P.toast('Publish the document before saving it as a PDF.', true); return; }
+      pdfBtn.disabled = true; P.toast('Preparing the PDF of version ' + meta.version + '\u2026');
+      try {
+        var pub = await rpc('policy_text', { p_slug: slug, p_version: meta.version }), tmp = LE.preview(document.createElement('div'), (pub && pub.body_md) || '', { resolveImage: resolveImage }), json = tmp.getJSON(); tmp.destroy();
+        await LE.savePdf(json, { org: "LKCMedicine Students' Medical Society", title: docInfo.title, summary: docInfo.summary, versionLine: 'Version ' + meta.version + (meta.effective_on ? ' \u00b7 ' + longDate(meta.effective_on) : ''), filename: slug + '-v' + meta.version }, { resolveImage: resolveImage });
+      } catch (e) { P.toast('Could not make the PDF. Check your connection and try again.', true); }
       pdfBtn.disabled = false; } });
-    pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20));
+    function updatePdfBtn() { var ok = meta.status === 'in_force' && meta.version > 0; pdfBtn.classList.toggle('off', !ok); pdfBtn.title = ok ? 'Save version ' + meta.version + ' as PDF' : 'Save as PDF (publish the document first)'; pdfBtn.setAttribute('aria-disabled', ok ? 'false' : 'true'); }
+    pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20)); updatePdfBtn();
     var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
     var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
     // ---- Publish (the President only): asks for comments, saves what is pending, then publishes the working copy as the next version ----

@@ -1103,3 +1103,4 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-figh{position:absolute;width:11px;height:11px;background:#fff;border:2px solid #8a2a6d;border-radius:2px;display:none;z-index:4}
 .lv-fig.sel .lv-figh,.lv-fig:hover .lv-figh{display:block}
 .lv-figh.nw{left:-6px;top:-6px;cursor:nwse-resize}.lv-figh.ne{right:-6px;top:-6px;cursor:nesw-resize}.lv-figh.sw{left:-6px;bottom:-6px;cursor:nesw-resize}.lv-figh.se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.gd-iconbtn.off{opacity:.38;cursor:not-allowed}
