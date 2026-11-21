@@ -76,6 +76,7 @@
       colAdd: '<rect x="3" y="3" width="10" height="18" rx="1.5"/><path d="M18.5 9.5v5M16 12h5"/>',
       rowDel: '<rect x="3" y="3" width="18" height="10" rx="1.5"/><path d="M9.5 18.5h5"/>',
       colDel: '<rect x="3" y="3" width="10" height="18" rx="1.5"/><path d="M16 12h5"/>',
+      palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.6-.3-1-.6-1.4-.3-.4-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/>',
       tableDel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m9 9 6 6M15 9l-6 6"/>'
     };
     function icon(name) { var sp = document.createElement('span'); sp.className = 'lv-ic'; sp.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[name] + '</svg>'; return sp; }
@@ -86,15 +87,29 @@
     }
     function grp() { return h.apply(null, ['div', { class: 'lv-grp', role: 'group' }].concat([].slice.call(arguments))); }
     function refreshTb() { tbButtons.forEach(function (x) { var on = false; try { on = x[1](); } catch (e) { /* no editor yet */ } x[0].classList.toggle('on', !!on); }); }
+    // ---- cell colour: tables have none by default; select cells (click one, or drag across several) and pick a colour ----
+    var CELL_COLORS = [['No colour', null], ['Grey', '#eceff1'], ['Yellow', '#fff3bf'], ['Green', '#d8f0dc'], ['Blue', '#d6e6fb'], ['Purple', '#e9dcf3'], ['Red', '#fbdcdc'], ['Orange', '#fde4c8']], pal = null;
+    function closePalette() { if (pal) { pal.remove(); pal = null; document.removeEventListener('mousedown', outside, true); document.removeEventListener('keydown', escPal, true); } }
+    function outside(ev) { if (pal && !pal.contains(ev.target) && !colourBtn.contains(ev.target)) closePalette(); }
+    function escPal(ev) { if (ev.key === 'Escape') closePalette(); }
+    function openPalette() {
+      if (pal) { closePalette(); return; }
+      if (!LE.inTable(ed)) { P.toast('Click in a table first, or drag across the cells you want to colour.', true); return; }
+      var r = colourBtn.getBoundingClientRect();
+      pal = h('div', { class: 'lv-pop', role: 'menu', 'aria-label': 'Cell colour', style: 'top:' + Math.round(r.bottom + 6) + 'px;left:' + Math.round(Math.max(8, r.left - 40)) + 'px' },
+        CELL_COLORS.map(function (c) { return h('button', { type: 'button', class: 'lv-sw' + (c[1] ? '' : ' none'), title: c[0], 'aria-label': c[0], style: c[1] ? 'background:' + c[1] : '', onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { LE.setCellColor(ed, c[1]); closePalette(); } }); }));
+      document.body.appendChild(pal); document.addEventListener('mousedown', outside, true); document.addEventListener('keydown', escPal, true);
+    }
+    var colourBtn = h('button', { type: 'button', class: 'lv-tb', title: 'Cell colour (select cells first)', 'aria-label': 'Cell colour', onmousedown: function (ev) { ev.preventDefault(); }, onclick: openPalette }); colourBtn.appendChild(icon('palette'));
     var toolbar = canEdit ? h('div', { class: 'lv-toolbar noprint', role: 'toolbar', 'aria-label': 'Formatting' },
       grp(tb('undo', 'Undo (your changes only)', function (c) { c.undo().run(); }), tb('redo', 'Redo', function (c) { c.redo().run(); })),
       grp(tb('bold', 'Bold', function (c) { c.toggleBold().run(); }, function () { return ed.isActive('bold'); }), tb('italic', 'Italic', function (c) { c.toggleItalic().run(); }, function () { return ed.isActive('italic'); })),
       grp(tb('article', 'Article title', function (c) { c.toggleHeading({ level: 2 }).run(); }, function () { return ed.isActive('heading'); }),
         tb('clause', 'Numbered clause', function (c) { c.toggleOrderedList().run(); }, function () { return ed.isActive('orderedList'); }),
         tb('sub', 'Make a sub-item (indent)', function (c) { if (!LE.canIndent(ed)) { P.toast('Four levels is the most: 1.1, (a), (i), (A).', true); return; } c.sinkListItem('listItem').run(); }), tb('out', 'Back out of a sub-item', function (c) { c.liftListItem('listItem').run(); })),
-      grp(tb('table', 'Insert a table', function (c) { c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); }),
+      grp(tb('table', 'Insert a table', function (c) { c.insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run(); }),
         tb('rowAdd', 'Add a row below', function (c) { c.addRowAfter().run(); }), tb('colAdd', 'Add a column after', function (c) { c.addColumnAfter().run(); }),
-        tb('rowDel', 'Delete this row', function (c) { c.deleteRow().run(); }), tb('colDel', 'Delete this column', function (c) { c.deleteColumn().run(); }), tb('tableDel', 'Delete the table', function (c) { c.deleteTable().run(); }))) : null;
+        tb('rowDel', 'Delete this row', function (c) { c.deleteRow().run(); }), tb('colDel', 'Delete this column', function (c) { c.deleteColumn().run(); }), tb('tableDel', 'Delete the table', function (c) { c.deleteTable().run(); }), colourBtn)) : null;
 
     // ---- comments (the same table and functions as the ordinary page) ----
     function threads() { var roots = notes.filter(function (n) { return !n.parent_id; }); return roots.map(function (r) { return { root: r, replies: notes.filter(function (n) { return n.parent_id === r.id; }) }; }); }
@@ -327,7 +342,7 @@
     ed.on('update', function () { clearTimeout(ed._pn); ed._pn = setTimeout(paintNotes, 400); });
     window.__live = { ed: ed, ydoc: ydoc, awareness: awareness };
     P.onLeave(function () {
-      closed = true; clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
+      closed = true; closePalette(); clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
       if (pending.length) { var b = pending; pending = []; rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(b)), p_md: LE.markdownOf(ed), p_name: myName(), p_epoch: epoch }).catch(function () { /* lost only if the tab died */ }); }
       LE.removeAwarenessStates(awareness, [ydoc.clientID], 'local'); try { P.sb.removeChannel(chan); } catch (e) { /* closing */ } ed.destroy();
     });

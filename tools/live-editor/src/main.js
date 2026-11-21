@@ -342,9 +342,18 @@ var TableResize = Extension.create({
   }
 });
 
+// ---- cell colours: a background colour on any table cell (none by default), set for the selected cells from the toolbar ----
+var cellBg = { default: null,
+  parseHTML: function (el) { return el.getAttribute('data-bg') || el.style.backgroundColor || null; },
+  renderHTML: function (a) { return a.backgroundColor ? { 'data-bg': a.backgroundColor, style: 'background-color:' + a.backgroundColor } : {}; } };
+var PolicyCell = TableCell.extend({ addAttributes: function () { return Object.assign({}, this.parent ? this.parent() : {}, { backgroundColor: cellBg }); } });
+var PolicyHeader = TableHeader.extend({ addAttributes: function () { return Object.assign({}, this.parent ? this.parent() : {}, { backgroundColor: cellBg }); } });
+function setCellColor(ed, color) { return ed.chain().focus().setCellAttribute('backgroundColor', color || null).run(); }
+function inTable(ed) { return ed.isActive('table'); }
+
 function extensions() {
   return [StarterKit.configure({ history: false, heading: { levels: [2] }, blockquote: false, codeBlock: false, code: false, horizontalRule: false }),
-    PolicyTable.configure({ resizable: false }), TableRow, TableHeader, TableCell, Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
+    PolicyTable.configure({ resizable: false }), TableRow, PolicyHeader, PolicyCell, Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
 }
 function seed(ydoc, markdown) {                       // turn markdown into the shared document, once, when nothing has been shared yet
   var ed = new Editor({ element: document.createElement('div'), extensions: extensions(), content: markdown || '' });
@@ -366,4 +375,4 @@ function preview(el, md) { return new Editor({ element: el, editable: false, ext
 // A title can have a line break in the editor (Shift+Enter) but a markdown title is one line, so in the saved/published text the lines of a title are joined with a space.
 function markdownOf(ed) { var md = ed.storage.markdown.getMarkdown(), re = /^(#{1,6} [^\n]*?)\\\n([^\n]+)/m; while (re.test(md)) md = md.replace(re, '$1 $2'); return md; }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
-  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, canIndent: canIndent, preview: preview, fixStructure: fixStructure };
+  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, canIndent: canIndent, setCellColor: setCellColor, inTable: inTable, preview: preview, fixStructure: fixStructure };

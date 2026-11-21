@@ -829,7 +829,7 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 .lv-editor .ProseMirror>ol>li::before{content:counter(art) "." counter(cl);position:absolute;left:0;font-weight:600}
 .lv-editor .ProseMirror>ol>li>ol,.lv-editor .ProseMirror>ol>li>ul{list-style:lower-alpha;padding-left:2em}
 .lv-editor .ProseMirror li>p{margin:.2em 0}
-.lv-editor table{border-collapse:collapse;margin:.6em 0;width:100%}.lv-editor td,.lv-editor th{border:1px solid #bbb;padding:4px 8px;vertical-align:top}.lv-editor th{background:#f3eef2}
+.lv-editor table{border-collapse:collapse;margin:.6em 0;width:100%}.lv-editor td,.lv-editor th{border:1px solid #bbb;padding:4px 8px;vertical-align:top}.lv-editor th{font-weight:600;text-align:left}
 .lv-editor .selectedCell{background:#e6dbe3}
 .lv-editor .tableWrapper{overflow-x:auto}
 .collaboration-cursor__caret{position:relative;margin-left:-1px;margin-right:-1px;border-left:1px solid;border-right:1px solid;word-break:normal;pointer-events:none}
@@ -993,3 +993,8 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .tableWrapper.lv-hit{cursor:col-resize}
 .lv-editor .tableWrapper.lv-hit table{cursor:col-resize}
 .lv-editor .tableWrapper.lv-hit::after{content:'';position:absolute;top:0;bottom:0;width:3px;left:var(--lv-hit);background:#8a2a6d;pointer-events:none;border-radius:2px}
+
+/* cell colour palette */
+.lv-pop{position:fixed;z-index:2147483000;display:grid;grid-template-columns:repeat(4,28px);gap:6px;padding:10px;background:#fff;border:1px solid #dadce0;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+.lv-sw{width:28px;height:28px;border-radius:50%;border:1px solid #c9c2c7;cursor:pointer;padding:0}.lv-sw:hover{outline:2px solid #8a2a6d;outline-offset:1px}
+.lv-sw.none{background:#fff linear-gradient(135deg,transparent 46%,#c0392b 46%,#c0392b 54%,transparent 54%)}
