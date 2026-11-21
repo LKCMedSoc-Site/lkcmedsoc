@@ -32,6 +32,8 @@ function fixStructure(state) {
   if (tr) return tr;
   // 2. a stray block straight at the top level
   var kids = []; doc.forEach(function (node, pos) { kids.push({ node: node, pos: pos }); });
+  // two clause lists in a row (Enter at the end of an article title makes one) are one list: join them so the clauses number on and Backspace can reach across
+  for (var m = 1; m < kids.length; m++) if (kids[m].node.type === T.orderedList && kids[m - 1].node.type === T.orderedList) return state.tr.join(kids[m].pos);
   for (var i = 0; i < kids.length; i++) {
     var k = kids[i], node = k.node, prev = i ? kids[i - 1].node : null;
     if (node.type === T.heading || node.type === T.orderedList) continue;
@@ -74,7 +76,11 @@ var Structure = Extension.create({
     return [new Plugin({ key: new PluginKey('policyStructure'), appendTransaction: function (trs, oldS, newS) {
       if (!trs.some(function (t) { return t.docChanged; })) return null;
       if (trs.some(function (t) { var m = t.getMeta('y-sync$'); return m && m.isChangeOrigin; })) return null;   // someone else's edit: their own page fixes it, so two pages never fix the same thing twice
-      return fixStructure(newS);
+      // ProseMirror does not call a plugin again for a transaction it appended itself, so keep fixing until nothing is left to fix and hand back all the steps at once
+      var acc = null, st = newS;
+      for (var g = 0; g < 30; g++) { var t = fixStructure(st); if (!t) break; st = st.applyInner(t);   // applyInner: state.apply would run this plugin again inside and the steps would be lost
+       if (!acc) acc = t; else t.steps.forEach(function (stp) { acc.step(stp); }); }
+      return acc;
     } })];
   }
 });
