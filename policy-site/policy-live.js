@@ -299,7 +299,7 @@
       titleT.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); descT.focus(); } });
       descT.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); ed.commands.focus('start'); } });
     }
-    var titleBlock = h('div', { class: 'lv-doctitle' }, h('div', { class: 'lv-org' }, (P.cfg && P.cfg.ORG_NAME) || 'LKCMedSoc'), titleT, descT, metaLine);
+    var titleBlock = h('div', { class: 'lv-doctitle' }, h('div', { class: 'lv-org' }, "LKCMedicine Students' Medical Society"), titleT, descT, metaLine);
     function fitAll() { fit(titleT); fit(descT); }
     function openDetails() {
       var overlay = h('div', { class: 'gd-overlay', onclick: function (ev) { if (ev.target === overlay) overlay.remove(); } });
