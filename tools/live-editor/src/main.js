@@ -372,7 +372,15 @@ var TableKeys = Extension.create({
   },
   addProseMirrorPlugins: function () {
     var opts = this.options;
-    return [new Plugin({ key: new PluginKey('tableMenu'), props: { handleDOMEvents: { contextmenu: function (view, ev) {
+    function inSelection(view, ev) {                                       // is the pointer inside the block of selected cells?
+      var sel = view.state.selection; if (!sel.$anchorCell) return false;
+      var hit = view.posAtCoords({ left: ev.clientX, top: ev.clientY }); if (!hit) return false;
+      return sel.ranges.some(function (r) { return hit.pos >= r.$from.pos && hit.pos <= r.$to.pos; });
+    }
+    return [new Plugin({ key: new PluginKey('tableMenu'), props: { handleDOMEvents: {
+      // a right-click (or Ctrl+click on a Mac) inside selected cells must not touch the selection: the browser would select a word and the cell selection would be lost
+      mousedown: function (view, ev) { if (view.editable && (ev.button === 2 || (ev.button === 0 && ev.ctrlKey)) && inSelection(view, ev)) { ev.preventDefault(); return true; } return false; },
+      contextmenu: function (view, ev) {
       var cell = ev.target && ev.target.closest ? ev.target.closest('td, th') : null; if (!cell || !view.editable || !opts.onTableMenu) return false;
       var sel = view.state.selection, onCell = !!sel.$anchorCell;   // only a block of selected cells has $anchorCell (not the class name: the build shortens it); it stays selected when you right-click inside it
       var hit = view.posAtCoords({ left: ev.clientX, top: ev.clientY });
