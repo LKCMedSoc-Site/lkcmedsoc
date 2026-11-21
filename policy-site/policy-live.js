@@ -91,7 +91,7 @@
       grp(tb('bold', 'Bold', function (c) { c.toggleBold().run(); }, function () { return ed.isActive('bold'); }), tb('italic', 'Italic', function (c) { c.toggleItalic().run(); }, function () { return ed.isActive('italic'); })),
       grp(tb('article', 'Article title', function (c) { c.toggleHeading({ level: 2 }).run(); }, function () { return ed.isActive('heading'); }),
         tb('clause', 'Numbered clause', function (c) { c.toggleOrderedList().run(); }, function () { return ed.isActive('orderedList'); }),
-        tb('sub', 'Make a sub-item (indent)', function (c) { c.sinkListItem('listItem').run(); }), tb('out', 'Back out of a sub-item', function (c) { c.liftListItem('listItem').run(); })),
+        tb('sub', 'Make a sub-item (indent)', function (c) { if (!LE.canIndent(ed)) { P.toast('Four levels is the most: 1.1, (a), (i), (A).', true); return; } c.sinkListItem('listItem').run(); }), tb('out', 'Back out of a sub-item', function (c) { c.liftListItem('listItem').run(); })),
       grp(tb('table', 'Insert a table', function (c) { c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); }),
         tb('rowAdd', 'Add a row below', function (c) { c.addRowAfter().run(); }), tb('colAdd', 'Add a column after', function (c) { c.addColumnAfter().run(); }),
         tb('rowDel', 'Delete this row', function (c) { c.deleteRow().run(); }), tb('colDel', 'Delete this column', function (c) { c.deleteColumn().run(); }), tb('tableDel', 'Delete the table', function (c) { c.deleteTable().run(); }))) : null;

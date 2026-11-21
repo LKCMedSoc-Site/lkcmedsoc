@@ -961,3 +961,11 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-rule{display:none}
 .lv-org,.lv-doctitle textarea.muted{font-style:normal}
 .lv-doctitle{padding-top:36px}
+
+/* article number shown on the heading, in the same column as the clause numbers; a fourth level (A) under (i) */
+.lv-editor .ProseMirror h2{position:relative;padding-left:3.6em}
+.lv-editor .ProseMirror h2::before{content:counter(art);display:inline;position:absolute;left:0;font-weight:700;font-size:inherit;font-style:normal;letter-spacing:0;color:inherit;margin:0}
+.lv-editor .ProseMirror>ol>li ol ol>li{counter-increment:sub3}
+.lv-editor .ProseMirror>ol>li ol ol ol>li{counter-increment:sub4}
+.lv-editor .ProseMirror>ol>li ol ol ol>li::before{content:"(" counter(sub4,upper-alpha) ")"}
+.lv-editor .ProseMirror>ol>li ol ol ol{counter-reset:sub4}

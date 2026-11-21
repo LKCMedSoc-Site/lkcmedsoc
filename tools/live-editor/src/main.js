@@ -137,6 +137,15 @@ var ClauseBackspace = Extension.create({
   }
 });
 
+
+// Four levels at most under an article: clause 1.1, (a), (i), (A). Tab and the indent button stop there.
+function listDepth($p) { var n = 0; for (var d = $p.depth; d > 0; d--) if (isList($p.node(d))) n++; return n; }
+function canIndent(ed) { return listDepth(ed.state.selection.$from) < 4; }
+var IndentCap = Extension.create({
+  name: 'indentCap', priority: 1000,
+  addKeyboardShortcuts: function () { return { Tab: function (ctx) { return !canIndent(ctx.editor) && listDepth(ctx.editor.state.selection.$from) > 0; } }; }
+});
+
 // ---- comment highlights, anchored by quoted text like policy_notes ----
 var cmKey = new PluginKey('policyComments');
 function docText(doc) { var parts = [], map = []; doc.descendants(function (node, pos) { if (node.isText) { for (var i = 0; i < node.text.length; i++) map.push(pos + i); parts.push(node.text); } else if (node.isBlock && parts.length) { parts.push('\n'); map.push(-1); } return true; }); return { text: parts.join(''), map: map }; }
@@ -175,7 +184,7 @@ function seed(ydoc, markdown) {                       // turn markdown into the 
 }
 function create(o) {
   var ed = new Editor({ element: o.element, editable: o.editable !== false,
-    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, Comments.configure({ onClick: o.onNoteClick })]),
+    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, Comments.configure({ onClick: o.onNoteClick })]),
     onUpdate: o.onUpdate || function () {}, onSelectionUpdate: o.onSelection || function () {} });
   return ed;
 }
@@ -187,4 +196,4 @@ function selectionQuote(ed) {
 function preview(el, md) { return new Editor({ element: el, editable: false, extensions: extensions(), content: md || '' }); }
 function markdownOf(ed) { return ed.storage.markdown.getMarkdown(); }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
-  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, preview: preview, fixStructure: fixStructure };
+  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, canIndent: canIndent, preview: preview, fixStructure: fixStructure };
