@@ -1055,8 +1055,6 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-fold:hover{background:#efe8ec;color:#3a0a2e}.lv-fold.on{transform:rotate(-90deg)}
 .lv-editor .ProseMirror li li .lv-fold{left:-2em}
 .lv-hidden{display:none!important}
-.lv-editor .ProseMirror h2.lv-folded::after{content:' \2026';color:#8a7f86;font-weight:400}
-.lv-editor .ProseMirror li.lv-folded>p:first-of-type::after{content:' \2026';color:#8a7f86}
 @media(hover:none){.lv-fold{opacity:.45}}
 
 /* outline (left rail, like Google Docs) */
