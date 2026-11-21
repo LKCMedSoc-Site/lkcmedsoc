@@ -80,7 +80,7 @@ var Structure = Extension.create({
 });
 
 
-// Backspace at the very start of a clause joins its text onto the end of the clause above (Google Docs style). A clause cannot be un-numbered, so the default
+// Backspace at the very start of a clause moves its text into the clause above as a new line of that same clause (like Shift+Enter). A clause cannot be un-numbered, so the default
 // "lift out of the list" would only be put back by the structure rules (and threw the cursor to the next clause). Sub-items, tables and lead-in text follow the text up.
 var ClauseBackspace = Extension.create({
   name: 'clauseBackspace', priority: 1000,
@@ -93,8 +93,8 @@ var ClauseBackspace = Extension.create({
       if ($f.node(d - 1).type.name !== 'listItem' || $f.node(d - 2).type.name !== 'orderedList' || $f.index(d - 1) !== 0) return false;
       var list = $f.node(d - 2), idx = $f.index(d - 2), item = $f.node(d - 1), itemPos = $f.before(d - 1);
       if (idx === 0) return true;                                         // the first clause of an article has nothing above it to join
-      var prev = list.child(idx - 1), prevStart = itemPos - prev.nodeSize, target = -1;
-      prev.descendants(function (n, p, parent) { if (n.type.name === 'table') return false; if (n.type.name === 'paragraph') target = prevStart + 1 + p + n.nodeSize - 1; return true; });
+      var prev = list.child(idx - 1), prevStart = itemPos - prev.nodeSize, target = -1, seenList = false;
+      prev.forEach(function (c, off) { if (isList(c)) seenList = true; if (!seenList && c.type.name === 'paragraph') target = prevStart + 1 + off + c.nodeSize - 1; });   // the clause's own last paragraph, before any sub-items
       if (target < 0) return true;
       var tr = st.tr, rest = []; item.forEach(function (c, off, i) { if (i > 0) rest.push(c); });
       tr.delete(itemPos, itemPos + item.nodeSize);
@@ -103,8 +103,8 @@ var ClauseBackspace = Extension.create({
         if (rest.length > 1) tr.insert(itemEnd, Fragment.fromArray(rest.slice(1)));
         tr.insert(itemEnd - 1, rest[0].content);
       } else if (rest.length) tr.insert(itemEnd, Fragment.fromArray(rest));
-      tr.insert(target, $f.parent.content);
-      tr.setSelection(TextSelection.near(tr.doc.resolve(target), -1));
+      tr.insert(target, Fragment.from(st.schema.nodes.hardBreak.create()).append($f.parent.content));   // the text carries on in the same clause, on a new line (like Shift+Enter)
+      tr.setSelection(TextSelection.near(tr.doc.resolve(target + 1), 1));
       ed.view.dispatch(tr.scrollIntoView());
       return true;
     } };
