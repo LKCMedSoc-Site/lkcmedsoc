@@ -441,6 +441,34 @@ var Fold = Extension.create({
   }
 });
 
+
+// In-page dialogs: the app's browser does not support window.prompt or window.confirm, so these draw a small dialog instead (same look as the Share dialog).
+function askText(o) {
+  return new Promise(function (done) {
+    var ov = document.createElement('div'), dg = document.createElement('div'), t = document.createElement('div'), lab = document.createElement('label'), inp = document.createElement(o.multiline ? 'textarea' : 'input'), foot = document.createElement('div'), no = document.createElement('button'), ok = document.createElement('button');
+    ov.className = 'gd-overlay'; dg.className = 'gd-dialog'; dg.setAttribute('role', 'dialog'); dg.setAttribute('aria-modal', 'true'); t.className = 'gd-title'; t.textContent = o.title || '';
+    lab.className = 'gd-lab'; lab.textContent = o.label || ''; inp.className = 'gd-field'; inp.value = o.value || ''; if (!o.multiline) inp.type = 'text'; else inp.rows = 3; inp.maxLength = o.maxLength || 300;
+    foot.className = 'gd-foot'; foot.style.cssText = 'justify-content:flex-end;gap:8px'; no.type = 'button'; no.className = 'gd-btn'; no.textContent = 'Cancel'; ok.type = 'button'; ok.className = 'gd-btn fill'; ok.textContent = o.ok || 'OK';
+    function end(v) { document.removeEventListener('keydown', key, true); ov.remove(); done(v); }
+    function key(ev) { if (ev.key === 'Escape') { ev.stopPropagation(); end(null); } }
+    function sync() { ok.disabled = !!o.required && !inp.value.trim(); }
+    inp.addEventListener('input', sync); inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !o.multiline && !ok.disabled) { ev.preventDefault(); end(inp.value.trim()); } });
+    no.addEventListener('click', function () { end(null); }); ok.addEventListener('click', function () { end(inp.value.trim()); }); ov.addEventListener('mousedown', function (ev) { if (ev.target === ov) end(null); });
+    foot.appendChild(no); foot.appendChild(ok); dg.appendChild(t); if (o.label) dg.appendChild(lab); dg.appendChild(inp); dg.appendChild(foot); ov.appendChild(dg); document.body.appendChild(ov); document.addEventListener('keydown', key, true); sync(); inp.focus(); inp.select && inp.select();
+  });
+}
+function askConfirm(o) {
+  return new Promise(function (done) {
+    var ov = document.createElement('div'), dg = document.createElement('div'), t = document.createElement('div'), p = document.createElement('p'), foot = document.createElement('div'), no = document.createElement('button'), ok = document.createElement('button');
+    ov.className = 'gd-overlay'; dg.className = 'gd-dialog'; dg.setAttribute('role', 'dialog'); dg.setAttribute('aria-modal', 'true'); t.className = 'gd-title'; t.textContent = o.title || 'Are you sure?'; p.className = 'gd-sub'; p.style.cssText = 'font-size:.95rem;margin:0 0 6px'; p.textContent = o.message || '';
+    foot.className = 'gd-foot'; foot.style.cssText = 'justify-content:flex-end;gap:8px'; no.type = 'button'; no.className = 'gd-btn'; no.textContent = 'Cancel'; ok.type = 'button'; ok.className = 'gd-btn fill'; ok.textContent = o.ok || 'OK';
+    function end(v) { document.removeEventListener('keydown', key, true); ov.remove(); done(v); }
+    function key(ev) { if (ev.key === 'Escape') { ev.stopPropagation(); end(false); } }
+    no.addEventListener('click', function () { end(false); }); ok.addEventListener('click', function () { end(true); }); ov.addEventListener('mousedown', function (ev) { if (ev.target === ov) end(false); });
+    foot.appendChild(no); foot.appendChild(ok); dg.appendChild(t); if (o.message) dg.appendChild(p); dg.appendChild(foot); ov.appendChild(dg); document.body.appendChild(ov); document.addEventListener('keydown', key, true); ok.focus();
+  });
+}
+
 // ---- images: a picture sits on its own line inside a clause. It is stored in the markdown as ![alt](policy-image:<path> "w=60;c=Caption"), where w is the width as a percent of the level
 // it sits at (it can never be wider) and c the caption. The page turns policy-image:<path> into a short-lived signed link. Alt text is required when inserting.
 function figInfo(title) { var m = /(?:^|;)w=(\d+)/.exec(title || ''), c = /(?:^|;)c=(.*)$/.exec(title || ''); return { w: m ? Math.min(100, Math.max(10, +m[1])) : 100, c: c ? c[1] : '' }; }
@@ -455,11 +483,20 @@ var PolicyImage = Image.extend({
       var fig = document.createElement('span'), box = document.createElement('span'), img = document.createElement('img'), cap = document.createElement('span'), bar = document.createElement('span');
       fig.className = 'lv-fig'; box.className = 'lv-figbox'; cap.className = 'lv-figcap'; bar.className = 'lv-figbar'; bar.contentEditable = 'false'; img.draggable = false;
       box.appendChild(img); if (editor.isEditable) box.appendChild(bar); fig.appendChild(box); fig.appendChild(cap);
+      if (editor.isEditable) ['nw', 'ne', 'sw', 'se'].forEach(function (corner) {                      // drag a corner to resize: the width is a percent of the level, 10 to 100, so it can only shrink to fit
+        var hd = document.createElement('span'); hd.className = 'lv-figh ' + corner; hd.contentEditable = 'false'; box.appendChild(hd);
+        hd.addEventListener('mousedown', function (ev) {
+          ev.preventDefault(); ev.stopPropagation(); var startX = ev.clientX, levelW = fig.getBoundingClientRect().width || 1, w0 = figInfo(cur.attrs.title).w, sign = corner.charAt(1) === 'e' ? 1 : -1, w = w0;
+          function move(e) { w = Math.round(Math.min(100, Math.max(10, w0 + sign * (e.clientX - startX) / levelW * 100))); box.style.width = w + '%'; }
+          function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); if (w !== w0) edit({ title: figTitle(w, figInfo(cur.attrs.title).c) }); }
+          document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+        });
+      });
       function edit(attrs) { var pos = getPos(); if (typeof pos !== 'number') return; editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, null, Object.assign({}, cur.attrs, attrs))); }
       function btn(label, title, fn) { var b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; b.addEventListener('mousedown', function (e) { e.preventDefault(); }); b.addEventListener('click', function (e) { e.preventDefault(); fn(); }); bar.appendChild(b); return b; }
       [25, 50, 75, 100].forEach(function (w) { btn(w + '%', 'Width ' + w + '% of this level', function () { edit({ title: figTitle(w, figInfo(cur.attrs.title).c) }); }); });
-      btn('Alt text', 'Describe the image for people who cannot see it', function () { var a = window.prompt('Describe this image for people who cannot see it:', cur.attrs.alt || ''); if (a !== null && a.trim()) edit({ alt: a.trim() }); });
-      btn('Caption', 'Caption under the image', function () { var c = window.prompt('Caption (leave empty for none):', figInfo(cur.attrs.title).c); if (c !== null) edit({ title: figTitle(figInfo(cur.attrs.title).w, c.trim()) }); });
+      btn('Alt text', 'Describe the image for people who cannot see it', function () { askText({ title: 'Alt text', label: 'Optional: a short description for people who cannot see the image. Screen readers read it aloud.', value: cur.attrs.alt || '', required: false, ok: 'Save', multiline: true }).then(function (a) { if (a !== null) edit({ alt: a }); }); });
+      btn('Caption', 'Caption under the image', function () { askText({ title: 'Caption', label: 'Shown under the image. Leave it empty for no caption.', value: figInfo(cur.attrs.title).c, ok: 'Save', maxLength: 200 }).then(function (c) { if (c !== null) edit({ title: figTitle(figInfo(cur.attrs.title).w, c) }); }); });
       btn('Remove', 'Remove the image', function () { var pos = getPos(); if (typeof pos === 'number') editor.view.dispatch(editor.state.tr.delete(pos, pos + cur.nodeSize)); });
       function load(src) {
         if (img.getAttribute('data-src') === src) return; img.setAttribute('data-src', src); fig.classList.remove('broken'); fig.classList.add('loading');
@@ -468,7 +505,7 @@ var PolicyImage = Image.extend({
       function paint(n) { var fi = figInfo(n.attrs.title); box.style.width = fi.w + '%'; img.alt = n.attrs.alt || ''; cap.textContent = fi.c; cap.hidden = !fi.c; load(n.attrs.src); }
       paint(cur);
       return { dom: fig, update: function (n) { if (n.type !== cur.type) return false; cur = n; paint(n); return true; }, selectNode: function () { fig.classList.add('sel'); }, deselectNode: function () { fig.classList.remove('sel'); },
-        stopEvent: function (ev) { return bar.contains(ev.target); }, ignoreMutation: function () { return true; } };
+        stopEvent: function (ev) { return bar.contains(ev.target) || (ev.target.classList && ev.target.classList.contains('lv-figh')); }, ignoreMutation: function () { return true; } };
     };
   }
 });
@@ -536,4 +573,4 @@ function createReader(o) {
 }
 function markdownOf(ed) { var md = ed.storage.markdown.getMarkdown(), re = /^(#{1,6} [^\n]*?)\\\n([^\n]+)/m; while (re.test(md)) md = md.replace(re, '$1 $2'); return md; }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
-  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, prepareImage: prepareImage, insertImage: insertImage, savePdf: savePdf, createReader: createReader, headings: headings, headingTop: headingTop, scrollToHeading: scrollToHeading, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };
+  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, askText: askText, askConfirm: askConfirm, prepareImage: prepareImage, insertImage: insertImage, savePdf: savePdf, createReader: createReader, headings: headings, headingTop: headingTop, scrollToHeading: scrollToHeading, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };

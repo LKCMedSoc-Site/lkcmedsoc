@@ -137,7 +137,7 @@
         try {
           P.toast('Preparing the image\u2026'); var prep = await LE.prepareImage(f);
           if (prep.blob.size > 5 * 1024 * 1024) { P.toast('Even shrunk, that image is over 5 MB. Try a smaller picture.', true); continue; }
-          var alt = ''; while (!alt.trim()) { var a = window.prompt('Describe this image for people who cannot see it (required):', ''); if (a === null) break; alt = a; } if (!alt.trim()) continue;
+          var alt = await LE.askText({ title: 'Add image', label: 'Alt text (optional): a short description for people who cannot see the image. Screen readers read it aloud.', required: false, multiline: true, ok: 'Add image' }); if (alt === null) continue;
           var path = data.doc.id + '/' + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2)) + '.' + prep.ext;
           var up = await P.sb.storage.from('policy-images').upload(path, prep.blob, { contentType: prep.type, upsert: false }); if (up.error) throw up.error;
           LE.insertImage(ed, { src: 'policy-image:' + path, alt: alt.trim(), title: 'w=100' });
@@ -231,7 +231,7 @@
       sendRow.append(h('div', { class: 'gd-sendrole' }, roleSel), h('div', { class: 'gd-sendbtns' }, h('button', { type: 'button', class: 'gd-btn', onclick: function () { chips = []; drawChips(); } }, 'Cancel'), sendBtn));
       function personRow(name, sub, right) { return h('div', { class: 'gd-person' }, avatar(name, 36), h('div', { class: 'gd-pn' }, h('div', { class: 'gd-name' }, name), sub ? h('div', { class: 'gd-sub' }, sub) : null), right); }
       async function setRole(email, val, row) {
-        if (val === 'none') { if (!confirm('Remove access for ' + email + '?')) { load(); return; } try { await rpc('policy_editor_remove', { p_slug: slug, p_email: email }); P.toast('Removed access'); } catch (e) { P.toast(P.friendly(e), true); } load(); return; }
+        if (val === 'none') { if (!(await LE.askConfirm({ title: 'Remove access', message: 'Remove access for ' + email + '? They will no longer be able to open this document.', ok: 'Remove' }))) { load(); return; } try { await rpc('policy_editor_remove', { p_slug: slug, p_email: email }); P.toast('Removed access'); } catch (e) { P.toast(P.friendly(e), true); } load(); return; }
         try { await rpc('policy_editor_add', { p_slug: slug, p_email: email, p_can_edit: val === 'edit', p_name: myName() }); } catch (e) { P.toast(P.friendly(e), true); } load();
       }
       async function load() {
@@ -270,7 +270,7 @@
         })();
         banner.replaceChildren(h('span', { class: 'gd-hname' }, item.kind === 'current' ? 'Current version' : item.label || stamp(item.at)),
           item.kind !== 'save' || !canEdit ? null : h('button', { type: 'button', class: 'gd-btn fill', onclick: async function () {
-            if (!confirm('Restore this version for everyone? What is there now is kept in the version history.')) return;
+            if (!(await LE.askConfirm({ title: 'Restore this version', message: 'Put this version back for everyone? What is there now is kept in the version history.', ok: 'Restore' }))) return;
             if (await P.run(function () { return rpc('policy_restore_backup', { p_slug: slug, p_id: item.id, p_name: myName() }).then(function () { return true; }); }, 'Restored')) location.reload(); } }, 'Restore this version'));
       }
       var openG = { draft: true };
