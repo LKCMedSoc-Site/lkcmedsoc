@@ -131,7 +131,7 @@ var ClauseBackspace = Extension.create({
         tr.setSelection(TextSelection.near(tr.doc.resolve(tgt + 1), 1));
         ed.view.dispatch(tr.scrollIntoView()); return true;
       }
-      // Backspace works one row at a time. If the row above is deeper than this item, the item moves out one level per press; otherwise, or for a clause, the text joins the row above on a new line (like Shift+Enter).
+      // Backspace at the start of an item takes its number away and carries the text up onto the row directly above, on a new line (like Google Docs: number removed, then merged). It never changes levels: Tab and Shift+Tab do that.
       var prev = list.child(idx - 1), deep = prev, deepPos = itemPos - prev.nodeSize, parentList = list, parentListPos = $f.before(d - 2), descents = 0;
       for (;;) {
         var lc = deep.lastChild; if (!lc || !isList(lc) || !lc.childCount) break;
@@ -143,8 +143,6 @@ var ClauseBackspace = Extension.create({
         var gone = parentList.childCount === 1 ? parentList.nodeSize : deep.nodeSize, mapped = itemPos - gone;
         tr0.setSelection(TextSelection.near(tr0.doc.resolve(mapped + 2), 1)); ed.view.dispatch(tr0.scrollIntoView()); return true;
       }
-      // The row above is deeper than this item: Backspace moves the item OUT one level, as its own item (like Shift+Tab), once per press. A clause cannot go out any further, so there it joins the row above.
-      if (descents > 0 && !clause) { ed.chain().focus().liftListItem('listItem').run(); return true; }
       if (!deep.lastChild || deep.lastChild.type.name !== 'paragraph') return true;                                         // the row above ends in a table: leave it alone
       var target = deepPos + deep.nodeSize - 2, deepEnd = deepPos + deep.nodeSize - 1;
       tr.delete(itemPos, itemPos + item.nodeSize);
