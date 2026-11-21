@@ -270,15 +270,15 @@
     function longDate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
     // ---- the version token under the title: "Draft" or "Version N", opening a log of every publish with the President's comments ----
     var meta = { versions: [], status: data.doc.status, version: data.doc.version, effective_on: null };
-    var tokenT = h('span', null, data.doc.version > 0 ? 'Version ' + data.doc.version : 'Draft · not yet in force'), tokenCaret = svg('<path d="m6 9 6 6 6-6"/>', 14);
+    var tokenT = h('span', null, data.doc.version > 0 ? 'Version ' + data.doc.version : 'Draft'), tokenCaret = svg('<path d="m6 9 6 6 6-6"/>', 14);
     var token = h('button', { type: 'button', class: 'lv-token', 'aria-expanded': 'false', 'aria-controls': 'lv-log', title: 'Version log', onclick: toggleLog }, tokenT, tokenCaret);
     var logEl = h('div', { class: 'lv-log', id: 'lv-log', hidden: true }), metaLine = h('div', { class: 'lv-meta' }, token, logEl);
     function toggleLog() { var open = logEl.hidden; logEl.hidden = !open; token.setAttribute('aria-expanded', open ? 'true' : 'false'); token.classList.toggle('open', open); }
     function drawLog() {
       logEl.replaceChildren();
-      if (!meta.versions.length) { logEl.appendChild(h('p', { class: 'lv-log-empty' }, 'Not published yet. When the President publishes, the document becomes a numbered version that members can read, and each publish is recorded here with the President\u2019s comments.')); return; }
+      if (!meta.versions.length) { logEl.appendChild(h('p', { class: 'lv-log-empty' }, 'Not published yet. Each version the President publishes is listed here with their comments.')); return; }
       meta.versions.forEach(function (v) {
-        logEl.appendChild(h('div', { class: 'lv-log-item' }, h('div', { class: 'lv-log-h' }, h('b', null, 'Version ' + v.version), v.effective_on ? ' \u00b7 in force from ' + longDate(v.effective_on) : ''),
+        logEl.appendChild(h('div', { class: 'lv-log-item' }, h('div', { class: 'lv-log-h' }, h('b', null, 'Version ' + v.version), v.effective_on ? ' \u00b7 ' + longDate(v.effective_on) : '', ' \u00b7 ', h('a', { href: '#/d/' + slug + '?v=' + v.version }, 'View')),
           h('div', { class: 'lv-log-by' }, 'Published by ' + (v.by || 'the President')), v.note ? h('p', { class: 'lv-log-note' }, v.note) : null));
       });
     }
@@ -286,8 +286,8 @@
     function refreshMeta(w) {
       if (!w || !w.doc) return; if (metaFirst) { docInfo.summary = w.doc.summary || ''; metaFirst = false; }
       meta.versions = w.versions || []; meta.status = w.doc.status; meta.version = w.doc.version; meta.effective_on = w.doc.effective_on;
-      tokenT.textContent = w.doc.status === 'in_force' && w.doc.version > 0 ? 'Version ' + w.doc.version + (w.doc.effective_on ? ' \u00b7 In force from ' + longDate(w.doc.effective_on) : ' \u00b7 In force') : 'Draft \u00b7 not yet in force';
-      drawLog(); if (typeof pubLink !== 'undefined' && pubLink) { pubLink.hidden = !(w.doc.version > 0); pubLink.href = '#/d/' + slug + '?v=' + w.doc.version; pubLink.textContent = 'Published version ' + w.doc.version; }
+      tokenT.textContent = w.doc.status === 'in_force' && w.doc.version > 0 ? 'Version ' + w.doc.version + (w.doc.effective_on ? ' \u00b7 ' + longDate(w.doc.effective_on) : '') : 'Draft';
+      drawLog();
     }
     function loadMeta() { return (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(refreshMeta).catch(function () { /* none */ }); }
     var sumP = loadMeta();
@@ -332,7 +332,6 @@
     var infoBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Name and description', 'aria-label': 'Name and description', onclick: openDetails }); infoBtn.appendChild(svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 20));
     var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
     var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
-    var pubLink = h('a', { href: '#/d/' + slug + '?v=' + data.doc.version, hidden: !(data.doc.version > 0) }, 'Published version ' + data.doc.version);
     // ---- Publish (the President only): asks for comments, saves what is pending, then publishes the working copy as the next version ----
     async function flushPending() { clearTimeout(pushT); for (var n = 0; n < 60 && (pending.length || pushing); n++) { if (!pushing && pending.length) await push(); else await new Promise(function (r) { setTimeout(r, 100); }); } return !pending.length; }
     function openPublish() {
@@ -351,8 +350,7 @@
       document.body.appendChild(overlay); note.focus();
     }
     var pubBtn = P.canConfirm ? h('button', { type: 'button', class: 'gd-btn fill gd-pub', onclick: openPublish }, 'Publish') : null;
-    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, P.exco ? infoBtn : null, h('span', { class: 'pill warn', title: canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.' }, canEdit ? 'Working copy' : 'Working copy · read only'),
-      pubLink, status, h('span', { class: 'lv-spacer' }), people,
+    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, P.exco ? infoBtn : null, status, h('span', { class: 'lv-spacer' }), people,
       P.exco ? histBtn : null, pubBtn, P.exco || canEdit ? shareBtn : null);
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
     // ---- zoom: the − and + buttons, Ctrl/Cmd + scroll, trackpad pinch (Chrome, Firefox, Safari) and two-finger pinch on a touch screen ----
