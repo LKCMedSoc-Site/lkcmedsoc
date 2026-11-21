@@ -351,7 +351,7 @@
       var inForce = meta.status === 'in_force' && meta.version > 0, dirty = false;
       if (inForce && meta.published_md !== null && meta.published_md !== undefined && ed) { try { dirty = LE.markdownOf(ed).trim() !== meta.published_md.trim(); } catch (e) { dirty = false; } }
       tokenT.textContent = !inForce ? 'Not published' : dirty ? 'Unpublished changes \u00b7 since version ' + meta.version : 'Version ' + meta.version + (meta.effective_on ? ' \u00b7 ' + longDate(meta.effective_on) : '');
-      token.classList.toggle('dirty', inForce && dirty);
+      token.classList.toggle('dirty', inForce && dirty); if (typeof updatePdfBtn === 'function' && typeof pdfBtn !== 'undefined') updatePdfBtn();
     }
     var metaFirst = true;
     function refreshMeta(w) {
@@ -403,13 +403,14 @@
     // Save as PDF is only for published documents, and it always makes the published version (what members read), never the working copy.
     var pdfBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Save as PDF', 'aria-label': 'Save as PDF', onclick: async function () {
       if (!(meta.status === 'in_force' && meta.version > 0)) { P.toast('Publish the document before saving it as a PDF.', true); return; }
+      if (token.classList.contains('dirty')) { P.toast('This is the working copy. Showing the published version: save the PDF from here.'); location.hash = '#/d/' + slug + '?v=' + meta.version; return; }   // a PDF is only made from a published version
       pdfBtn.disabled = true; P.toast('Preparing the PDF of version ' + meta.version + '\u2026');
       try {
         var pub = await rpc('policy_text', { p_slug: slug, p_version: meta.version }), tmp = LE.preview(document.createElement('div'), (pub && pub.body_md) || '', { resolveImage: resolveImage }), json = tmp.getJSON(); tmp.destroy();
         await LE.savePdf(json, { org: "LKCMedicine Students' Medical Society", title: docInfo.title, summary: docInfo.summary, versionLine: 'Version ' + meta.version + (meta.effective_on ? ' \u00b7 ' + longDate(meta.effective_on) : ''), filename: slug + '-v' + meta.version }, { resolveImage: resolveImage });
       } catch (e) { P.toast('Could not make the PDF. Check your connection and try again.', true); }
       pdfBtn.disabled = false; } });
-    function updatePdfBtn() { var ok = meta.status === 'in_force' && meta.version > 0; pdfBtn.classList.toggle('off', !ok); pdfBtn.title = ok ? 'Save version ' + meta.version + ' as PDF' : 'Save as PDF (publish the document first)'; pdfBtn.setAttribute('aria-disabled', ok ? 'false' : 'true'); }
+    function updatePdfBtn() { var pub = meta.status === 'in_force' && meta.version > 0, clean = pub && !token.classList.contains('dirty'), ok = clean; pdfBtn.classList.toggle('off', !ok); pdfBtn.title = clean ? 'Save version ' + meta.version + ' as PDF' : pub ? 'Save as PDF: opens the published version, since this is the working copy' : 'Save as PDF (publish the document first)'; pdfBtn.setAttribute('aria-disabled', ok ? 'false' : 'true'); }
     pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20)); updatePdfBtn();
     var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
     var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
