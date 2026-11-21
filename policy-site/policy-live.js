@@ -77,6 +77,7 @@
       colAdd: '<rect x="3" y="3" width="10" height="18" rx="1.5"/><path d="M18.5 9.5v5M16 12h5"/>',
       rowDel: '<rect x="3" y="3" width="18" height="10" rx="1.5"/><path d="M9.5 18.5h5"/>',
       colDel: '<rect x="3" y="3" width="10" height="18" rx="1.5"/><path d="M16 12h5"/>',
+      image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/>',
       palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.6-.3-1-.6-1.4-.3-.4-.4-.7-.4-1.1 0-.9.7-1.7 1.7-1.7H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/>',
       tableDel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m9 9 6 6M15 9l-6 6"/>'
     };
@@ -123,6 +124,28 @@
       var w = tmenu.offsetWidth, hh = tmenu.offsetHeight; tmenu.style.left = Math.max(8, Math.min(pt.x, window.innerWidth - w - 8)) + 'px'; tmenu.style.top = Math.max(8, Math.min(pt.y, window.innerHeight - hh - 8)) + 'px';
       document.addEventListener('mousedown', outsideMenu, true); document.addEventListener('keydown', escMenu, true); window.addEventListener('scroll', closeTableMenu, true); window.addEventListener('blur', closeTableMenu);
     }
+    // ---- images: pick, paste or drag a picture in; it is shrunk, uploaded to the private policy-images bucket and placed on its own line ----
+    var imgCache = {};
+    function resolveImage(src) {
+      var path = String(src || '').replace(/^policy-image:/, ''), hit = imgCache[path]; if (hit && hit.until > Date.now()) return hit.p;
+      var pr = P.sb.storage.from('policy-images').createSignedUrl(path, 3600).then(function (r) { if (r.error || !r.data) throw (r.error || new Error('no link')); return r.data.signedUrl; });
+      imgCache[path] = { p: pr, until: Date.now() + 50 * 60 * 1000 }; pr.catch(function () { delete imgCache[path]; }); return pr;
+    }
+    async function addImages(files) {
+      for (var i = 0; i < files.length; i++) {
+        var f = files[i]; if (f.size > 15 * 1024 * 1024) { P.toast('That image is too large (15 MB at most before it is shrunk).', true); continue; }
+        try {
+          P.toast('Preparing the image\u2026'); var prep = await LE.prepareImage(f);
+          if (prep.blob.size > 5 * 1024 * 1024) { P.toast('Even shrunk, that image is over 5 MB. Try a smaller picture.', true); continue; }
+          var alt = ''; while (!alt.trim()) { var a = window.prompt('Describe this image for people who cannot see it (required):', ''); if (a === null) break; alt = a; } if (!alt.trim()) continue;
+          var path = data.doc.id + '/' + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2)) + '.' + prep.ext;
+          var up = await P.sb.storage.from('policy-images').upload(path, prep.blob, { contentType: prep.type, upsert: false }); if (up.error) throw up.error;
+          LE.insertImage(ed, { src: 'policy-image:' + path, alt: alt.trim(), title: 'w=100' });
+        } catch (e) { P.toast(P.friendly(e) || 'Could not add the image.', true); }
+      }
+    }
+    var imgInput = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml', multiple: true, hidden: true, onchange: function () { var fs = [].slice.call(imgInput.files); imgInput.value = ''; if (fs.length) addImages(fs); } });
+    var imgBtn = h('button', { type: 'button', class: 'lv-tb', title: 'Insert image (or paste or drag one in)', 'aria-label': 'Insert image', onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { imgInput.click(); } }); imgBtn.appendChild(icon('image')); imgBtn.appendChild(imgInput);
     var colourBtn = h('button', { type: 'button', class: 'lv-tb', title: 'Cell colour (select cells first)', 'aria-label': 'Cell colour', onmousedown: function (ev) { ev.preventDefault(); }, onclick: openPalette }); colourBtn.appendChild(icon('palette'));
     // (the inserted table has a header row because a markdown table needs one to be saved; the header has no colour, only bold text)
     var toolbar = canEdit ? h('div', { class: 'lv-toolbar noprint', role: 'toolbar', 'aria-label': 'Formatting' },
@@ -131,17 +154,32 @@
       grp(tb('article', 'Article title', function (c) { c.toggleHeading({ level: 2 }).run(); }, function () { return ed.isActive('heading'); }),
         tb('clause', 'Numbered clause', function (c) { c.toggleOrderedList().run(); }, function () { return ed.isActive('orderedList'); }),
         tb('sub', 'Make a sub-item (indent)', function (c) { if (!LE.canIndent(ed)) { P.toast('Four levels is the most: 1.1, (a), (i), (A).', true); return; } c.sinkListItem('listItem').run(); }), tb('out', 'Back out of a sub-item', function (c) { c.liftListItem('listItem').run(); })),
+      grp(imgBtn),
       grp(tb('table', 'Insert a table', function (c) { c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); }),
         tb('rowAdd', 'Add a row below', function (c) { c.addRowAfter().run(); }), tb('colAdd', 'Add a column after', function (c) { c.addColumnAfter().run(); }),
         tb('rowDel', 'Delete this row', function (c) { c.deleteRow().run(); }), tb('colDel', 'Delete this column', function (c) { c.deleteColumn().run(); }), tb('tableDel', 'Delete the table', function (c) { c.deleteTable().run(); }), colourBtn)) : null;
 
     // ---- comments (the same table and functions as the ordinary page) ----
     function threads() { var roots = notes.filter(function (n) { return !n.parent_id; }); return roots.map(function (r) { return { root: r, replies: notes.filter(function (n) { return n.parent_id === r.id; }) }; }); }
+    // Comment cards line up with the words they are about (like Google Docs): each card sits at the height of its highlight, and a card that would overlap the one above moves down.
+    function layoutNotes() {
+      var cards = [].slice.call(notesCol.querySelectorAll('.lv-card[data-tid]')), base = notesCol.getBoundingClientRect().top, items = cards.map(function (c) {
+        var y = null;
+        if (c.getAttribute('data-tid') === 'draft') y = +c.getAttribute('data-y') || 0;
+        else { var sp = editorEl.querySelector('[data-note="' + c.getAttribute('data-tid') + '"]'); if (sp) { var rc = sp.getBoundingClientRect(); if (rc.height > 0) y = rc.top - base; else y = null; } else y = 1e9; }   // no highlight at all: the words were changed; the card goes to the end. A highlight folded away hides its card.
+        c.classList.toggle('orphan', y === 1e9);
+        return { c: c, y: y };
+      });
+      items.forEach(function (it) { it.c.hidden = it.y === null; });
+      items = items.filter(function (it) { return it.y !== null; }).sort(function (a, b) { return a.y - b.y; });
+      var bottom = 0; items.forEach(function (it) { var top = Math.max(it.y, bottom ? bottom + 8 : 0); it.c.style.top = Math.max(0, top) + 'px'; bottom = Math.max(0, top) + it.c.offsetHeight; });
+      notesCol.style.minHeight = bottom + 'px';
+    }
     function paintNotes() {
       var open = notes.filter(function (n) { return !n.parent_id && !n.resolved; });
       LE.setNotes(ed, open, activeId);
       notesCol.replaceChildren.apply(notesCol, threads().filter(function (t) { return !t.root.resolved; }).map(function (t) {
-        var r = t.root, card = h('div', { class: 'lv-card' + (r.id === activeId ? ' on' : ''), onclick: function () { activeId = r.id; paintNotes(); } },
+        var r = t.root, card = h('div', { class: 'lv-card' + (r.id === activeId ? ' on' : ''), 'data-tid': r.id, onclick: function () { activeId = r.id; paintNotes(); } },
           h('div', { class: 'lv-q' }, '“' + r.quote.slice(0, 80) + (r.quote.length > 80 ? '…' : '') + '”'),
           [r].concat(t.replies).map(function (n) { return h('div', { class: 'lv-note' }, h('b', null, n.author_name + ': '), n.body); }));
         if (r.id === activeId) {
@@ -151,6 +189,7 @@
         }
         return card;
       }));
+      layoutNotes();
     }
     async function reloadNotes() { try { notes = (await rpc('policy_note_list', { p_slug: slug })) || []; } catch (e) { /* keep what we have */ } if (ed) paintNotes(); }
     cmBtn.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
@@ -160,7 +199,8 @@
         h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: async function () { if (!ta.value.trim()) return;
           if (await P.run(function () { return rpc('policy_note_add', { p_slug: slug, p_ref: '', p_quote: q.quote, p_prefix: q.prefix, p_body: ta.value, p_parent: null, p_name: myName() }).then(function () { return true; }); })) { send('notes', {}); box.remove(); reloadNotes(); } } }, 'Comment'),
           h('button', { class: 'ghost small', onclick: function () { box.remove(); } }, 'Cancel')));
-      notesCol.prepend(box); cmBtn.hidden = true; ta.focus();
+      box.setAttribute('data-tid', 'draft'); box.setAttribute('data-y', String(Math.round(ed.view.coordsAtPos(ed.state.selection.from).top - notesCol.getBoundingClientRect().top)));
+      notesCol.prepend(box); layoutNotes(); cmBtn.hidden = true; ta.focus();
     });
 
     // ---- icons for the bar (clock = version history, people = share) ----
@@ -226,7 +266,7 @@
         (async function () {
           var md = '';
           try { md = item.kind === 'current' ? LE.markdownOf(ed) : item.kind === 'pub' ? ((await rpc('policy_text', { p_slug: slug, p_version: item.version })) || {}).body_md : await rpc('policy_backup_text', { p_slug: slug, p_id: item.id }); } catch (e) { P.toast('Could not load that version', true); }
-          if (pvEd) pvEd.destroy(); pv.replaceChildren(); pvEd = LE.preview(pv, md || '');
+          if (pvEd) pvEd.destroy(); pv.replaceChildren(); pvEd = LE.preview(pv, md || '', { resolveImage: resolveImage });
         })();
         banner.replaceChildren(h('span', { class: 'gd-hname' }, item.kind === 'current' ? 'Current version' : item.label || stamp(item.at)),
           item.kind !== 'save' || !canEdit ? null : h('button', { type: 'button', class: 'gd-btn fill', onclick: async function () {
@@ -455,13 +495,16 @@
     var viewEl = document.getElementById('view'); viewEl.classList.add('lv-wide'); P.onLeave(function () { viewEl.classList.remove('lv-wide'); }); setTimeout(fitAll, 0); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll); window.addEventListener('resize', fitAll);
     document.body.appendChild(cmBtn);
     awareness.setLocalStateField('user', me);
-    ed = LE.create({ onTableMenu: openTableMenu, element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,
+    ed = LE.create({ onTableMenu: openTableMenu, resolveImage: resolveImage, onImageFiles: addImages, element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,
       onNoteClick: function (id) { activeId = id; paintNotes(); },
       onSelection: function () {
         refreshTb(); var s = ed.state.selection; if (s.empty) { cmBtn.hidden = true; return; }
         var c = ed.view.coordsAtPos(s.to); cmBtn.hidden = false; cmBtn.style.cssText = 'position:fixed;z-index:30;left:' + Math.round(c.left) + 'px;top:' + Math.round(c.bottom + 6) + 'px';
       } });
     document.body.appendChild(outPanel); setOutline(outOpen); drawOutline(); markOutline(); ed.on('update', outSoon);
+    if (window.ResizeObserver) { var roN = new ResizeObserver(function () { layoutNotes(); }); roN.observe(editorEl); P.onLeave(function () { roN.disconnect(); }); }
+    window.addEventListener('resize', layoutNotes); P.onLeave(function () { window.removeEventListener('resize', layoutNotes); });
+    ed.on('transaction', function () { clearTimeout(ed._ln); ed._ln = setTimeout(layoutNotes, 120); });
     ed.on('transaction', refreshTb); drawPeople(); announce(); send('hello', {}); setStatus(canEdit ? 'All changes saved' : 'Read only'); await reloadNotes();
     var dtimer = setInterval(function () { paintNotes(); }, 15000);   // highlights follow the words as other people type
     ed.on('update', function () { clearTimeout(ed._pn); ed._pn = setTimeout(paintNotes, 400); clearTimeout(ed._tk); ed._tk = setTimeout(updateToken, 500); });

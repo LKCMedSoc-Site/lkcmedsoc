@@ -92,10 +92,24 @@
     // ---- comments: the same threads as in the editor (members can comment, reply and resolve) ----
     function threads() { var roots = notes.filter(function (n) { return !n.parent_id; }); return roots.map(function (r) { return { root: r, replies: notes.filter(function (n) { return n.parent_id === r.id; }) }; }); }
     function send(name, args) { return rpc(name, args).then(function () { return true; }); }
+    // Comment cards line up with the words they are about (like Google Docs): each card sits at the height of its highlight, and a card that would overlap the one above moves down.
+    function layoutNotes() {
+      var cards = [].slice.call(notesCol.querySelectorAll('.lv-card[data-tid]')), base = notesCol.getBoundingClientRect().top, items = cards.map(function (c) {
+        var y = null;
+        if (c.getAttribute('data-tid') === 'draft') y = +c.getAttribute('data-y') || 0;
+        else { var sp = editorEl.querySelector('[data-note="' + c.getAttribute('data-tid') + '"]'); if (sp) { var rc = sp.getBoundingClientRect(); if (rc.height > 0) y = rc.top - base; else y = null; } else y = 1e9; }   // no highlight at all: the words were changed; the card goes to the end. A highlight folded away hides its card.
+        c.classList.toggle('orphan', y === 1e9);
+        return { c: c, y: y };
+      });
+      items.forEach(function (it) { it.c.hidden = it.y === null; });
+      items = items.filter(function (it) { return it.y !== null; }).sort(function (a, b) { return a.y - b.y; });
+      var bottom = 0; items.forEach(function (it) { var top = Math.max(it.y, bottom ? bottom + 8 : 0); it.c.style.top = Math.max(0, top) + 'px'; bottom = Math.max(0, top) + it.c.offsetHeight; });
+      notesCol.style.minHeight = bottom + 'px';
+    }
     function paintNotes() {
       if (!ed) return; LE.setNotes(ed, notes.filter(function (n) { return !n.parent_id && !n.resolved; }), activeId);
       notesCol.replaceChildren.apply(notesCol, threads().filter(function (t) { return !t.root.resolved; }).map(function (t) {
-        var r = t.root, card = h('div', { class: 'lv-card' + (r.id === activeId ? ' on' : ''), onclick: function () { activeId = r.id; paintNotes(); } },
+        var r = t.root, card = h('div', { class: 'lv-card' + (r.id === activeId ? ' on' : ''), 'data-tid': r.id, onclick: function () { activeId = r.id; paintNotes(); } },
           h('div', { class: 'lv-q' }, '“' + r.quote.slice(0, 80) + (r.quote.length > 80 ? '…' : '') + '”'), [r].concat(t.replies).map(function (n) { return h('div', { class: 'lv-note' }, h('b', null, n.author_name + ': '), n.body); }));
         if (r.id === activeId) {
           var ta = h('input', { type: 'text', placeholder: 'Reply…', class: 'grow' });
@@ -104,6 +118,7 @@
         }
         return card;
       }));
+      layoutNotes();
     }
     async function reload() { try { notes = (await rpc('policy_note_list', { p_slug: slug })) || []; } catch (e) { /* keep */ } paintNotes(); }
     cmBtn.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
@@ -112,7 +127,8 @@
       var box = h('div', { class: 'lv-card on' }, h('div', { class: 'lv-q' }, '“' + qq.quote.slice(0, 80) + '”'), ta, h('div', { class: 'row' },
         h('button', { class: 'btn small', onclick: async function () { if (!ta.value.trim()) return; if (await P.run(function () { return send('policy_note_add', { p_slug: slug, p_ref: '', p_quote: qq.quote, p_prefix: qq.prefix, p_body: ta.value, p_parent: null, p_name: myName() }); })) { box.remove(); reload(); } } }, 'Comment'),
         h('button', { class: 'ghost small', onclick: function () { box.remove(); } }, 'Cancel')));
-      notesCol.prepend(box); cmBtn.hidden = true; ta.focus();
+      box.setAttribute('data-tid', 'draft'); box.setAttribute('data-y', String(Math.round(ed.view.coordsAtPos(ed.state.selection.from).top - notesCol.getBoundingClientRect().top)));
+      notesCol.prepend(box); layoutNotes(); cmBtn.hidden = true; ta.focus();
     });
 
     // ---- assemble ----
@@ -127,9 +143,18 @@
     lvBody.addEventListener('touchend', function (ev) { if (ev.touches.length < 2) pd0 = 0; }, { passive: true });
     P.show(lvEl);
     var viewEl = document.getElementById('view'); viewEl.classList.add('lv-wide'); document.body.appendChild(cmBtn); document.body.appendChild(outPanel);
-    ed = LE.createReader({ element: editorEl, markdown: data.body_md || '', onNoteClick: function (id) { activeId = id; paintNotes(); },
+    var imgCache = {};
+    function resolveImage(src) {
+      var path = String(src || '').replace(/^policy-image:/, ''), hit = imgCache[path]; if (hit && hit.until > Date.now()) return hit.p;
+      var pr = P.sb.storage.from('policy-images').createSignedUrl(path, 3600).then(function (x) { if (x.error || !x.data) throw (x.error || new Error('no link')); return x.data.signedUrl; });
+      imgCache[path] = { p: pr, until: Date.now() + 50 * 60 * 1000 }; pr.catch(function () { delete imgCache[path]; }); return pr;
+    }
+    ed = LE.createReader({ resolveImage: resolveImage, element: editorEl, markdown: data.body_md || '', onNoteClick: function (id) { activeId = id; paintNotes(); },
       onSelection: function () { if (!P.exco) return; var s = ed.state.selection; if (s.empty) { cmBtn.hidden = true; return; } var c = ed.view.coordsAtPos(s.to); cmBtn.hidden = false; cmBtn.style.cssText = 'position:fixed;z-index:30;left:' + Math.round(c.left) + 'px;top:' + Math.round(c.bottom + 6) + 'px'; } });
     drawOutline(); setOutline(outOpen); markOutline(); paintNotes();
+    if (window.ResizeObserver) { var roN = new ResizeObserver(function () { layoutNotes(); }); roN.observe(editorEl); P.onLeave(function () { roN.disconnect(); }); }
+    window.addEventListener('resize', layoutNotes); P.onLeave(function () { window.removeEventListener('resize', layoutNotes); });
+    ed.on('transaction', function () { clearTimeout(ed._ln); ed._ln = setTimeout(layoutNotes, 120); });
     P.onLeave(function () { viewEl.classList.remove('lv-wide'); cmBtn.remove(); outPanel.remove(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); try { ed.destroy(); } catch (e) { /* closing */ } });
   };
 })();

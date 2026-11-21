@@ -14,6 +14,7 @@ import { Markdown } from 'tiptap-markdown';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Fragment } from '@tiptap/pm/model';
+import Image from '@tiptap/extension-image';
 import { savePdf } from './pdf.js';
 
 function b64(u8) { var s = '', i; for (i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
@@ -440,9 +441,72 @@ var Fold = Extension.create({
   }
 });
 
-function extensions() {
+// ---- images: a picture sits on its own line inside a clause. It is stored in the markdown as ![alt](policy-image:<path> "w=60;c=Caption"), where w is the width as a percent of the level
+// it sits at (it can never be wider) and c the caption. The page turns policy-image:<path> into a short-lived signed link. Alt text is required when inserting.
+function figInfo(title) { var m = /(?:^|;)w=(\d+)/.exec(title || ''), c = /(?:^|;)c=(.*)$/.exec(title || ''); return { w: m ? Math.min(100, Math.max(10, +m[1])) : 100, c: c ? c[1] : '' }; }
+function figTitle(w, c) { return 'w=' + w + (c ? ';c=' + String(c).replace(/"/g, "'").replace(/\n/g, ' ') : ''); }
+var PolicyImage = Image.extend({
+  inline: true, group: 'inline', draggable: true,
+  addOptions: function () { return Object.assign({}, this.parent ? this.parent() : {}, { resolve: null }); },
+  addNodeView: function () {
+    var opts = this.options;
+    return function (props) {
+      var cur = props.node, editor = props.editor, getPos = props.getPos;
+      var fig = document.createElement('span'), box = document.createElement('span'), img = document.createElement('img'), cap = document.createElement('span'), bar = document.createElement('span');
+      fig.className = 'lv-fig'; box.className = 'lv-figbox'; cap.className = 'lv-figcap'; bar.className = 'lv-figbar'; bar.contentEditable = 'false'; img.draggable = false;
+      box.appendChild(img); if (editor.isEditable) box.appendChild(bar); fig.appendChild(box); fig.appendChild(cap);
+      function edit(attrs) { var pos = getPos(); if (typeof pos !== 'number') return; editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, null, Object.assign({}, cur.attrs, attrs))); }
+      function btn(label, title, fn) { var b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; b.addEventListener('mousedown', function (e) { e.preventDefault(); }); b.addEventListener('click', function (e) { e.preventDefault(); fn(); }); bar.appendChild(b); return b; }
+      [25, 50, 75, 100].forEach(function (w) { btn(w + '%', 'Width ' + w + '% of this level', function () { edit({ title: figTitle(w, figInfo(cur.attrs.title).c) }); }); });
+      btn('Alt text', 'Describe the image for people who cannot see it', function () { var a = window.prompt('Describe this image for people who cannot see it:', cur.attrs.alt || ''); if (a !== null && a.trim()) edit({ alt: a.trim() }); });
+      btn('Caption', 'Caption under the image', function () { var c = window.prompt('Caption (leave empty for none):', figInfo(cur.attrs.title).c); if (c !== null) edit({ title: figTitle(figInfo(cur.attrs.title).w, c.trim()) }); });
+      btn('Remove', 'Remove the image', function () { var pos = getPos(); if (typeof pos === 'number') editor.view.dispatch(editor.state.tr.delete(pos, pos + cur.nodeSize)); });
+      function load(src) {
+        if (img.getAttribute('data-src') === src) return; img.setAttribute('data-src', src); fig.classList.remove('broken'); fig.classList.add('loading');
+        Promise.resolve(opts.resolve ? opts.resolve(src) : src).then(function (u) { if (img.getAttribute('data-src') === src) { img.src = u; fig.classList.remove('loading'); } }).catch(function () { fig.classList.remove('loading'); fig.classList.add('broken'); });
+      }
+      function paint(n) { var fi = figInfo(n.attrs.title); box.style.width = fi.w + '%'; img.alt = n.attrs.alt || ''; cap.textContent = fi.c; cap.hidden = !fi.c; load(n.attrs.src); }
+      paint(cur);
+      return { dom: fig, update: function (n) { if (n.type !== cur.type) return false; cur = n; paint(n); return true; }, selectNode: function () { fig.classList.add('sel'); }, deselectNode: function () { fig.classList.remove('sel'); },
+        stopEvent: function (ev) { return bar.contains(ev.target); }, ignoreMutation: function () { return true; } };
+    };
+  }
+});
+// resize and compress before upload: at most 1600 px wide, WebP (PNG where WebP is not available). An SVG is drawn to a PNG so the saved picture can never carry anything but pixels.
+async function prepareImage(file) {
+  var url = URL.createObjectURL(file);
+  try {
+    var img = await new Promise(function (ok, bad) { var i = new window.Image(); i.onload = function () { ok(i); }; i.onerror = function () { bad(new Error('That file is not an image the page can read.')); }; i.src = url; });
+    var nw = img.naturalWidth || img.width || 800, nh = img.naturalHeight || img.height || 600, svgFile = file.type === 'image/svg+xml';
+    var scale = svgFile ? Math.min(3, 1600 / nw) : Math.min(1, 1600 / nw), w = Math.max(1, Math.round(nw * scale)), h = Math.max(1, Math.round(nh * scale));
+    var cv = document.createElement('canvas'); cv.width = w; cv.height = h; var cx = cv.getContext('2d');
+    if (file.type === 'image/jpeg') { cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); }
+    cx.drawImage(img, 0, 0, w, h);
+    var blob = await new Promise(function (ok) { cv.toBlob(function (b) { ok(b); }, 'image/webp', 0.88); });
+    var type = 'image/webp'; if (!blob || blob.type !== 'image/webp') { blob = await new Promise(function (ok) { cv.toBlob(function (b) { ok(b); }, 'image/png'); }); type = 'image/png'; }
+    return { blob: blob, type: type, ext: type === 'image/webp' ? 'webp' : 'png', width: w, height: h };
+  } finally { URL.revokeObjectURL(url); }
+}
+function insertImage(ed, attrs) {                                                  // on its own line, straight after the line the cursor is on
+  var $f = ed.state.selection.$from, d = $f.depth; while (d > 0 && !$f.node(d).isTextblock) d--;
+  var pos = d > 0 ? $f.after(d) : ed.state.doc.content.size;
+  return ed.chain().focus().insertContentAt(pos, { type: 'paragraph', content: [{ type: 'image', attrs: attrs }] }).run();
+}
+var ImageIO = Extension.create({
+  name: 'imageIO', addOptions: function () { return { onFiles: null }; },
+  addProseMirrorPlugins: function () {
+    var opts = this.options;
+    function imgs(list) { return [].slice.call(list || []).filter(function (f) { return /^image\//.test(f.type); }); }
+    return [new Plugin({ key: new PluginKey('imageIO'), props: {
+      handlePaste: function (view, ev) { var f = imgs(ev.clipboardData && ev.clipboardData.files); if (f.length && opts.onFiles) { ev.preventDefault(); opts.onFiles(f); return true; } return false; },
+      handleDrop: function (view, ev) { var f = imgs(ev.dataTransfer && ev.dataTransfer.files); if (f.length && opts.onFiles) { ev.preventDefault(); opts.onFiles(f); return true; } return false; } } })];
+  }
+});
+
+function extensions(o) {
+  o = o || {};
   return [StarterKit.configure({ history: false, heading: { levels: [2] }, blockquote: false, codeBlock: false, code: false, horizontalRule: false }),
-    PolicyTable.configure({ resizable: false }), TableRow, PolicyHeader, PolicyCell, Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
+    PolicyTable.configure({ resizable: false }), TableRow, PolicyHeader, PolicyCell, PolicyImage.configure({ resolve: o.resolveImage || null, allowBase64: false }), Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
 }
 function seed(ydoc, markdown) {                       // turn markdown into the shared document, once, when nothing has been shared yet
   var ed = new Editor({ element: document.createElement('div'), extensions: extensions(), content: markdown || '' });
@@ -450,7 +514,7 @@ function seed(ydoc, markdown) {                       // turn markdown into the 
 }
 function create(o) {
   var ed = new Editor({ element: o.element, editable: o.editable !== false,
-    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, TableResize, Fold, TableKeys.configure({ onTableMenu: o.onTableMenu }), Comments.configure({ onClick: o.onNoteClick })]),
+    extensions: extensions(o).concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, TableResize, Fold, TableKeys.configure({ onTableMenu: o.onTableMenu }), ImageIO.configure({ onFiles: o.onImageFiles }), Comments.configure({ onClick: o.onNoteClick })]),
     onUpdate: o.onUpdate || function () {}, onSelectionUpdate: o.onSelection || function () {} });
   if (o.editable !== false && ed.state.doc.childCount === 1 && ed.state.doc.textContent === '') { var t0 = fixStructure(ed.state); if (t0) ed.view.dispatch(t0); }   // opening a blank document gives it its first article
   return ed;
@@ -460,16 +524,16 @@ function selectionQuote(ed) {
   var s = ed.state.selection; if (s.empty) return null; var dt = docText(ed.state.doc), a = dt.map.indexOf(s.from), q = ed.state.doc.textBetween(s.from, s.to, '\n').slice(0, 400);
   var i = dt.text.indexOf(q, Math.max(0, a - 1)); i = a >= 0 ? a : i; return { quote: q, prefix: i > 0 ? dt.text.slice(Math.max(0, i - 80), i) : '' };
 }
-function preview(el, md) { return new Editor({ element: el, editable: false, extensions: extensions(), content: md || '' }); }
+function preview(el, md, o) { return new Editor({ element: el, editable: false, extensions: extensions(o), content: md || '' }); }
 // A title can have a line break in the editor (Shift+Enter) but a markdown title is one line, so in the saved/published text the lines of a title are joined with a space.
 function headings(ed) { var out = []; ed.state.doc.forEach(function (n, off) { if (n.type.name === 'heading') out.push({ pos: off, text: n.textContent }); }); return out; }
 function headingTop(ed, pos) { var el = ed.view.nodeDOM(pos); return el && el.getBoundingClientRect ? el.getBoundingClientRect().top : null; }
 function scrollToHeading(ed, pos) { var el = ed.view.nodeDOM(pos); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
 // the read-only page members see: the same editor engine and look, no collaboration, with comment highlights and folding
 function createReader(o) {
-  return new Editor({ element: o.element, editable: false, content: o.markdown || '', extensions: extensions().concat([Fold, Comments.configure({ onClick: o.onNoteClick })]),
+  return new Editor({ element: o.element, editable: false, content: o.markdown || '', extensions: extensions(o).concat([Fold, Comments.configure({ onClick: o.onNoteClick })]),
     onSelectionUpdate: o.onSelection || function () {}, onUpdate: function () {} });
 }
 function markdownOf(ed) { var md = ed.storage.markdown.getMarkdown(), re = /^(#{1,6} [^\n]*?)\\\n([^\n]+)/m; while (re.test(md)) md = md.replace(re, '$1 $2'); return md; }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
-  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, savePdf: savePdf, createReader: createReader, headings: headings, headingTop: headingTop, scrollToHeading: scrollToHeading, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };
+  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, prepareImage: prepareImage, insertImage: insertImage, savePdf: savePdf, createReader: createReader, headings: headings, headingTop: headingTop, scrollToHeading: scrollToHeading, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };

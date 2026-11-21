@@ -1079,3 +1079,22 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 
 /* members read without a comments column */
 .lv-body.lv-nonotes{grid-template-columns:minmax(0,1fr)}
+
+/* images */
+.lv-fig{display:block;margin:.4em 0;text-align:left}
+.lv-figbox{position:relative;display:block;max-width:100%}
+.lv-figbox img{display:block;width:100%;height:auto;border-radius:2px}
+.lv-fig.loading .lv-figbox{min-height:80px;background:#f3eef2}
+.lv-fig.broken .lv-figbox{min-height:60px;background:#fdeaea;border:1px dashed #c0392b}
+.lv-fig.broken .lv-figbox::after{content:'This image could not be loaded';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#8a2a2a}
+.lv-figcap{display:block;margin-top:4px;font-size:.85rem;color:#5b5057}
+.lv-figbar{position:absolute;top:6px;left:6px;display:none;gap:2px;padding:3px;background:#fff;border:1px solid #dadce0;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.18);z-index:3}
+.lv-fig.sel .lv-figbar,.lv-fig:hover .lv-figbar{display:flex}
+.lv-figbar button{border:0;background:transparent;border-radius:6px;padding:3px 7px;font:inherit;font-size:.78rem;cursor:pointer;color:#202124}.lv-figbar button:hover{background:#f1e9ef}
+.lv-fig.sel .lv-figbox{outline:2px solid #8a2a6d;outline-offset:2px}
+
+/* comment cards sit at the height of their highlighted words */
+.lv-notes{position:relative}
+.lv-notes .lv-card[data-tid]{position:absolute;left:0;right:0;margin:0;box-sizing:border-box}
+.lv-notes .lv-card[hidden]{display:none}
+.lv-notes .lv-card.orphan{border-style:dashed;opacity:.85}.lv-notes .lv-card.orphan .lv-q::after{content:' (these words have changed)';font-style:normal;font-size:.75rem;color:#8a7f86}
