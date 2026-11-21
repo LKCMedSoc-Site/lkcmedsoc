@@ -339,15 +339,14 @@
       var next = (meta.version || 0) + 1, overlay = h('div', { class: 'gd-overlay', onclick: function (ev) { if (ev.target === overlay) close(); } });
       function close() { overlay.remove(); document.removeEventListener('keydown', onKey); } function onKey(ev) { if (ev.key === 'Escape') close(); } document.addEventListener('keydown', onKey);
       var note = h('textarea', { class: 'gd-field', rows: 4, maxlength: 140, placeholder: 'What changed in this version? These comments go in the version log.', 'aria-label': 'Comments for this version' }), count = h('div', { class: 'gd-sub' }, '0 / 140');
-      var eff = h('input', { type: 'date', class: 'gd-field', value: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10), 'aria-label': 'In force from' });
       var go = h('button', { type: 'button', class: 'gd-btn fill', disabled: true, onclick: async function () {
         go.disabled = true; var saved = await flushPending(); if (!saved) { P.toast('Your latest changes are not saved yet. Try again in a moment.', true); go.disabled = false; return; }
-        var nv = await P.run(function () { return rpc('policy_text_publish', { p_slug: slug, p_note: note.value.trim(), p_effective: eff.value, p_name: myName() }); }, 'Published version ' + next);
+        var nv = await P.run(function () { return rpc('policy_text_publish', { p_slug: slug, p_note: note.value.trim(), p_effective: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10), p_name: myName() }); }, 'Published version ' + next);   // publishing puts it in force straight away (today, Singapore time)
         if (nv) { close(); await loadMeta(); logEl.hidden = false; token.setAttribute('aria-expanded', 'true'); token.classList.add('open'); } else go.disabled = false; } }, 'Publish version ' + next);
       note.addEventListener('input', function () { count.textContent = note.value.length + ' / 140'; go.disabled = note.value.trim().length < 3; });
       overlay.appendChild(h('div', { class: 'gd-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Publish' }, h('div', { class: 'gd-title' }, 'Publish version ' + next),
-        h('p', { class: 'gd-sub', style: 'font-size:.9rem;margin:0 0 6px' }, 'Members will see the document as it is now. Editing carries on in the working copy and members see no change until the next version.'),
-        h('label', { class: 'gd-lab' }, 'Comments (required)'), note, count, h('label', { class: 'gd-lab' }, 'In force from'), eff,
+        h('p', { class: 'gd-sub', style: 'font-size:.9rem;margin:0 0 6px' }, 'Publishing puts this version in force straight away. Members will see the document as it is now. Editing carries on in the working copy and members see no change until the next version.'),
+        h('label', { class: 'gd-lab' }, 'Comments (required)'), note, count,
         h('div', { class: 'gd-foot', style: 'justify-content:flex-end;gap:8px' }, h('button', { type: 'button', class: 'gd-btn', onclick: close }, 'Cancel'), go)));
       document.body.appendChild(overlay); note.focus();
     }
