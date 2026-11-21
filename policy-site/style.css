@@ -910,7 +910,7 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror h2{margin:1.8em 0 .7em}
 .lv-doctitle textarea.muted{line-height:1.6}
 /* official look: serif text, a formal title block, articles set off with a small-caps label and a rule */
-.lv-col{font-family:'Libre Baskerville',Georgia,'Times New Roman',serif}
+.lv-col{font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif}
 .lv-doctitle{text-align:center;padding-top:44px}
 .lv-org{font-size:.95rem;letter-spacing:.04em;font-style:italic;color:#6b5a65;margin-bottom:10px}
 .lv-doctitle textarea.edit-in-place{text-align:center;font-family:inherit}
@@ -924,7 +924,7 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror>ol>li::before{font-weight:600;color:#3a0a2e}
 .lv-col textarea::placeholder{font-style:italic}
 .lv-editor .ProseMirror{text-align:left;hyphens:manual;-webkit-hyphens:manual}
-.lv-col .lv-editor .ProseMirror,.lv-col .lv-editor .ProseMirror *{font-family:'Libre Baskerville',Georgia,'Times New Roman',serif!important}
+.lv-col .lv-editor .ProseMirror,.lv-col .lv-editor .ProseMirror *{font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif!important}
 
 .lv-editor .ProseMirror{font-size:.98rem;line-height:1.85}
 /* A4 sheet: 210 mm wide (794 px) with 25 mm margins; the zoom buttons, pinch and Ctrl/Cmd+scroll scale it */
@@ -953,3 +953,11 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror>ol>li ol ol>li::before{content:"(" counter(sub3,lower-roman) ")"}
 .lv-editor .ProseMirror>ol>li ol ol{counter-reset:sub3}
 .lv-editor .ProseMirror>ol>li ul{padding-left:2.9em;margin:.9em 0 0}
+
+/* back to Inter; articles are plain headings, no label and no rules */
+.lv-col,.lv-col .lv-editor .ProseMirror,.lv-col .lv-editor .ProseMirror *{font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif!important}
+.lv-editor .ProseMirror h2::before{content:none;display:none}
+.lv-editor .ProseMirror h2{border-bottom:0;padding-bottom:0;font-size:1.05rem;letter-spacing:0;margin:1.8em 0 .8em}
+.lv-rule{display:none}
+.lv-org,.lv-doctitle textarea.muted{font-style:normal}
+.lv-doctitle{padding-top:36px}
