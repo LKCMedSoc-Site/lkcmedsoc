@@ -1058,3 +1058,17 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror h2.lv-folded::after{content:' \2026';color:#8a7f86;font-weight:400}
 .lv-editor .ProseMirror li.lv-folded>p:first-of-type::after{content:' \2026';color:#8a7f86}
 @media(hover:none){.lv-fold{opacity:.45}}
+
+/* outline (left rail, like Google Docs) */
+.lv-outline{position:fixed;z-index:15;width:220px;overflow:auto;background:#fff;border-radius:8px;padding:8px 0 10px}
+.lv-outline.over{box-shadow:0 4px 18px rgba(0,0,0,.18);border:1px solid #e3dde1}
+.lv-outhead{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 6px 16px;font-size:.88rem;font-weight:500;color:#202124}
+.lv-outx{border:0;background:transparent;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#5f6368}.lv-outx:hover{background:#f1f3f4}
+.lv-outlist{display:flex;flex-direction:column}
+.lv-outitem{display:flex;gap:8px;align-items:baseline;text-align:left;border:0;border-left:3px solid transparent;background:transparent;padding:7px 14px 7px 13px;font:inherit;font-size:.84rem;color:#444;cursor:pointer;line-height:1.3}
+.lv-outitem:hover{background:#f1f3f4}.lv-outitem.on{border-left-color:#8a2a6d;color:#3a0a2e;font-weight:600;background:#f6eef3}
+.lv-outn{flex:none;min-width:1.4em;color:#8a7f86;font-weight:600}.lv-outt{overflow-wrap:anywhere}
+.lv-outempty{margin:6px 16px;font-size:.82rem;color:#8a7f86}
+.lv-tb.on{background:#e6d6e1;color:#8a2a6d}
+.lv-editor .ProseMirror h2{scroll-margin-top:150px}
+@media print{.lv-outline{display:none}}

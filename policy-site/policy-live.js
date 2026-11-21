@@ -271,7 +271,7 @@
       histPanel = h('aside', { class: 'gd-hist', 'aria-label': 'Version history' }, h('div', { class: 'gd-htitle' }, 'Version history'), body,
         h('label', { class: 'gd-hfoot', for: 'gd-named' }, onlyNamed, ' Only show named versions'));
       histTop = h('div', { class: 'gd-htop' }, back, h('span', { class: 'gd-hname' }, 'Version history'), banner);
-      lvEl.classList.add('hist');
+      outPanel.hidden = true; lvEl.classList.add('hist');
       // the preview sits in the same sheet as the editor, so it has the same type, indents and numbering
       lvBody.replaceChildren(h('div', { class: 'lv-scroll' }, h('div', { class: 'lv-col lv-prevcol' }, pv)), histPanel); lvRoot.insertBefore(histTop, lvTop); lvTop.hidden = true;
       curView = pv;
@@ -283,7 +283,7 @@
       show(items[0]);
     }
     function closeHistory() {
-      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(lvScroll, notesCol); fitAll(); lvTop.hidden = false; paintNotes();
+      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(lvScroll, notesCol); fitAll(); lvTop.hidden = false; setOutline(outOpen); paintNotes();
     }
 
     // ---- name and description (ExCo): click the name to rename; the info button edits the description ----
@@ -401,6 +401,36 @@
     var zoomGrp = h('div', { class: 'lv-grp lv-zoom', role: 'group', 'aria-label': 'Zoom' }, zOut, zoomLab, zIn);
     if (!toolbar) toolbar = h('div', { class: 'lv-toolbar noprint', role: 'toolbar', 'aria-label': 'View' });
     toolbar.appendChild(zoomGrp);
+    // ---- outline (Google Docs style): the articles down the left, the one you are reading highlighted, click to jump ----
+    var outOpen = window.innerWidth >= 1500; try { var so = localStorage.getItem('policyOutline'); if (so !== null) outOpen = so === '1'; } catch (e) { /* no storage */ }
+    var outList = h('nav', { class: 'lv-outlist', 'aria-label': 'Outline' }), outBtn = h('button', { type: 'button', class: 'lv-tb', title: 'Document outline', 'aria-label': 'Document outline', 'aria-pressed': 'false', onclick: function () { setOutline(!outOpen, true); } });
+    var outClose = h('button', { type: 'button', class: 'lv-outx', 'aria-label': 'Close the outline', onclick: function () { setOutline(false, true); } }); outClose.appendChild(svg(PATH.close, 16));
+    var outPanel = h('aside', { class: 'lv-outline noprint', 'aria-label': 'Outline' }, h('div', { class: 'lv-outhead' }, h('span', null, 'Outline'), outClose), outList);
+    outBtn.appendChild(svg('<path d="M4 6h16M4 12h10M4 18h13"/>', 18));
+    function setOutline(on, remember) { outOpen = on; outBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); outBtn.classList.toggle('on', on); outPanel.hidden = !on || histOpen; if (remember) { try { localStorage.setItem('policyOutline', on ? '1' : '0'); } catch (e) { /* no storage */ } } placeOutline(); }   // only a click is remembered, not the default for this window size
+    function placeOutline() {
+      if (outPanel.hidden) return; var bar = lvTop.getBoundingClientRect(), col = lvCol.getBoundingClientRect();
+      outPanel.style.top = Math.max(bar.bottom + 12, 12) + 'px'; outPanel.style.left = Math.max(12, col.left - 236) + 'px'; outPanel.style.maxHeight = 'calc(100vh - ' + (Math.max(bar.bottom + 12, 12) + 16) + 'px)';
+      outPanel.classList.toggle('over', col.left - 236 < 12);
+    }
+    var outActive = -1;
+    function drawOutline() {
+      if (!ed) return; var hs = LE.headings(ed);
+      outList.replaceChildren.apply(outList, hs.map(function (hd, i) {
+        var letter = i < 26 ? String.fromCharCode(65 + i) + '.' : (i + 1) + '.';
+        return h('button', { type: 'button', class: 'lv-outitem' + (i === outActive ? ' on' : ''), onclick: function () { LE.scrollToHeading(ed, hd.pos); } }, h('span', { class: 'lv-outn' }, letter), h('span', { class: 'lv-outt' }, hd.text.trim() || 'Untitled article'));
+      }));
+      if (!hs.length) outList.appendChild(h('p', { class: 'lv-outempty' }, 'Articles will appear here.'));
+    }
+    function markOutline() {                                                  // the last article whose title has passed the top of the page
+      if (!ed || outPanel.hidden) return; var hs = LE.headings(ed), cut = Math.max(lvTop.getBoundingClientRect().bottom + 90, 200), k = -1;
+      hs.forEach(function (hd, i) { var t = LE.headingTop(ed, hd.pos); if (t !== null && t <= cut) k = i; });
+      if (k !== outActive) { outActive = k; [].slice.call(outList.children).forEach(function (el, i) { el.classList.toggle('on', i === k); }); }
+    }
+    var outT = null; function outSoon() { clearTimeout(outT); outT = setTimeout(function () { drawOutline(); markOutline(); }, 300); }
+    function onOutScroll() { placeOutline(); markOutline(); }
+    window.addEventListener('scroll', onOutScroll, { passive: true }); window.addEventListener('resize', onOutScroll);
+    var outGrp = h('div', { class: 'lv-grp', role: 'group' }, outBtn); toolbar.insertBefore(outGrp, toolbar.firstChild);
     var toolbarWrap = h('div', { class: 'lv-tbwrap' }, toolbar);
     var lvCol = h('div', { class: 'lv-col' }, titleBlock, editorEl);
     var lvScroll = h('div', { class: 'lv-scroll' }, lvCol);
@@ -424,13 +454,14 @@
         refreshTb(); var s = ed.state.selection; if (s.empty) { cmBtn.hidden = true; return; }
         var c = ed.view.coordsAtPos(s.to); cmBtn.hidden = false; cmBtn.style.cssText = 'position:fixed;z-index:30;left:' + Math.round(c.left) + 'px;top:' + Math.round(c.bottom + 6) + 'px';
       } });
+    document.body.appendChild(outPanel); setOutline(outOpen); drawOutline(); markOutline(); ed.on('update', outSoon);
     ed.on('transaction', refreshTb); drawPeople(); announce(); send('hello', {}); setStatus(canEdit ? 'All changes saved' : 'Read only'); await reloadNotes();
     var dtimer = setInterval(function () { paintNotes(); }, 15000);   // highlights follow the words as other people type
     ed.on('update', function () { clearTimeout(ed._pn); ed._pn = setTimeout(paintNotes, 400); clearTimeout(ed._tk); ed._tk = setTimeout(updateToken, 500); });
     updateToken();
     window.__live = { ed: ed, ydoc: ydoc, awareness: awareness, refreshMeta: refreshMeta };   // refreshMeta: handy for checking the version log without publishing
     P.onLeave(function () {
-      closed = true; closePalette(); closeTableMenu(); clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
+      closed = true; closePalette(); closeTableMenu(); outPanel.remove(); window.removeEventListener('scroll', onOutScroll); window.removeEventListener('resize', onOutScroll); clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
       if (pending.length) { var b = pending; pending = []; rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(b)), p_md: LE.markdownOf(ed), p_name: myName(), p_epoch: epoch }).catch(function () { /* lost only if the tab died */ }); }
       LE.removeAwarenessStates(awareness, [ydoc.clientID], 'local'); try { P.sb.removeChannel(chan); } catch (e) { /* closing */ } ed.destroy();
     });

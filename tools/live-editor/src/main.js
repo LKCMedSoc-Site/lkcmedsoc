@@ -461,6 +461,9 @@ function selectionQuote(ed) {
 }
 function preview(el, md) { return new Editor({ element: el, editable: false, extensions: extensions(), content: md || '' }); }
 // A title can have a line break in the editor (Shift+Enter) but a markdown title is one line, so in the saved/published text the lines of a title are joined with a space.
+function headings(ed) { var out = []; ed.state.doc.forEach(function (n, off) { if (n.type.name === 'heading') out.push({ pos: off, text: n.textContent }); }); return out; }
+function headingTop(ed, pos) { var el = ed.view.nodeDOM(pos); return el && el.getBoundingClientRect ? el.getBoundingClientRect().top : null; }
+function scrollToHeading(ed, pos) { var el = ed.view.nodeDOM(pos); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
 function markdownOf(ed) { var md = ed.storage.markdown.getMarkdown(), re = /^(#{1,6} [^\n]*?)\\\n([^\n]+)/m; while (re.test(md)) md = md.replace(re, '$1 $2'); return md; }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
-  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };
+  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, headings: headings, headingTop: headingTop, scrollToHeading: scrollToHeading, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };
