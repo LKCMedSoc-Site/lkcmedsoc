@@ -204,6 +204,11 @@ var ArticleEnter = Extension.create({
         if (next && next.type === T0.orderedList) { tr1.insert(afterPos + 1, item0); cur = afterPos + 3; } else { tr1.insert(afterPos, T0.orderedList.create(null, item0)); cur = afterPos + 3; }
         tr1.setSelection(TextSelection.near(tr1.doc.resolve(cur), 1)); ed.view.dispatch(tr1.scrollIntoView()); return true;
       }
+      // Enter at the very start of a title puts a new empty article above it (the default left a blank paragraph at the end of the clause above)
+      if ($f.depth === 1 && $f.parent.type.name === 'heading' && $f.parentOffset === 0 && $f.parent.content.size > 0) {
+        var at0 = $f.before(1), tr0 = st.tr.insert(at0, st.schema.nodes.heading.create({ level: 2 }));
+        tr0.setSelection(TextSelection.near(tr0.doc.resolve(at0 + 3), 1)); ed.view.dispatch(tr0.scrollIntoView()); return true;
+      }
       if ($f.depth !== 1 || $f.parent.type.name !== 'heading' || $f.parentOffset !== $f.parent.content.size) return false;
       var at = $f.after(1);                                              // straight below the title; any clauses under it follow the new title
       var tr = st.tr.insert(at, st.schema.nodes.heading.create({ level: 2 }));
