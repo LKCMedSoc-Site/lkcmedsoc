@@ -194,6 +194,7 @@
     P.loading();
     var v = /^\d{1,4}$/.test(q.v || '') ? +q.v : null;
     var wantWork = !!P.exco && v === null;                         // ExCo type into the working copy; an older version is read-only
+    if (wantWork) { var lv = null; try { lv = await rpc('policy_live_open', { p_slug: p.slug }); } catch (e) { /* not available: use this editor */ } if (lv) { location.replace('#/live/' + p.slug); return; } }   // documents switched to live editing open in the live editor
     var got = await Promise.all([wantWork ? rpc('policy_work', { p_slug: p.slug }) : rpc('policy_text', { p_slug: p.slug, p_version: v }), rpc('policy_note_list', { p_slug: p.slug }).catch(function () { return []; })]);
     var data = got[0], notes = got[1] || [];
     if (!data) { P.show(h('p', { class: 'muted' }, 'That document does not exist, or it is not published yet.')); return; }

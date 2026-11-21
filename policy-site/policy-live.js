@@ -15,7 +15,7 @@
     var LE = window.LiveEditor, Y = LE.Y, slug = p.slug;
     var data = await rpc('policy_live_open', { p_slug: slug });
     if (!data) { P.show(h('p', { class: 'muted' }, 'Live editing is not switched on for this document.')); return; }
-    var ydoc = new Y.Doc(), awareness = new LE.Awareness(ydoc), canEdit = data.access === 'edit', lastId = data.last_id || 0;
+    var ydoc = new Y.Doc(), awareness = new LE.Awareness(ydoc), canEdit = data.access === 'edit', lastId = data.last_id || 0, epoch = data.epoch || 1;
     var ed = null, notes = [], activeId = null, pending = [], pushT = null, pushing = false, closed = false, status = h('span', { class: 'savestate', role: 'status', 'aria-live': 'polite' }, 'Connecting…');
 
     // ---- the channel: changes and cursors go straight to the other browsers ----
@@ -34,10 +34,11 @@
     async function push() {
       if (!pending.length || pushing || closed) return;
       pushing = true; var batch = pending; pending = [];
-      try { var id = await rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(batch)), p_md: LE.markdownOf(ed), p_name: myName() }); lastId = Math.max(lastId, id); setStatus('All changes saved'); }
-      catch (e) { pending = batch.concat(pending); setStatus('Not saved. Will retry.', 'bad'); clearTimeout(pushT); pushT = setTimeout(push, 4000); }
+      try { var id = await rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(batch)), p_md: LE.markdownOf(ed), p_name: myName(), p_epoch: epoch }); lastId = Math.max(lastId, id); setStatus('All changes saved'); }
+      catch (e) { if (/EPOCH/.test(String(e && e.message))) { stale(); pushing = false; return; } pending = batch.concat(pending); setStatus('Not saved. Will retry.', 'bad'); clearTimeout(pushT); pushT = setTimeout(push, 4000); }
       pushing = false; if (pending.length) { clearTimeout(pushT); pushT = setTimeout(push, 300); }
     }
+    function stale() { closed = true; pending = []; setStatus('This document was restored from an earlier save. Reload the page.', 'bad'); try { ed.setEditable(false); } catch (e) { /* none */ } P.toast('This document was restored from an earlier save. Reload the page to continue.', true); }
     function setStatus(t, kind) { status.textContent = t; status.className = 'savestate' + (kind ? ' ' + kind : ''); }
 
     // ---- loading the shared document ----
@@ -45,13 +46,13 @@
     if (!data.state) {                                            // nobody has opened it yet: the first editor turns the markdown into the shared document
       if (!canEdit) { P.show(h('p', { class: 'muted' }, 'Nobody has started live editing of this document yet.')); return; }
       var tmp = new Y.Doc(); LE.seed(tmp, data.working_md);
-      await rpc('policy_live_init', { p_slug: slug, p_state: LE.b64(Y.encodeStateAsUpdate(tmp)) });
+      await rpc('policy_live_init', { p_slug: slug, p_state: LE.b64(Y.encodeStateAsUpdate(tmp)), p_epoch: epoch });
       data = await rpc('policy_live_open', { p_slug: slug });
     }
     Y.applyUpdate(ydoc, LE.unb64(data.state), 'remote');
     (data.updates || []).forEach(function (u) { Y.applyUpdate(ydoc, LE.unb64(u), 'remote'); });
     lastId = data.last_id || 0;
-    if (canEdit && (data.updates || []).length > 40) { rpc('policy_live_compact', { p_slug: slug, p_state: LE.b64(Y.encodeStateAsUpdate(ydoc)), p_upto: lastId }).catch(function () { /* next time */ }); }
+    if (canEdit && (data.updates || []).length > 40) { rpc('policy_live_compact', { p_slug: slug, p_state: LE.b64(Y.encodeStateAsUpdate(ydoc)), p_upto: lastId, p_epoch: epoch }).catch(function () { /* next time */ }); }
 
     // ---- the page ----
     var me = { name: myName(), color: colourFor(P.me && P.me.email || myName()) };
@@ -134,9 +135,20 @@
       drawInv();
     }
 
-    P.show(h('div', { class: 'lv' }, h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, data.doc.title), h('span', { class: 'pill warn' }, 'Working copy'), people, status),
+    var saves = null;
+    if (P.exco) {
+      var sl = h('div', { class: 'muted' });
+      saves = h('details', { class: 'lv-invite noprint', ontoggle: async function (ev) {
+        if (!ev.target.open) return;
+        try { var l = await rpc('policy_backups', { p_slug: slug }); sl.replaceChildren.apply(sl, l.slice(0, 30).map(function (b) {
+          return h('div', { class: 'row' }, h('span', { class: 'grow' }, new Date(b.saved_at).toLocaleString() + ' · ' + (b.by || '') + ' · ' + b.preview),
+            h('button', { class: 'ghost small', onclick: async function () { if (!confirm('Put this earlier save back for everyone? What is there now is kept as another earlier save.')) return;
+              if (await P.run(function () { return rpc('policy_restore_backup', { p_slug: slug, p_id: b.id, p_name: myName() }).then(function () { return true; }); }, 'Restored')) location.reload(); } }, 'Restore')); })); if (!l.length) sl.textContent = 'No earlier saves yet.'; } catch (e) { sl.textContent = 'Could not load earlier saves.'; } } },
+        h('summary', null, 'Earlier saves'), sl);
+    }
+    P.show(h('div', { class: 'lv' }, h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, data.doc.title), h('span', { class: 'pill warn' }, 'Working copy'), data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, people, status),
       h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.'),
-      invites, toolbar, h('div', { class: 'lv-body' }, editorEl, notesCol)));
+      invites, saves, toolbar, h('div', { class: 'lv-body' }, editorEl, notesCol)));
     document.body.appendChild(cmBtn);
     awareness.setLocalStateField('user', me);
     ed = LE.create({ element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,
@@ -151,7 +163,7 @@
     window.__live = { ed: ed, ydoc: ydoc, awareness: awareness };
     P.onLeave(function () {
       closed = true; clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
-      if (pending.length) { var b = pending; pending = []; rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(b)), p_md: LE.markdownOf(ed), p_name: myName() }).catch(function () { /* lost only if the tab died */ }); }
+      if (pending.length) { var b = pending; pending = []; rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(b)), p_md: LE.markdownOf(ed), p_name: myName(), p_epoch: epoch }).catch(function () { /* lost only if the tab died */ }); }
       LE.removeAwarenessStates(awareness, [ydoc.clientID], 'local'); try { P.sb.removeChannel(chan); } catch (e) { /* closing */ } ed.destroy();
     });
     window.addEventListener('beforeunload', function () { if (pending.length) push(); });
