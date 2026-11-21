@@ -70,8 +70,7 @@
       }));
     var list = shown.length ? h('div', { class: 'list' }, shown.map(function (d) {
       var meta = [h('span', { class: 'kind' }, TIER_ONE[d.tier]), docPill(d)];
-      if (exco) {
-      }
+      if (exco && d.has_changes) { var dp = P.pill('Draft', 'warn'); dp.title = 'The working copy has changes that are not published yet'; meta.push(dp); }
       return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + d.slug, style: 'text-decoration:none' }, d.title), h('div', { class: 's' }, d.summary), h('div', { class: 'meta' }, meta));
     })) : h('div', { class: 'list' }, h('div', { class: 'item empty' }, 'Nothing here yet.'));
     var how = h('details', { class: 'how' }, h('summary', null, 'How documents are changed'),
@@ -1169,7 +1168,9 @@
   P.route('/', { nav: 'docs', fn: async function (p, q) {
     if (!P.exco) return memberIndex(q);
     P.loading();
-    indexView(await rpc('policy_all'), true, q || {});
+    var docs = await rpc('policy_all'), changed = []; try { changed = await rpc('policy_docs_with_changes'); } catch (e) { /* not installed yet: no pills */ }
+    docs.forEach(function (x) { x.has_changes = changed.indexOf(x.slug) >= 0; });
+    indexView(docs, true, q || {});
   } });
 
   // The document's name and description: click the text and type. Saved a moment after you stop (ExCo).
