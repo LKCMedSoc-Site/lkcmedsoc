@@ -815,8 +815,11 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 /* ---- live editing (policy-live.js) ---- */
 .lv-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.lv-head h1{font-size:1.3rem;margin:0}
 .lv-people{display:flex;gap:4px}.lv-person{width:26px;height:26px;border-radius:50%;color:#fff;font-size:.8rem;display:inline-flex;align-items:center;justify-content:center;font-weight:600}
-.lv-toolbar{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;position:sticky;top:0;background:var(--bg,#fff);z-index:5;padding:6px 0}
-.lv-tb{border:1px solid #ccc;background:#fff;border-radius:6px;padding:4px 9px;cursor:pointer;font:inherit}.lv-tb:hover{background:#f3eef2}
+.lv-toolbar{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;position:sticky;top:0;background:#fff;z-index:5;padding:6px 8px;border:1px solid #ddd;border-radius:10px;align-items:center}
+.lv-grp{display:flex;gap:2px;padding-right:8px;margin-right:2px;border-right:1px solid #e3dde1}.lv-grp:last-child{border-right:0;padding-right:0;margin-right:0}
+.lv-tb{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;background:transparent;border-radius:6px;cursor:pointer;color:#3a0a2e;padding:0}
+.lv-tb:hover{background:#f1e9ef}.lv-tb.on{background:#e6d6e1;color:#8a2a6d}.lv-tb:focus-visible{outline:2px solid #8a2a6d;outline-offset:1px}
+.lv-ic{display:inline-flex}
 .lv-body{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;align-items:start}
 @media(max-width:900px){.lv-body{grid-template-columns:1fr}}
 .lv-editor .ProseMirror{min-height:60vh;padding:28px 36px;background:#fff;border:1px solid #ddd;border-radius:8px;outline:none;counter-reset:art}
@@ -835,3 +838,6 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 .lv-card{border:1px solid #ddd;background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:.88rem}.lv-card.on{border-color:#8a2a6d}
 .lv-q{color:#666;font-style:italic;margin-bottom:4px}.lv-note{margin:3px 0}
 .lv-invite{margin:8px 0}
+.lv-invite>summary{font-size:.9rem;font-weight:500;color:#555;cursor:pointer}
+.lv-head .savestate{margin-left:auto;font-size:.85rem;color:#666}
+.lv>.muted{font-size:.9rem;margin:6px 0}
