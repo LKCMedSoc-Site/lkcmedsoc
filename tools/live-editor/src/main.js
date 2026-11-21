@@ -94,6 +94,11 @@ var ClauseBackspace = Extension.create({
       var list = $f.node(d - 2), idx = $f.index(d - 2), item = $f.node(d - 1), itemPos = $f.before(d - 1);
       if (idx === 0) return true;                                         // the first clause of an article has nothing above it to join
       var prev = list.child(idx - 1), prevStart = itemPos - prev.nodeSize, target = -1, seenList = false;
+      if (prev.childCount === 1 && prev.firstChild.type.name === 'paragraph' && prev.firstChild.content.size === 0) {     // the clause above is empty: this clause simply takes its place
+        var tr0 = st.tr.delete(prevStart, itemPos);
+        tr0.setSelection(TextSelection.near(tr0.doc.resolve(prevStart + 2), 1));
+        ed.view.dispatch(tr0.scrollIntoView()); return true;
+      }
       prev.forEach(function (c, off) { if (isList(c)) seenList = true; if (!seenList && c.type.name === 'paragraph') target = prevStart + 1 + off + c.nodeSize - 1; });   // the clause's own last paragraph, before any sub-items
       if (target < 0) return true;
       var tr = st.tr, rest = []; item.forEach(function (c, off, i) { if (i > 0) rest.push(c); });
