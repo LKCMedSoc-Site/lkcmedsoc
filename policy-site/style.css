@@ -884,8 +884,11 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 .lv-tbwrap{display:contents}
 .lv-toolbar{top:54px}
 /* the title bar, Share and toolbar stay put; only the document scrolls (like Google Docs) */
-.lv-top{position:sticky;top:0;z-index:2147483001;background:#fff;margin:0 -16px;padding:6px 16px 0;box-shadow:0 1px 0 #e3dde1}
+.lv-top{position:sticky;top:0;z-index:20;transition:top .25s ease;background:#fff;margin:0 -16px;padding:6px 16px 0;box-shadow:0 1px 0 #e3dde1}
 .lv-top .lv-head{margin:0 0 4px}
 .lv-top .lv-toolbar{position:static;margin:0 0 8px;border-radius:10px}
-.gd-htop{position:sticky;top:0;z-index:2147483001}
-.gd-hist{top:57px}
+.gd-htop{position:sticky;top:0;z-index:20;transition:top .25s ease}
+.gd-hist{top:57px;transition:top .25s ease}
+/* the site header slips away when you scroll down and returns when you scroll up: the bar sits under it while it shows and moves to the top edge when it hides */
+html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .lv-top,html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-htop{top:64px}
+html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
