@@ -283,7 +283,15 @@
     // ---- zoom: the − and + buttons, Ctrl/Cmd + scroll, trackpad pinch (Chrome, Firefox, Safari) and two-finger pinch on a touch screen ----
     var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }
     var zoomLab = h('button', { type: 'button', class: 'lv-zoomlab', title: 'Back to 100%', onclick: function () { setZoom(1); } }, '100%');
-    function setZoom(z) { zoom = Math.min(2.5, Math.max(0.4, z)); lvCol.style.zoom = zoom; zoomLab.textContent = Math.round(zoom * 100) + '%'; try { localStorage.setItem('policyZoom', String(zoom)); } catch (e) { /* no storage */ } fitAll(); try { if (ed) paintNotes(); } catch (e) { /* none */ } }
+    // zoom around a point (the pointer, the pinch centre, or the middle of the window for the buttons): the words under it stay under it
+    function setZoom(z, cx, cy) {
+      z = Math.min(2.5, Math.max(0.4, z)); if (Math.abs(z - zoom) < 0.0005) return;
+      var sc = lvScroll, r0 = lvCol.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+      if (cx == null) cx = sr.left + sr.width / 2; if (cy == null) cy = window.innerHeight / 2;
+      var relX = (cx - r0.left) / zoom, relY = (cy - r0.top) / zoom;
+      zoom = z; lvCol.style.zoom = zoom;
+      var r1 = lvCol.getBoundingClientRect();
+      var se = document.scrollingElement || document.documentElement; se.scrollTo({ top: se.scrollTop + r1.top + relY * zoom - cy, behavior: 'instant' }); sc.scrollTo({ left: sc.scrollLeft + r1.left + relX * zoom - cx, behavior: 'instant' }); zoomLab.textContent = Math.round(zoom * 100) + '%'; try { localStorage.setItem('policyZoom', String(zoom)); } catch (e) { /* no storage */ } fitAll(); try { if (ed) paintNotes(); } catch (e) { /* none */ } }
     var STEPS = [0.4, 0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5];
     function stepZoom(dir) { var i; if (dir > 0) { for (i = 0; i < STEPS.length && STEPS[i] <= zoom + 0.001; i++); setZoom(STEPS[Math.min(i, STEPS.length - 1)]); } else { for (i = STEPS.length - 1; i >= 0 && STEPS[i] >= zoom - 0.001; i--); setZoom(STEPS[Math.max(i, 0)]); } }
     var zOut = h('button', { type: 'button', class: 'lv-tb', title: 'Zoom out', 'aria-label': 'Zoom out', onclick: function () { stepZoom(-1); } }), zIn = h('button', { type: 'button', class: 'lv-tb', title: 'Zoom in', 'aria-label': 'Zoom in', onclick: function () { stepZoom(1); } });
@@ -298,11 +306,11 @@
     var lvTop = h('div', { class: 'lv-top' }, lvHead, toolbarWrap);
     var lvEl = h('div', { class: 'lv' }, lvTop, lvBody), lvRoot = lvEl;
     lvCol.style.zoom = zoom; zoomLab.textContent = Math.round(zoom * 100) + '%';
-    lvBody.addEventListener('wheel', function (ev) { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); setZoom(zoom * Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.01))); }, { passive: false });
-    var gz0 = 1; lvBody.addEventListener('gesturestart', function (ev) { ev.preventDefault(); gz0 = zoom; }); lvBody.addEventListener('gesturechange', function (ev) { ev.preventDefault(); setZoom(gz0 * ev.scale); }); lvBody.addEventListener('gestureend', function (ev) { ev.preventDefault(); });
+    lvBody.addEventListener('wheel', function (ev) { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); setZoom(zoom * Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.01)), ev.clientX, ev.clientY); }, { passive: false });
+    var gz0 = 1; lvBody.addEventListener('gesturestart', function (ev) { ev.preventDefault(); gz0 = zoom; }); lvBody.addEventListener('gesturechange', function (ev) { ev.preventDefault(); setZoom(gz0 * ev.scale, ev.clientX, ev.clientY); }); lvBody.addEventListener('gestureend', function (ev) { ev.preventDefault(); });
     var pd0 = 0, pz0 = 1; function pdist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
     lvBody.addEventListener('touchstart', function (ev) { if (ev.touches.length === 2) { pd0 = pdist(ev.touches); pz0 = zoom; } }, { passive: true });
-    lvBody.addEventListener('touchmove', function (ev) { if (ev.touches.length === 2 && pd0) { ev.preventDefault(); setZoom(pz0 * pdist(ev.touches) / pd0); } }, { passive: false });
+    lvBody.addEventListener('touchmove', function (ev) { if (ev.touches.length === 2 && pd0) { ev.preventDefault(); setZoom(pz0 * pdist(ev.touches) / pd0, (ev.touches[0].clientX + ev.touches[1].clientX) / 2, (ev.touches[0].clientY + ev.touches[1].clientY) / 2); } }, { passive: false });
     lvBody.addEventListener('touchend', function (ev) { if (ev.touches.length < 2) pd0 = 0; }, { passive: true });
     P.show(lvEl); fitAll();
     var viewEl = document.getElementById('view'); viewEl.classList.add('lv-wide'); P.onLeave(function () { viewEl.classList.remove('lv-wide'); }); setTimeout(fitAll, 0); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll); window.addEventListener('resize', fitAll);

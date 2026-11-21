@@ -936,3 +936,20 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-zoom{margin-left:auto;align-items:center}.lv-zoomlab{border:0;background:transparent;font:inherit;font-size:.85rem;min-width:46px;cursor:pointer;color:#3a0a2e;padding:6px 4px;border-radius:6px}.lv-zoomlab:hover{background:#f1e9ef}
 @media(max-width:900px){.lv-doctitle{padding-left:24px;padding-right:24px}.lv-col .lv-editor .ProseMirror{padding-left:24px;padding-right:24px}}
 #view.wrap.lv-wide{max-width:1280px}
+
+/* spacing and alignment after the NTU regulations: everything flush left, tight lines, a clear gap between items, numbers hanging in the margin */
+.lv-doctitle{text-align:left}
+.lv-doctitle textarea.edit-in-place{text-align:left}
+.lv-rule{margin-left:0}
+.lv-editor .ProseMirror{line-height:1.45;font-size:.98rem}
+.lv-editor .ProseMirror h2{text-align:left;margin:2em 0 1em}
+.lv-editor .ProseMirror li>p{margin:0}
+.lv-editor .ProseMirror>ol>li{margin:1.05em 0;padding-left:3.6em}
+.lv-editor .ProseMirror>ol>li ol{list-style:none;padding-left:0;margin:1em 0 0}
+.lv-editor .ProseMirror>ol>li ol>li{position:relative;padding-left:2.9em;margin:.9em 0;counter-increment:sub}
+.lv-editor .ProseMirror>ol>li ol>li::before{content:"(" counter(sub,lower-alpha) ")";position:absolute;left:0}
+.lv-editor .ProseMirror>ol>li ol{counter-reset:sub}
+.lv-editor .ProseMirror>ol>li ol ol>li{counter-increment:sub3}
+.lv-editor .ProseMirror>ol>li ol ol>li::before{content:"(" counter(sub3,lower-roman) ")"}
+.lv-editor .ProseMirror>ol>li ol ol{counter-reset:sub3}
+.lv-editor .ProseMirror>ol>li ul{padding-left:2.9em;margin:.9em 0 0}
