@@ -374,7 +374,7 @@ var TableKeys = Extension.create({
     var opts = this.options;
     return [new Plugin({ key: new PluginKey('tableMenu'), props: { handleDOMEvents: { contextmenu: function (view, ev) {
       var cell = ev.target && ev.target.closest ? ev.target.closest('td, th') : null; if (!cell || !view.editable || !opts.onTableMenu) return false;
-      var sel = view.state.selection, onCell = sel.$anchorCell && sel.constructor.name === 'CellSelection';   // a block of selected cells stays selected when you right-click inside it
+      var sel = view.state.selection, onCell = !!sel.$anchorCell;   // only a block of selected cells has $anchorCell (not the class name: the build shortens it); it stays selected when you right-click inside it
       var hit = view.posAtCoords({ left: ev.clientX, top: ev.clientY });
       if (hit) { var inSel = sel.ranges && sel.ranges.some(function (r) { return hit.pos >= r.$from.pos && hit.pos <= r.$to.pos; }); if (!(onCell && inSel)) view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(hit.pos), 1))); }
       ev.preventDefault(); opts.onTableMenu({ x: ev.clientX, y: ev.clientY }); return true;
