@@ -224,7 +224,7 @@
       show(items[0]);
     }
     function closeHistory() {
-      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(lvCol, notesCol); fitAll(); lvTop.hidden = false; paintNotes();
+      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(lvScroll, notesCol); fitAll(); lvTop.hidden = false; paintNotes();
     }
 
     // ---- name and description (ExCo): click the name to rename; the info button edits the description ----
@@ -280,12 +280,32 @@
       data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, status, h('span', { class: 'lv-spacer' }), people,
       P.exco ? histBtn : null, P.exco || canEdit ? shareBtn : null);
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
+    // ---- zoom: the − and + buttons, Ctrl/Cmd + scroll, trackpad pinch (Chrome, Firefox, Safari) and two-finger pinch on a touch screen ----
+    var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }
+    var zoomLab = h('button', { type: 'button', class: 'lv-zoomlab', title: 'Back to 100%', onclick: function () { setZoom(1); } }, '100%');
+    function setZoom(z) { zoom = Math.min(2.5, Math.max(0.4, z)); lvCol.style.zoom = zoom; zoomLab.textContent = Math.round(zoom * 100) + '%'; try { localStorage.setItem('policyZoom', String(zoom)); } catch (e) { /* no storage */ } fitAll(); try { if (ed) paintNotes(); } catch (e) { /* none */ } }
+    var STEPS = [0.4, 0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5];
+    function stepZoom(dir) { var i; if (dir > 0) { for (i = 0; i < STEPS.length && STEPS[i] <= zoom + 0.001; i++); setZoom(STEPS[Math.min(i, STEPS.length - 1)]); } else { for (i = STEPS.length - 1; i >= 0 && STEPS[i] >= zoom - 0.001; i--); setZoom(STEPS[Math.max(i, 0)]); } }
+    var zOut = h('button', { type: 'button', class: 'lv-tb', title: 'Zoom out', 'aria-label': 'Zoom out', onclick: function () { stepZoom(-1); } }), zIn = h('button', { type: 'button', class: 'lv-tb', title: 'Zoom in', 'aria-label': 'Zoom in', onclick: function () { stepZoom(1); } });
+    zOut.appendChild(svg('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M8 11h6"/>', 18)); zIn.appendChild(svg('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M8 11h6M11 8v6"/>', 18));
+    var zoomGrp = h('div', { class: 'lv-grp lv-zoom', role: 'group', 'aria-label': 'Zoom' }, zOut, zoomLab, zIn);
+    if (!toolbar) toolbar = h('div', { class: 'lv-toolbar noprint', role: 'toolbar', 'aria-label': 'View' });
+    toolbar.appendChild(zoomGrp);
     var toolbarWrap = h('div', { class: 'lv-tbwrap' }, toolbar);
     var lvCol = h('div', { class: 'lv-col' }, titleBlock, editorEl);
-    var lvBody = h('div', { class: 'lv-body' }, lvCol, notesCol);
+    var lvScroll = h('div', { class: 'lv-scroll' }, lvCol);
+    var lvBody = h('div', { class: 'lv-body' }, lvScroll, notesCol);
     var lvTop = h('div', { class: 'lv-top' }, lvHead, toolbarWrap);
     var lvEl = h('div', { class: 'lv' }, lvTop, lvBody), lvRoot = lvEl;
-    P.show(lvEl); fitAll(); setTimeout(fitAll, 0); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll); window.addEventListener('resize', fitAll);
+    lvCol.style.zoom = zoom; zoomLab.textContent = Math.round(zoom * 100) + '%';
+    lvBody.addEventListener('wheel', function (ev) { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); setZoom(zoom * Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.01))); }, { passive: false });
+    var gz0 = 1; lvBody.addEventListener('gesturestart', function (ev) { ev.preventDefault(); gz0 = zoom; }); lvBody.addEventListener('gesturechange', function (ev) { ev.preventDefault(); setZoom(gz0 * ev.scale); }); lvBody.addEventListener('gestureend', function (ev) { ev.preventDefault(); });
+    var pd0 = 0, pz0 = 1; function pdist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }
+    lvBody.addEventListener('touchstart', function (ev) { if (ev.touches.length === 2) { pd0 = pdist(ev.touches); pz0 = zoom; } }, { passive: true });
+    lvBody.addEventListener('touchmove', function (ev) { if (ev.touches.length === 2 && pd0) { ev.preventDefault(); setZoom(pz0 * pdist(ev.touches) / pd0); } }, { passive: false });
+    lvBody.addEventListener('touchend', function (ev) { if (ev.touches.length < 2) pd0 = 0; }, { passive: true });
+    P.show(lvEl); fitAll();
+    var viewEl = document.getElementById('view'); viewEl.classList.add('lv-wide'); P.onLeave(function () { viewEl.classList.remove('lv-wide'); }); setTimeout(fitAll, 0); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll); window.addEventListener('resize', fitAll);
     document.body.appendChild(cmBtn);
     awareness.setLocalStateField('user', me);
     ed = LE.create({ element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,

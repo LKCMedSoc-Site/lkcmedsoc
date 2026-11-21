@@ -927,3 +927,12 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-col .lv-editor .ProseMirror,.lv-col .lv-editor .ProseMirror *{font-family:'Libre Baskerville',Georgia,'Times New Roman',serif!important}
 
 .lv-editor .ProseMirror{font-size:.98rem;line-height:1.85}
+/* A4 sheet: 210 mm wide (794 px) with 25 mm margins; the zoom buttons, pinch and Ctrl/Cmd+scroll scale it */
+.lv-scroll{overflow-x:auto;min-width:0;touch-action:pan-x pan-y}
+.lv-col{width:794px;max-width:none;margin:0 auto;box-sizing:border-box}
+@media(max-width:900px){.lv-col{width:100%}}
+.lv-doctitle{padding-left:94px;padding-right:94px}
+.lv-col .lv-editor .ProseMirror{padding-left:94px;padding-right:94px;padding-bottom:94px}
+.lv-zoom{margin-left:auto;align-items:center}.lv-zoomlab{border:0;background:transparent;font:inherit;font-size:.85rem;min-width:46px;cursor:pointer;color:#3a0a2e;padding:6px 4px;border-radius:6px}.lv-zoomlab:hover{background:#f1e9ef}
+@media(max-width:900px){.lv-doctitle{padding-left:24px;padding-right:24px}.lv-col .lv-editor .ProseMirror{padding-left:24px;padding-right:24px}}
+#view.wrap.lv-wide{max-width:1280px}
