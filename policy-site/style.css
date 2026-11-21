@@ -969,3 +969,12 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror>ol>li ol ol ol>li{counter-increment:sub4}
 .lv-editor .ProseMirror>ol>li ol ol ol>li::before{content:"(" counter(sub4,upper-alpha) ")"}
 .lv-editor .ProseMirror>ol>li ol ol ol{counter-reset:sub4}
+
+/* body text is 11 pt; the indents are fixed lengths from it, so article titles line up with clause text */
+.lv-col{--lv-fs:11pt;--lv-ind:calc(11pt * 3.6);--lv-ind2:calc(11pt * 2.9)}
+.lv-col .lv-editor .ProseMirror{font-size:var(--lv-fs)}
+.lv-editor .ProseMirror h2{font-size:12pt;padding-left:var(--lv-ind)}
+.lv-editor .ProseMirror>ol>li{padding-left:var(--lv-ind)}
+.lv-editor .ProseMirror>ol>li ol>li{padding-left:var(--lv-ind2)}
+.lv-editor .ProseMirror>ol>li ul{padding-left:var(--lv-ind2)}
+.lv-doctitle textarea.muted,.lv-org,.lv-meta{font-size:11pt}
