@@ -213,7 +213,7 @@
       histPanel = h('aside', { class: 'gd-hist', 'aria-label': 'Version history' }, h('div', { class: 'gd-htitle' }, 'Version history'), body,
         h('label', { class: 'gd-hfoot', for: 'gd-named' }, onlyNamed, ' Only show named versions'));
       histTop = h('div', { class: 'gd-htop' }, back, h('span', { class: 'gd-hname' }, 'Version history'), banner);
-      lvEl.classList.add('hist'); lvBody.replaceChildren(pv, histPanel); lvRoot.insertBefore(histTop, lvHead); toolbarWrap.hidden = true; lvHead.hidden = true; lvIntro.hidden = true;
+      lvEl.classList.add('hist'); lvBody.replaceChildren(pv, histPanel); lvRoot.insertBefore(histTop, lvTop); lvTop.hidden = true;
       curView = pv;
       var bk = []; try { bk = await rpc('policy_backups', { p_slug: slug }); } catch (e) { /* none */ }
       var pubs = (data.versions || (await rpc('policy_text', { p_slug: slug, p_version: data.doc.version > 0 ? data.doc.version : null }).catch(function () { return null; }) || {}).versions || []);
@@ -224,18 +224,19 @@
       show(items[0]);
     }
     function closeHistory() {
-      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(editorEl, notesCol); toolbarWrap.hidden = false; lvHead.hidden = false; lvIntro.hidden = false; paintNotes();
+      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(editorEl, notesCol); lvTop.hidden = false; paintNotes();
     }
 
     var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
     var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
-    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, data.doc.title), h('span', { class: 'pill warn' }, 'Working copy'),
+    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, data.doc.title), h('span', { class: 'pill warn', title: canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.' }, canEdit ? 'Working copy' : 'Working copy · read only'),
       data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, status, h('span', { class: 'lv-spacer' }), people,
       P.exco ? histBtn : null, P.exco || canEdit ? shareBtn : null);
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
     var toolbarWrap = h('div', { class: 'lv-tbwrap' }, toolbar);
     var lvBody = h('div', { class: 'lv-body' }, editorEl, notesCol);
-    var lvEl = h('div', { class: 'lv' }, lvHead, lvIntro, toolbarWrap, lvBody), lvRoot = lvEl;
+    var lvTop = h('div', { class: 'lv-top' }, lvHead, toolbarWrap);
+    var lvEl = h('div', { class: 'lv' }, lvTop, lvBody), lvRoot = lvEl;
     P.show(lvEl);
     document.body.appendChild(cmBtn);
     awareness.setLocalStateField('user', me);

@@ -883,3 +883,9 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 .gd-hist{min-height:calc(100vh - 140px)}
 .lv-tbwrap{display:contents}
 .lv-toolbar{top:54px}
+/* the title bar, Share and toolbar stay put; only the document scrolls (like Google Docs) */
+.lv-top{position:sticky;top:64px;z-index:20;background:#fff;margin:0 -16px;padding:6px 16px 0;box-shadow:0 1px 0 #e3dde1}
+.lv-top .lv-head{margin:0 0 4px}
+.lv-top .lv-toolbar{position:static;margin:0 0 8px;border-radius:10px}
+.gd-htop{position:sticky;top:64px;z-index:20}
+.gd-hist{top:121px}
