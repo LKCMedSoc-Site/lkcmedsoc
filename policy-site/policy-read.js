@@ -104,7 +104,7 @@
       });
       items.forEach(function (it) { it.c.hidden = it.y === null; });
       items = items.filter(function (it) { return it.y !== null; }).sort(function (a, b) { return a.y - b.y; });
-      var bottom = 0; items.forEach(function (it) { var top = Math.max(it.y, bottom ? bottom + 8 : 0); it.c.style.top = Math.max(0, top) + 'px'; bottom = Math.max(0, top) + it.c.offsetHeight; });
+      var bottom = 0; items.forEach(function (it) { var top = Math.max(it.y === 1e9 ? 0 : it.y, bottom ? bottom + 8 : 0); it.c.style.top = Math.max(0, top) + 'px'; bottom = Math.max(0, top) + it.c.offsetHeight; });
       notesCol.style.minHeight = bottom + 'px';
     }
     function paintNotes() {
