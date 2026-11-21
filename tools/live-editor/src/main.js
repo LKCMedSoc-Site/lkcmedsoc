@@ -97,11 +97,14 @@ var ClauseBackspace = Extension.create({
       var hb = st.schema.nodes.hardBreak, tr = st.tr;
       if (idx === 0) {                                                    // the first item of a list
         if (clause) return true;                                          // the first clause of an article has nothing above it to join
-        var pItem = $f.node(d - 3); if (pItem.type.name !== 'listItem' || rest.length) return true;
+        var pItem = $f.node(d - 3); if (pItem.type.name !== 'listItem') return true;
+        var promoted = [], ok = rest.every(function (c) { if (!isList(c) || c.type !== list.type) return false; c.forEach(function (x) { promoted.push(x); }); return true; });
+        if (rest.length && !ok) return true;                              // something other than deeper items hangs under it: leave it alone
         var pStart = $f.before(d - 3), li = $f.index(d - 3), tgt = -1;
         pItem.forEach(function (c, off, i) { if (i < li && c.type.name === 'paragraph') tgt = pStart + 1 + off + c.nodeSize - 1; });   // the clause's own line, above its sub-items
         if (tgt < 0) return true;
-        if (list.childCount === 1) tr.delete($f.before(d - 2), $f.after(d - 2)); else tr.delete(itemPos, itemPos + item.nodeSize);
+        if (rest.length) tr.replaceWith(itemPos, itemPos + item.nodeSize, Fragment.fromArray(promoted));    // its deeper items take its place in the list
+        else if (list.childCount === 1) tr.delete($f.before(d - 2), $f.after(d - 2)); else tr.delete(itemPos, itemPos + item.nodeSize);
         tr.insert(tgt, Fragment.from(hb.create()).append($f.parent.content));
         tr.setSelection(TextSelection.near(tr.doc.resolve(tgt + 1), 1));
         ed.view.dispatch(tr.scrollIntoView()); return true;
