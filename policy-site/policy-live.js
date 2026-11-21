@@ -221,7 +221,7 @@
       var named = false, sel = null, items = [], body = h('div', { class: 'gd-hbody' }), onlyNamed = h('input', { type: 'checkbox', id: 'gd-named' });
       var pv = h('div', { class: 'lv-editor lv-prev' }), pvEd = null, banner = h('div', { class: 'gd-hbar' });
       function show(item) {
-        sel = item; draw();
+        sel = item; build(); var g0 = groupOf(item); if (g0) openG[g0.key] = true; draw();
         (async function () {
           var md = '';
           try { md = item.kind === 'current' ? LE.markdownOf(ed) : item.kind === 'pub' ? ((await rpc('policy_text', { p_slug: slug, p_version: item.version })) || {}).body_md : await rpc('policy_backup_text', { p_slug: slug, p_id: item.id }); } catch (e) { P.toast('Could not load that version', true); }
@@ -232,33 +232,54 @@
             if (!confirm('Restore this version for everyone? What is there now is kept in the version history.')) return;
             if (await P.run(function () { return rpc('policy_restore_backup', { p_slug: slug, p_id: item.id, p_name: myName() }).then(function () { return true; }); }, 'Restored')) location.reload(); } }, 'Restore this version'));
       }
+      var openG = { draft: true };
+      function groupOf(item) { var g = null; groups.forEach(function (x) { if (x.rows.indexOf(item) >= 0 || x.head === item) g = x; }); return g; }
+      var groups = [];
+      function build() {                                                          // one section per published version, newest first; the saves are filed under the version they led up to
+        var vers = items.filter(function (x) { return x.kind === 'pub'; }).sort(function (a, b) { return b.version - a.version; }), saves = items.filter(function (x) { return x.kind === 'save'; }), cur = items.filter(function (x) { return x.kind === 'current'; })[0];
+        var T = function (x) { return new Date(x.at).getTime(); }, latest = vers.length ? T(vers[0]) : -Infinity;
+        groups = [{ key: 'draft', title: vers.length ? 'Draft \u00b7 since version ' + vers[0].version : 'Draft', rows: [cur].concat(saves.filter(function (x) { return T(x) > latest; })) }];
+        vers.forEach(function (v, k) { var lo = k + 1 < vers.length ? T(vers[k + 1]) : -Infinity, hi = T(v); groups.push({ key: 'v' + v.version, head: v, live: k === 0, rows: saves.filter(function (x) { return T(x) <= hi && T(x) > lo; }) }); });
+      }
+      function chevron(open) { var b = h('span', { class: 'gd-gchev' + (open ? ' open' : '') }); b.appendChild(svg('<path d="m6 9 6 6 6-6"/>', 16)); return b; }
       function draw() {
-        var list = items.filter(function (i) { return !onlyNamed.checked || i.kind === 'pub'; }), last = '';
+        build();
         var out = [];
-        list.forEach(function (i) {
-          var lab = dayLabel(i.at); if (lab !== last) { out.push(h('div', { class: 'gd-day' }, lab)); last = lab; }
-          var on = sel && sel.key === i.key;
-          out.push(h('button', { type: 'button', class: 'gd-ver' + (on ? ' on' : ''), onclick: function () { show(i); } },
-            h('span', { class: 'gd-vtxt' }, h('span', { class: i.kind === 'pub' ? 'gd-vt named' : 'gd-vt' }, i.kind === 'current' ? 'Current version' : i.label || stamp(i.at)),
-              i.kind === 'pub' ? h('span', { class: 'gd-vs' }, stamp(i.at)) : null,
-              h('span', { class: 'gd-vwho' }, h('i', { style: 'background:' + colourFor(i.by || '?') }), i.by || 'Someone'))));
+        groups.forEach(function (g) {
+          var isOpen = !!openG[g.key], rows = onlyNamed.checked ? (g.key === 'draft' ? [g.rows[0]] : []) : g.rows;
+          if (g.head) {
+            var v = g.head, on = sel && sel.key === v.key;
+            out.push(h('div', { class: 'gd-grp pub' + (g.live ? ' live' : '') },
+              h('button', { type: 'button', class: 'gd-ghead' + (on ? ' on' : ''), onclick: function () { show(v); } },
+                h('span', { class: 'gd-gt' }, 'Version ' + v.version, g.live ? h('span', { class: 'lv-live' }, 'Live now') : null),
+                h('span', { class: 'gd-gs' }, stamp(v.at)), h('span', { class: 'gd-gs' }, 'Published by ' + (v.by || 'the President')), v.note ? h('span', { class: 'gd-gn' }, v.note) : null),
+              rows.length ? h('button', { type: 'button', class: 'gd-gtoggle', 'aria-expanded': isOpen ? 'true' : 'false', onclick: function () { openG[g.key] = !isOpen; draw(); } }, chevron(isOpen), rows.length + (rows.length === 1 ? ' edit before this version' : ' edits before this version')) : null,
+              isOpen ? rows.map(row) : null));
+          } else {
+            out.push(h('div', { class: 'gd-grp draftgrp' }, h('div', { class: 'gd-gdraft' }, g.title), rows.map(row)));
+          }
         });
-        if (!out.length) out.push(h('div', { class: 'muted', style: 'padding:16px' }, 'No named versions yet. A version is named when the President publishes.'));
         body.replaceChildren.apply(body, out);
+      }
+      function row(i) {
+        var on = sel && sel.key === i.key;
+        return h('button', { type: 'button', class: 'gd-ver' + (on ? ' on' : ''), onclick: function () { show(i); } },
+          h('span', { class: 'gd-vtxt' }, h('span', { class: 'gd-vt' }, i.kind === 'current' ? 'Current version' : stamp(i.at)), h('span', { class: 'gd-vwho' }, h('i', { style: 'background:' + colourFor(i.by || '?') }), i.by || 'Someone')));
       }
       onlyNamed.addEventListener('change', draw);
       var back = h('button', { type: 'button', class: 'gd-back', 'aria-label': 'Back to the document', onclick: closeHistory }); back.appendChild(svg(PATH.back, 22));
       histPanel = h('aside', { class: 'gd-hist', 'aria-label': 'Version history' }, h('div', { class: 'gd-htitle' }, 'Version history'), body,
         h('label', { class: 'gd-hfoot', for: 'gd-named' }, onlyNamed, ' Only show named versions'));
       histTop = h('div', { class: 'gd-htop' }, back, h('span', { class: 'gd-hname' }, 'Version history'), banner);
-      lvEl.classList.add('hist'); lvBody.replaceChildren(pv, histPanel); lvRoot.insertBefore(histTop, lvTop); lvTop.hidden = true;
+      lvEl.classList.add('hist');
+      // the preview sits in the same sheet as the editor, so it has the same type, indents and numbering
+      lvBody.replaceChildren(h('div', { class: 'lv-scroll' }, h('div', { class: 'lv-col lv-prevcol' }, pv)), histPanel); lvRoot.insertBefore(histTop, lvTop); lvTop.hidden = true;
       curView = pv;
       var bk = []; try { bk = await rpc('policy_backups', { p_slug: slug }); } catch (e) { /* none */ }
-      var pubs = (data.versions || (await rpc('policy_text', { p_slug: slug, p_version: data.doc.version > 0 ? data.doc.version : null }).catch(function () { return null; }) || {}).versions || []);
+      var pubs = []; try { pubs = await rpc('policy_versions', { p_slug: slug }); } catch (e) { pubs = meta.versions.map(function (v) { return { version: v.version, published_at: (v.effective_on || new Date().toISOString().slice(0, 10)) + 'T12:00:00', note: v.note, by: v.by }; }); }
       items = [{ kind: 'current', key: 'cur', at: new Date().toISOString(), by: 'You and others, now' }]
-        .concat(pubs.map(function (v) { return { kind: 'pub', key: 'p' + v.version, version: v.version, at: (v.effective_on || new Date().toISOString().slice(0, 10)) + 'T12:00:00', by: v.by, label: 'Version ' + v.version + (v.note ? ': ' + v.note : '') }; }))
+        .concat(pubs.map(function (v) { return { kind: 'pub', key: 'p' + v.version, version: v.version, at: v.published_at, by: v.by, note: v.note, label: 'Version ' + v.version + (v.note ? ': ' + v.note : '') }; }))
         .concat(bk.map(function (b) { return { kind: 'save', key: 'b' + b.id, id: b.id, at: b.saved_at, by: b.by }; }));
-      items.sort(function (a, b) { return a.kind === 'current' ? -1 : b.kind === 'current' ? 1 : new Date(b.at) - new Date(a.at); });
       show(items[0]);
     }
     function closeHistory() {

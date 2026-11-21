@@ -1030,3 +1030,20 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-log-item.old{background:transparent}.lv-log-item.old .lv-log-h,.lv-log-item.old .lv-log-note{color:#6b6b6b}.lv-log-item.old b{font-weight:500}
 .lv-live{display:inline-block;margin-left:8px;padding:1px 9px;border-radius:999px;background:#2e8b4f;color:#fff;font-size:.72rem;font-weight:600;letter-spacing:.02em;vertical-align:1px}
 .lv-log-item.live .lv-log-h{font-size:1rem}
+
+/* version history preview: same sheet as the editor */
+.lv.hist .lv-prevcol{margin:24px auto;min-height:60vh}
+.lv.hist .lv-prev{padding:0}
+.lv.hist .lv-prev .ProseMirror{margin:0;max-width:none;box-shadow:none;min-height:0;padding-top:44px;cursor:default}
+
+/* version history grouped by published version */
+.gd-grp{border-bottom:1px solid #e3e3e3;padding-bottom:6px}
+.gd-gdraft{padding:14px 16px 6px;font-size:.8rem;font-weight:600;color:#6b4e00;background:#fff9e8}
+.gd-grp.draftgrp .gd-ver{background:#fffdf5}
+.gd-ghead{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:0;border-left:4px solid #b9b0b6;background:#f6f3f5;padding:12px 16px;cursor:pointer;font:inherit;margin-top:8px}
+.gd-grp.live .gd-ghead{border-left-color:#2e8b4f;background:#e8f5ec}
+.gd-ghead.on{background:#f3e3ee;border-left-color:#8a2a6d}.gd-grp.live .gd-ghead.on{background:#d4ecda}
+.gd-gt{font-weight:600;font-size:.98rem;color:#202124}.gd-gs{font-size:.8rem;color:#5f6368}.gd-gn{font-size:.88rem;color:#202124;margin-top:4px}
+.gd-gtoggle{display:flex;align-items:center;gap:6px;width:100%;border:0;background:transparent;padding:8px 16px;font:inherit;font-size:.8rem;color:#5f6368;cursor:pointer;text-align:left}.gd-gtoggle:hover{background:#f1f3f4}
+.gd-gchev{display:inline-flex;transition:transform .15s}.gd-gchev.open{transform:rotate(180deg)}
+.gd-grp .gd-ver{padding-left:28px}
