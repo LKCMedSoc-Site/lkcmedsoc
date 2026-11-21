@@ -206,6 +206,27 @@ var ArticleEnter = Extension.create({
         if (next && next.type === T0.orderedList) { tr1.insert(afterPos + 1, item0); cur = afterPos + 3; } else { tr1.insert(afterPos, T0.orderedList.create(null, item0)); cur = afterPos + 3; }
         tr1.setSelection(TextSelection.near(tr1.doc.resolve(cur), 1)); ed.view.dispatch(tr1.scrollIntoView()); return true;
       }
+      // Enter on an empty clause starts a new article there (the clauses after it go under the new title); on an empty sub-item it goes out one level
+      // without taking the items after it along.
+      if ($f.parent.type.name === 'paragraph' && $f.parent.content.size === 0 && listDepth($f) > 0 && $f.node($f.depth - 1).childCount === 1) {
+        var dd = $f.depth, lst = $f.node(dd - 2), ix = $f.index(dd - 2), itm = $f.node(dd - 1), itmPos = $f.before(dd - 1), TT = st.schema.nodes, trE = st.tr;
+        if (dd === 3 && lst.type === TT.orderedList) {
+          var lp = $f.before(dd - 2), bef = [], aft = [], frag = [];
+          lst.forEach(function (it, o, i) { if (i < ix) bef.push(it); else if (i > ix) aft.push(it); });
+          if (bef.length) frag.push(lst.type.create(lst.attrs, bef)); frag.push(TT.heading.create({ level: 2 })); if (aft.length) frag.push(lst.type.create(lst.attrs, aft));
+          trE.replaceWith(lp, lp + lst.nodeSize, Fragment.fromArray(frag));
+          trE.setSelection(TextSelection.near(trE.doc.resolve(lp + (bef.length ? frag[0].nodeSize : 0) + 1), 1)); ed.view.dispatch(trE.scrollIntoView()); return true;
+        }
+        var par = $f.node(dd - 3);
+        if (dd > 3 && par.type === TT.listItem) {
+          var pp = $f.before(dd - 3), gone = lst.childCount === 1 ? lst.nodeSize : itm.nodeSize;
+          trE.delete(lst.childCount === 1 ? $f.before(dd - 2) : itmPos, (lst.childCount === 1 ? $f.before(dd - 2) : itmPos) + gone);
+          var ins = pp + par.nodeSize - gone; trE.insert(ins, TT.listItem.create(null, TT.paragraph.create()));
+          trE.setSelection(TextSelection.near(trE.doc.resolve(ins + 2), 1)); ed.view.dispatch(trE.scrollIntoView()); return true;
+        }
+      }
+      // an empty title stays as it is: Enter must not pile up empty articles
+      if ($f.depth === 1 && $f.parent.type.name === 'heading' && $f.parent.content.size === 0) return true;
       // Enter at the very start of a title puts a new empty article above it (the default left a blank paragraph at the end of the clause above)
       if ($f.depth === 1 && $f.parent.type.name === 'heading' && $f.parentOffset === 0 && $f.parent.content.size > 0) {
         var at0 = $f.before(1), tr0 = st.tr.insert(at0, st.schema.nodes.heading.create({ level: 2 }));
