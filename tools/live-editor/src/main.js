@@ -95,7 +95,12 @@ var ClauseBackspace = Extension.create({
       if (clause && list.type.name !== 'orderedList') return false;
       var rest = []; item.forEach(function (c, off, i) { if (i > 0) rest.push(c); });
       var hb = st.schema.nodes.hardBreak, tr = st.tr;
+      var empty = item.childCount === 1 && $f.parent.content.size === 0;
       if (idx === 0) {                                                    // the first item of a list
+        if (empty && list.childCount > 1) {                                // an empty first item with another after it: remove it, the cursor goes to the next one
+          var t2 = st.tr.delete(itemPos, itemPos + item.nodeSize); t2.setSelection(TextSelection.near(t2.doc.resolve(itemPos + 2), 1));
+          ed.view.dispatch(t2.scrollIntoView()); return true;
+        }
         if (clause) return true;                                          // the first clause of an article has nothing above it to join
         var pItem = $f.node(d - 3); if (pItem.type.name !== 'listItem') return true;
         var promoted = [], ok = rest.every(function (c) { if (!isList(c) || c.type !== list.type) return false; c.forEach(function (x) { promoted.push(x); }); return true; });
@@ -105,6 +110,7 @@ var ClauseBackspace = Extension.create({
         if (tgt < 0) return true;
         if (rest.length) tr.replaceWith(itemPos, itemPos + item.nodeSize, Fragment.fromArray(promoted));    // its deeper items take its place in the list
         else if (list.childCount === 1) tr.delete($f.before(d - 2), $f.after(d - 2)); else tr.delete(itemPos, itemPos + item.nodeSize);
+        if (empty) { tr.setSelection(TextSelection.near(tr.doc.resolve(tgt), -1)); ed.view.dispatch(tr.scrollIntoView()); return true; }   // a lone empty sub-item just goes, leaving the cursor at the end of the clause's line
         tr.insert(tgt, Fragment.from(hb.create()).append($f.parent.content));
         tr.setSelection(TextSelection.near(tr.doc.resolve(tgt + 1), 1));
         ed.view.dispatch(tr.scrollIntoView()); return true;
