@@ -131,18 +131,20 @@ var ClauseBackspace = Extension.create({
         tr.setSelection(TextSelection.near(tr.doc.resolve(tgt + 1), 1));
         ed.view.dispatch(tr.scrollIntoView()); return true;
       }
-      // Backspace brings the text up ONE ROW: onto the row straight above it, which is the last item at the very bottom of the item above (its deepest last sub-item), not that item's own first line.
-      var prev = list.child(idx - 1), deep = prev, deepPos = itemPos - prev.nodeSize, parentList = list, parentListPos = $f.before(d - 2);
+      // Backspace works one row at a time. If the row above is deeper than this item, the item first moves in to that row's level; level with it, the text joins that row on a new line (like Shift+Enter).
+      var prev = list.child(idx - 1), deep = prev, deepPos = itemPos - prev.nodeSize, parentList = list, parentListPos = $f.before(d - 2), descents = 0;
       for (;;) {
         var lc = deep.lastChild; if (!lc || !isList(lc) || !lc.childCount) break;
         var li2 = lc.lastChild, lcPos = deepPos + 1 + (deep.content.size - lc.nodeSize);
-        parentList = lc; parentListPos = lcPos; deepPos = lcPos + 1 + (lc.content.size - li2.nodeSize); deep = li2;
+        parentList = lc; parentListPos = lcPos; deepPos = lcPos + 1 + (lc.content.size - li2.nodeSize); deep = li2; descents++;
       }
       if (deep.childCount === 1 && deep.firstChild.type.name === 'paragraph' && deep.firstChild.content.size === 0) {     // the row above is empty: this one simply takes its place
         var tr0 = st.tr; if (parentList.childCount === 1) tr0.delete(parentListPos, parentListPos + parentList.nodeSize); else tr0.delete(deepPos, deepPos + deep.nodeSize);
         var gone = parentList.childCount === 1 ? parentList.nodeSize : deep.nodeSize, mapped = itemPos - gone;
         tr0.setSelection(TextSelection.near(tr0.doc.resolve(mapped + 2), 1)); ed.view.dispatch(tr0.scrollIntoView()); return true;
       }
+      // The row above is deeper than this item: first Backspace moves this item in one level (it becomes the next item of that deeper list, like Tab); once it is level with the row above, the next one joins it.
+      if (descents > 0) { ed.chain().focus().sinkListItem('listItem').run(); return true; }
       if (!deep.lastChild || deep.lastChild.type.name !== 'paragraph') return true;                                         // the row above ends in a table: leave it alone
       var target = deepPos + deep.nodeSize - 2, deepEnd = deepPos + deep.nodeSize - 1;
       tr.delete(itemPos, itemPos + item.nodeSize);
