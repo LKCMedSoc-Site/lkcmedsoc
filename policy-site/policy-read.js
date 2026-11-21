@@ -39,8 +39,14 @@
     // ---- the top bar ----
     var copyBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Copy link', 'aria-label': 'Copy link', onclick: function () { var u = location.origin + location.pathname + '#/d/' + slug + (shown < current ? '?v=' + shown : ''); (P.copy ? P.copy(u) : navigator.clipboard.writeText(u)).then(function () { P.toast('Link copied'); }); } });
     copyBtn.appendChild(svg('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 20));
+    var pdfBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Save as PDF', 'aria-label': 'Save as PDF', onclick: async function () {
+      pdfBtn.disabled = true; P.toast('Preparing the PDF\u2026');
+      try { await LE.savePdf(ed.getJSON(), { org: "LKCMedicine Students' Medical Society", title: d.title, summary: d.summary, versionLine: token.textContent, filename: slug + '-v' + shown }); }
+      catch (e) { P.toast('Could not make the PDF. Check your connection and try again.', true); }
+      pdfBtn.disabled = false; } });
+    pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20));
     var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, d.title), h('span', { class: 'lv-spacer' }),
-      P.exco ? h('a', { class: 'gd-btn', href: '#/live/' + slug, style: 'text-decoration:none' }, 'Edit') : null, copyBtn);
+      P.exco ? h('a', { class: 'gd-btn', href: '#/live/' + slug, style: 'text-decoration:none' }, 'Edit') : null, pdfBtn, copyBtn);
 
     // ---- toolbar: outline and zoom, as in the editor ----
     var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }

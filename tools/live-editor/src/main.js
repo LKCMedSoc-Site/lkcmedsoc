@@ -14,6 +14,7 @@ import { Markdown } from 'tiptap-markdown';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Fragment } from '@tiptap/pm/model';
+import { savePdf } from './pdf.js';
 
 function b64(u8) { var s = '', i; for (i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
 function unb64(s) { var bin = atob(s), u = new Uint8Array(bin.length), i; for (i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
@@ -471,4 +472,4 @@ function createReader(o) {
 }
 function markdownOf(ed) { var md = ed.storage.markdown.getMarkdown(), re = /^(#{1,6} [^\n]*?)\\\n([^\n]+)/m; while (re.test(md)) md = md.replace(re, '$1 $2'); return md; }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
-  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, createReader: createReader, headings: headings, headingTop: headingTop, scrollToHeading: scrollToHeading, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };
+  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, savePdf: savePdf, createReader: createReader, headings: headings, headingTop: headingTop, scrollToHeading: scrollToHeading, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };

@@ -360,6 +360,12 @@
       document.body.appendChild(overlay); nm.focus();
     }
     var infoBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Name and description', 'aria-label': 'Name and description', onclick: openDetails }); infoBtn.appendChild(svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 20));
+    var pdfBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Save as PDF', 'aria-label': 'Save as PDF', onclick: async function () {
+      pdfBtn.disabled = true; P.toast('Preparing the PDF\u2026');
+      try { await LE.savePdf(ed.getJSON(), { org: "LKCMedicine Students' Medical Society", title: docInfo.title, summary: docInfo.summary, versionLine: tokenT.textContent, filename: slug + (meta.version > 0 ? '-v' + meta.version : '-working-copy') }); }
+      catch (e) { P.toast('Could not make the PDF. Check your connection and try again.', true); }
+      pdfBtn.disabled = false; } });
+    pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20));
     var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
     var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
     // ---- Publish (the President only): asks for comments, saves what is pending, then publishes the working copy as the next version ----
@@ -381,7 +387,7 @@
     }
     var pubBtn = P.canConfirm ? h('button', { type: 'button', class: 'gd-btn fill gd-pub', onclick: openPublish }, 'Publish') : null;
     var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, canWork ? infoBtn : null, status, h('span', { class: 'lv-spacer' }), people,
-      canWork ? histBtn : null, pubBtn, P.exco ? shareBtn : null);   // only ExCo can invite people
+      pdfBtn, canWork ? histBtn : null, pubBtn, P.exco ? shareBtn : null);   // only ExCo can invite people
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
     // ---- zoom: the − and + buttons, Ctrl/Cmd + scroll, trackpad pinch (Chrome, Firefox, Safari) and two-finger pinch on a touch screen ----
     var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }
