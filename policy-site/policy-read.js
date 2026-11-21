@@ -55,12 +55,14 @@
     function setZoom(z, cx, cy) {
       z = Math.min(2.5, Math.max(0.4, z)); if (Math.abs(z - zoom) < 0.0005) return;
       var r0 = lvCol.getBoundingClientRect(), sr = lvScroll.getBoundingClientRect(); if (cx == null) cx = sr.left + sr.width / 2; if (cy == null) cy = window.innerHeight / 2;
-      var relX = (cx - r0.left) / zoom, relY = (cy - r0.top) / zoom; zoom = z; lvCol.style.zoom = zoom;
+      var relX = (cx - r0.left) / zoom, relY = (cy - r0.top) / zoom; zoom = z; sizeSheet();
       var r1 = lvCol.getBoundingClientRect(), se = document.scrollingElement || document.documentElement;
       se.scrollTo({ top: se.scrollTop + r1.top + relY * zoom - cy, behavior: 'instant' }); lvScroll.scrollTo({ left: lvScroll.scrollLeft + r1.left + relX * zoom - cx, behavior: 'instant' });
       zoomLab.textContent = Math.round(zoom * 100) + '%'; try { localStorage.setItem('policyZoom', String(zoom)); } catch (e) { /* no storage */ } if (ed) paintNotes(); placeOutline();
     }
     var STEPS = [0.4, 0.5, 0.67, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5];
+    // the sheet is scaled as a picture (nothing is laid out again, so lines never re-wrap or jump); lv-sizer takes the scaled size so scrolling matches
+    function sizeSheet() { var wide = window.innerWidth > 900; lvSizer.style.width = wide ? (794 * zoom) + 'px' : '100%'; lvCol.style.width = wide ? '' : (100 / zoom) + '%'; lvCol.style.transform = 'scale(' + zoom + ')'; lvSizer.style.height = (lvCol.offsetHeight * zoom) + 'px'; }
     function stepZoom(dir) { var i; if (dir > 0) { for (i = 0; i < STEPS.length && STEPS[i] <= zoom + 0.001; i++); setZoom(STEPS[Math.min(i, STEPS.length - 1)]); } else { for (i = STEPS.length - 1; i >= 0 && STEPS[i] >= zoom - 0.001; i--); setZoom(STEPS[Math.max(i, 0)]); } }
     var zOut = h('button', { type: 'button', class: 'lv-tb', title: 'Zoom out', 'aria-label': 'Zoom out', onclick: function () { stepZoom(-1); } }), zIn = h('button', { type: 'button', class: 'lv-tb', title: 'Zoom in', 'aria-label': 'Zoom in', onclick: function () { stepZoom(1); } });
     zOut.appendChild(svg('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M8 11h6"/>', 18)); zIn.appendChild(svg('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M8 11h6M11 8v6"/>', 18));
@@ -133,9 +135,9 @@
     });
 
     // ---- assemble ----
-    var lvCol = h('div', { class: 'lv-col' }, titleBlock, editorEl), lvScroll = h('div', { class: 'lv-scroll' }, lvCol), lvBody = h('div', { class: 'lv-body' + (P.exco ? '' : ' lv-nonotes') }, lvScroll, P.exco ? notesCol : null);
+    var lvCol = h('div', { class: 'lv-col' }, titleBlock, editorEl), lvSizer = h('div', { class: 'lv-sizer' }, lvCol), lvScroll = h('div', { class: 'lv-scroll' }, lvSizer), lvBody = h('div', { class: 'lv-body' + (P.exco ? '' : ' lv-nonotes') }, lvScroll, P.exco ? notesCol : null);
     var lvTop = h('div', { class: 'lv-top' }, lvHead, h('div', { class: 'lv-tbwrap' }, toolbar)), lvEl = h('div', { class: 'lv' }, lvTop, lvBody);
-    lvCol.style.zoom = zoom; zoomLab.textContent = Math.round(zoom * 100) + '%';
+    sizeSheet(); try { new ResizeObserver(sizeSheet).observe(lvCol); } catch (e) { /* none */ } zoomLab.textContent = Math.round(zoom * 100) + '%';
     lvBody.addEventListener('wheel', function (ev) { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); setZoom(zoom * Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.01)), ev.clientX, ev.clientY); }, { passive: false });
     var gz0 = 1; lvBody.addEventListener('gesturestart', function (ev) { ev.preventDefault(); gz0 = zoom; }); lvBody.addEventListener('gesturechange', function (ev) { ev.preventDefault(); setZoom(gz0 * ev.scale, ev.clientX, ev.clientY); }); lvBody.addEventListener('gestureend', function (ev) { ev.preventDefault(); });
     var pd0 = 0, pz0 = 1; function pdist(t) { return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY); }

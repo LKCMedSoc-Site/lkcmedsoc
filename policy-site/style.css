@@ -1105,3 +1105,6 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-figh.nw{left:-6px;top:-6px;cursor:nwse-resize}.lv-figh.ne{right:-6px;top:-6px;cursor:nesw-resize}.lv-figh.sw{left:-6px;bottom:-6px;cursor:nesw-resize}.lv-figh.se{right:-6px;bottom:-6px;cursor:nwse-resize}
 .gd-iconbtn.off{opacity:.38;cursor:not-allowed}
 .lv-log-item.draftitem{background:#fff9e8;border:1px solid #e0b84a;box-shadow:inset 4px 0 0 #d4a017}.lv-log-item.draftitem .lv-log-h{font-size:1rem}
+/* zoom: the sheet is scaled as a picture inside a box of the scaled size */
+.lv-sizer{position:relative;margin:0 auto;max-width:none}
+.lv-sizer>.lv-col{position:absolute;top:0;left:0;margin:0;transform-origin:0 0}
