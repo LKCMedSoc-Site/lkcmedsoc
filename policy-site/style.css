@@ -998,3 +998,4 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-pop{position:fixed;z-index:2147483000;display:grid;grid-template-columns:repeat(4,28px);gap:6px;padding:10px;background:#fff;border:1px solid #dadce0;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2)}
 .lv-sw{width:28px;height:28px;border-radius:50%;border:1px solid #c9c2c7;cursor:pointer;padding:0}.lv-sw:hover{outline:2px solid #8a2a6d;outline-offset:1px}
 .lv-sw.none{background:#fff linear-gradient(135deg,transparent 46%,#c0392b 46%,#c0392b 54%,transparent 54%)}
+.lv-editor th{background:transparent;position:static;color:inherit}
