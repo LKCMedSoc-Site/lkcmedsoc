@@ -380,7 +380,7 @@
     }
     var pubBtn = P.canConfirm ? h('button', { type: 'button', class: 'gd-btn fill gd-pub', onclick: openPublish }, 'Publish') : null;
     var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, P.exco ? infoBtn : null, status, h('span', { class: 'lv-spacer' }), people,
-      P.exco ? histBtn : null, pubBtn, P.exco || canEdit ? shareBtn : null);
+      P.exco ? histBtn : null, pubBtn, P.exco ? shareBtn : null);   // only ExCo can invite people
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
     // ---- zoom: the − and + buttons, Ctrl/Cmd + scroll, trackpad pinch (Chrome, Firefox, Safari) and two-finger pinch on a touch screen ----
     var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }

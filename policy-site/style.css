@@ -1076,3 +1076,6 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-rdesc{margin:2px 0 0;color:#5b5057;font-size:11pt}
 .lv-oldnote{margin-top:12px;padding:8px 12px;border-radius:8px;background:#fff4d6;border:1px solid #e0b84a;color:#6b4e00;font-size:.88rem}
 .lv-oldnote a{color:#6b4e00;font-weight:600}
+
+/* members read without a comments column */
+.lv-body.lv-nonotes{grid-template-columns:minmax(0,1fr)}

@@ -14,7 +14,7 @@
     P.loading();
     if (!window.LiveEditor) { P.show(h('p', { class: 'muted' }, 'The editor library did not load.')); return; }
     var LE = window.LiveEditor, slug = p.slug, want = /^\d{1,4}$/.test((q && q.v) || '') ? +q.v : null;
-    var got = await Promise.all([rpc('policy_text', { p_slug: slug, p_version: want }), rpc('policy_note_list', { p_slug: slug }).catch(function () { return []; })]);
+    var got = await Promise.all([rpc('policy_text', { p_slug: slug, p_version: want }), P.exco ? rpc('policy_note_list', { p_slug: slug }).catch(function () { return []; }) : Promise.resolve([])]);   // comments are for ExCo and the people a document is shared with: members just read
     var data = got[0], notes = got[1] || [];
     if (!data) { P.show(h('p', { class: 'muted' }, 'That document does not exist, or it is not published yet.')); return; }
     var d = data.doc, versions = data.versions || [], shown = d.shown_version || d.version, current = d.version, activeId = null, ed = null;
@@ -110,7 +110,7 @@
     });
 
     // ---- assemble ----
-    var lvCol = h('div', { class: 'lv-col' }, titleBlock, editorEl), lvScroll = h('div', { class: 'lv-scroll' }, lvCol), lvBody = h('div', { class: 'lv-body' }, lvScroll, notesCol);
+    var lvCol = h('div', { class: 'lv-col' }, titleBlock, editorEl), lvScroll = h('div', { class: 'lv-scroll' }, lvCol), lvBody = h('div', { class: 'lv-body' + (P.exco ? '' : ' lv-nonotes') }, lvScroll, P.exco ? notesCol : null);
     var lvTop = h('div', { class: 'lv-top' }, lvHead, h('div', { class: 'lv-tbwrap' }, toolbar)), lvEl = h('div', { class: 'lv' }, lvTop, lvBody);
     lvCol.style.zoom = zoom; zoomLab.textContent = Math.round(zoom * 100) + '%';
     lvBody.addEventListener('wheel', function (ev) { if (!(ev.ctrlKey || ev.metaKey)) return; ev.preventDefault(); setZoom(zoom * Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.01)), ev.clientX, ev.clientY); }, { passive: false });
@@ -122,7 +122,7 @@
     P.show(lvEl);
     var viewEl = document.getElementById('view'); viewEl.classList.add('lv-wide'); document.body.appendChild(cmBtn); document.body.appendChild(outPanel);
     ed = LE.createReader({ element: editorEl, markdown: data.body_md || '', onNoteClick: function (id) { activeId = id; paintNotes(); },
-      onSelection: function () { var s = ed.state.selection; if (s.empty) { cmBtn.hidden = true; return; } var c = ed.view.coordsAtPos(s.to); cmBtn.hidden = false; cmBtn.style.cssText = 'position:fixed;z-index:30;left:' + Math.round(c.left) + 'px;top:' + Math.round(c.bottom + 6) + 'px'; } });
+      onSelection: function () { if (!P.exco) return; var s = ed.state.selection; if (s.empty) { cmBtn.hidden = true; return; } var c = ed.view.coordsAtPos(s.to); cmBtn.hidden = false; cmBtn.style.cssText = 'position:fixed;z-index:30;left:' + Math.round(c.left) + 'px;top:' + Math.round(c.bottom + 6) + 'px'; } });
     drawOutline(); setOutline(outOpen); markOutline(); paintNotes();
     P.onLeave(function () { viewEl.classList.remove('lv-wide'); cmBtn.remove(); outPanel.remove(); window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); try { ed.destroy(); } catch (e) { /* closing */ } });
   };

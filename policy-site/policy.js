@@ -58,7 +58,7 @@
   var LEAD = 'How MedSoc is run, in one place. Every provision has a number you can quote, and every change is recorded in the document’s history. Select any words to comment on them. If an NTU or School rule conflicts with a MedSoc rule, the NTU or School rule applies.';
 
   // One list of documents, with the type as a plain label and a filter on top.
-  function indexView(docs, exco, q) {
+  function indexView(docs, exco, q, shared) {
     var want = TIER[q.t] ? q.t : '';
     var order = Object.keys(TIER);
     docs = docs.slice().sort(function (a, b) { return order.indexOf(a.tier) - order.indexOf(b.tier); });
@@ -76,9 +76,18 @@
     var how = h('details', { class: 'how' }, h('summary', null, 'How documents are changed'),
       h('dl', null, order.map(function (t) { return [h('dt', null, TIER[t]), h('dd', null, TIER_NOTE[t])]; })));
     P.show(h('div', null, exco ? h('div', { class: 'hero' }, h('h1', null, 'Policy'), h('p', { class: 'muted' }, 'Any ExCo member can edit a document. Members see it once the President publishes it, and each new version is recorded. Everyone signed in can comment on any passage.'), searchBox(''))
-      : [hero(LEAD), searchBox('')], chips, list, how));
+      : [hero(LEAD), searchBox('')], sharedBox(shared), chips, list, how));
   }
-  async function memberIndex(q) { P.loading(); indexView(await rpc('policy_index'), false, q || {}); }
+  // Documents an ExCo member has shared with this account (Share dialog): they appear here when you sign in and open straight into the editor.
+  function sharedBox(shared) {
+    if (!shared || !shared.length) return null;
+    return h('div', { class: 'list', style: 'margin-bottom:18px' }, h('div', { class: 'item' }, h('div', { class: 's', style: 'font-weight:600;color:#3a0a2e' }, 'Shared with you')),
+      shared.map(function (x) {
+        return h('div', { class: 'item' }, h('a', { class: 't', href: '#/live/' + x.slug, style: 'text-decoration:none' }, x.title), h('div', { class: 's' }, x.summary || ''),
+          h('div', { class: 'meta' }, P.pill(x.can_edit ? 'You can edit' : 'You can comment', x.can_edit ? 'dark' : null), x.status === 'in_force' ? P.pill('In force \u00b7 version ' + x.version, null) : P.pill('Draft', 'warn')));
+      }));
+  }
+  async function memberIndex(q) { P.loading(); var shared = []; try { shared = await rpc('policy_shared_with_me'); } catch (e) { /* function not installed: nothing shared */ } indexView(await rpc('policy_index'), false, q || {}, shared); }
 
   P.route('/s', { nav: 'docs', fn: async function (p, q) {
     var t = (q.q || '').trim();
@@ -193,6 +202,7 @@
     P.loading();
     var v = /^\d{1,4}$/.test(q.v || '') ? +q.v : null;
     var wantWork = !!P.exco && v === null;                         // ExCo type into the working copy; an older version is read-only
+    if (!wantWork && !P.exco && v === null) { var inv = null; try { inv = await rpc('policy_live_open', { p_slug: p.slug }); } catch (e) { /* not shared with this account */ } if (inv) { location.replace('#/live/' + p.slug); return; } }   // shared with you: straight into the editor
     if (!wantWork && P.readDoc) { return P.readDoc(p, q); }          // reading a published version: the same sheet as the live editor (policy-read.js)
     if (wantWork) { var lv = null; try { lv = await rpc('policy_live_open', { p_slug: p.slug }); } catch (e) { /* not available: use this editor */ } if (lv) { location.replace('#/live/' + p.slug); return; } }   // documents switched to live editing open in the live editor
     var got = await Promise.all([wantWork ? rpc('policy_work', { p_slug: p.slug }) : rpc('policy_text', { p_slug: p.slug, p_version: v }), rpc('policy_note_list', { p_slug: p.slug }).catch(function () { return []; })]);
