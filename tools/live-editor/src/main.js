@@ -152,7 +152,7 @@ var IndentCap = Extension.create({
   addKeyboardShortcuts: function () { return { Tab: function (ctx) { return !canIndent(ctx.editor) && listDepth(ctx.editor.state.selection.$from) > 0; } }; }
 });
 
-// Enter at the end of an article title starts a new article (Enter makes another of the same kind, like Enter in a clause makes another clause).
+// Enter at the end of an article title starts a new article (Enter makes another of the same kind, like Enter in a clause makes another clause). Shift+Enter is left alone: it is a line break, as everywhere else.
 // It goes after the last clause of this article, or straight below the title when the article has no clauses yet.
 var ArticleEnter = Extension.create({
   name: 'articleEnter', priority: 1000,
@@ -168,13 +168,6 @@ var ArticleEnter = Extension.create({
       tr.setSelection(TextSelection.near(tr.doc.resolve(at + 1), 1));
       ed.view.dispatch(tr.scrollIntoView());
       return true;
-    }, 'Shift-Enter': function (ctx) {                                      // Shift+Enter at the end of a title starts that article's first clause
-      var ed = ctx.editor, st = ed.state, sel = st.selection, $f = sel.$from;
-      if (!sel.empty || $f.depth !== 1 || $f.parent.type.name !== 'heading' || $f.parentOffset !== $f.parent.content.size) return false;
-      var T = st.schema.nodes, after = $f.after(1), next = st.doc.maybeChild($f.index(0) + 1), tr = st.tr, item = T.listItem.create(null, T.paragraph.create());
-      if (next && next.type === T.orderedList) { tr.insert(after + 1, item); tr.setSelection(TextSelection.near(tr.doc.resolve(after + 3), 1)); }
-      else { tr.insert(after, T.orderedList.create(null, item)); tr.setSelection(TextSelection.near(tr.doc.resolve(after + 3), 1)); }
-      ed.view.dispatch(tr.scrollIntoView()); return true;
     } };
   }
 });
@@ -227,6 +220,7 @@ function selectionQuote(ed) {
   var i = dt.text.indexOf(q, Math.max(0, a - 1)); i = a >= 0 ? a : i; return { quote: q, prefix: i > 0 ? dt.text.slice(Math.max(0, i - 80), i) : '' };
 }
 function preview(el, md) { return new Editor({ element: el, editable: false, extensions: extensions(), content: md || '' }); }
-function markdownOf(ed) { return ed.storage.markdown.getMarkdown(); }
+// A title can have a line break in the editor (Shift+Enter) but a markdown title is one line, so in the saved/published text the lines of a title are joined with a space.
+function markdownOf(ed) { var md = ed.storage.markdown.getMarkdown(), re = /^(#{1,6} [^\n]*?)\\\n([^\n]+)/m; while (re.test(md)) md = md.replace(re, '$1 $2'); return md; }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
   b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, canIndent: canIndent, preview: preview, fixStructure: fixStructure };
