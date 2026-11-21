@@ -84,7 +84,7 @@
     return h('div', { class: 'list', style: 'margin-bottom:18px' }, h('div', { class: 'item' }, h('div', { class: 's', style: 'font-weight:600;color:#3a0a2e' }, 'Shared with you')),
       shared.map(function (x) {
         return h('div', { class: 'item' }, h('a', { class: 't', href: '#/live/' + x.slug, style: 'text-decoration:none' }, x.title), h('div', { class: 's' }, x.summary || ''),
-          h('div', { class: 'meta' }, P.pill(x.can_edit ? 'You can edit' : 'You can comment', x.can_edit ? 'dark' : null), x.status === 'in_force' ? P.pill('In force \u00b7 version ' + x.version, null) : P.pill('Draft', 'warn')));
+          h('div', { class: 'meta' }, P.pill(x.can_edit ? 'You can edit' : 'You can comment', x.can_edit ? 'dark' : null), x.status === 'in_force' ? P.pill('In force \u00b7 version ' + x.version, null) : P.pill('Not published', 'warn')));
       }));
   }
   async function memberIndex(q) { P.loading(); var shared = []; try { shared = await rpc('policy_shared_with_me'); } catch (e) { /* function not installed: nothing shared */ } indexView(await rpc('policy_index'), false, q || {}, shared); }
