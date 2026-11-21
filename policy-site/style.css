@@ -1007,3 +1007,6 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-mi:hover:not(:disabled){background:#f1f3f4}.lv-mi:disabled{color:#b0b0b0;cursor:default}
 .lv-mi-lab{padding:4px 18px;font-size:.8rem;color:#5f6368}
 .lv-mi-sw{display:grid;grid-template-columns:repeat(8,24px);gap:6px;padding:4px 18px 8px}.lv-mi-sw .lv-sw{width:24px;height:24px}
+/* selected cells show clearly even when they have a colour: a tint and a border drawn over the cell */
+.lv-editor .selectedCell{position:relative}
+.lv-editor .selectedCell::after{content:'';position:absolute;inset:0;background:rgba(138,42,109,.22);border:2px solid #8a2a6d;pointer-events:none;box-sizing:border-box}
