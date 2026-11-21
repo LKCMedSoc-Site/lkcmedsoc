@@ -811,3 +811,27 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
    Dragging a column only moves the border between two columns, so the total width never changes. */
 .sheetbody table { width: 100% !important; table-layout: fixed !important; }
 .sheetbody table th, .sheetbody table td { overflow-wrap: anywhere; }
+
+/* ---- live editing (policy-live.js) ---- */
+.lv-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.lv-head h1{font-size:1.3rem;margin:0}
+.lv-people{display:flex;gap:4px}.lv-person{width:26px;height:26px;border-radius:50%;color:#fff;font-size:.8rem;display:inline-flex;align-items:center;justify-content:center;font-weight:600}
+.lv-toolbar{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;position:sticky;top:0;background:var(--bg,#fff);z-index:5;padding:6px 0}
+.lv-tb{border:1px solid #ccc;background:#fff;border-radius:6px;padding:4px 9px;cursor:pointer;font:inherit}.lv-tb:hover{background:#f3eef2}
+.lv-body{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;align-items:start}
+@media(max-width:900px){.lv-body{grid-template-columns:1fr}}
+.lv-editor .ProseMirror{min-height:60vh;padding:28px 36px;background:#fff;border:1px solid #ddd;border-radius:8px;outline:none;counter-reset:art}
+.lv-editor .ProseMirror h2{counter-increment:art;counter-reset:cl;font-size:1.2rem;margin:1.4em 0 .5em}
+.lv-editor .ProseMirror>ol{list-style:none;padding-left:0;margin:0}
+.lv-editor .ProseMirror>ol>li{counter-increment:cl;position:relative;padding-left:3em;margin:.6em 0}
+.lv-editor .ProseMirror>ol>li::before{content:counter(art) "." counter(cl);position:absolute;left:0;font-weight:600}
+.lv-editor .ProseMirror>ol>li>ol,.lv-editor .ProseMirror>ol>li>ul{list-style:lower-alpha;padding-left:2em}
+.lv-editor .ProseMirror li>p{margin:.2em 0}
+.lv-editor table{border-collapse:collapse;margin:.6em 0;width:100%}.lv-editor td,.lv-editor th{border:1px solid #bbb;padding:4px 8px;vertical-align:top}.lv-editor th{background:#f3eef2}
+.lv-editor .selectedCell{background:#e6dbe3}
+.lv-editor .tableWrapper{overflow-x:auto}
+.collaboration-cursor__caret{position:relative;margin-left:-1px;margin-right:-1px;border-left:1px solid;border-right:1px solid;word-break:normal;pointer-events:none}
+.collaboration-cursor__label{position:absolute;top:-1.4em;left:-1px;font-size:11px;font-weight:600;color:#fff;padding:1px 5px;border-radius:3px 3px 3px 0;white-space:nowrap;user-select:none}
+.lv-cm{background:#ffe9a8}.lv-cm.on{background:#ffd24d}
+.lv-card{border:1px solid #ddd;background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:.88rem}.lv-card.on{border-color:#8a2a6d}
+.lv-q{color:#666;font-style:italic;margin-bottom:4px}.lv-note{margin:3px 0}
+.lv-invite{margin:8px 0}
