@@ -270,9 +270,81 @@ var Comments = Extension.create({
   }
 });
 
+// ---- tables: they always take the full width of the level they sit at (a clause, a sub-item, ...). Only the column widths can change, by dragging a column border:
+// the two columns either side of it trade width, so the total never changes, and no column goes below MIN_COL percent. The widths are kept as percentages on the table.
+var MIN_COL = 10;
+function colCount(node) { var max = 0; node.forEach(function (row) { var n = 0; row.forEach(function (cell) { n += cell.attrs.colspan || 1; }); max = Math.max(max, n); }); return max; }
+function normWidths(node) {
+  var n = colCount(node) || 1, w = node.attrs.widths;
+  if (Array.isArray(w) && w.length === n && w.every(function (x) { return typeof x === 'number' && x > 0; })) { var sum = w.reduce(function (a, b) { return a + b; }, 0); return w.map(function (x) { return x * 100 / sum; }); }
+  var out = []; for (var i = 0; i < n; i++) out.push(100 / n); return out;
+}
+var PolicyTable = Table.extend({
+  addAttributes: function () {
+    return Object.assign({}, this.parent ? this.parent() : {}, { widths: { default: null,
+      parseHTML: function (el) { try { return JSON.parse(el.getAttribute('data-widths') || 'null'); } catch (e) { return null; } },
+      renderHTML: function (a) { return a.widths ? { 'data-widths': JSON.stringify(a.widths) } : {}; } } });
+  },
+  addNodeView: function () {
+    return function (props) {
+      var wrap = document.createElement('div'), table = document.createElement('table'), colgroup = document.createElement('colgroup'), tbody = document.createElement('tbody'), cur = props.node;
+      wrap.className = 'tableWrapper'; table.appendChild(colgroup); table.appendChild(tbody); wrap.appendChild(table);
+      function paint(w) { while (colgroup.firstChild) colgroup.removeChild(colgroup.firstChild); w.forEach(function (x) { var c = document.createElement('col'); c.style.width = x + '%'; colgroup.appendChild(c); }); }
+      paint(normWidths(cur));
+      return { dom: wrap, contentDOM: tbody,
+        update: function (n) { if (n.type !== cur.type) return false; cur = n; paint(normWidths(n)); return true; },
+        ignoreMutation: function (m) { return m.type !== 'selection' && (m.target === wrap || m.target === table || m.target === colgroup || colgroup.contains(m.target)); } };
+    };
+  }
+});
+var TableResize = Extension.create({
+  name: 'tableResize',
+  addProseMirrorPlugins: function () {
+    var dragging = false;
+    function boundary(tableEl, x) {                                     // the index of the column border within 5 px of x, or -1
+      var cols = tableEl.querySelectorAll(':scope > colgroup > col'), r = tableEl.getBoundingClientRect(), acc = 0;
+      for (var i = 0; i < cols.length - 1; i++) { acc += parseFloat(cols[i].style.width) || 0; if (Math.abs(x - (r.left + r.width * acc / 100)) <= 5) return i + 1; }
+      return -1;
+    }
+    function mark(tableEl, i) {
+      var w = tableEl.parentElement, cols = tableEl.querySelectorAll(':scope > colgroup > col'), acc = 0, k;
+      for (k = 0; k < i; k++) acc += parseFloat(cols[k].style.width) || 0;
+      if (i > 0) { w.style.setProperty('--lv-hit', 'calc(' + acc + '% - 1.5px)'); w.classList.add('lv-hit'); } else w.classList.remove('lv-hit');
+    }
+    return [new Plugin({ key: new PluginKey('tableResize'), props: { handleDOMEvents: {
+      mousemove: function (view, ev) {
+        if (dragging) return false;
+        var t = ev.target && ev.target.closest ? ev.target.closest('table') : null;
+        view.dom.querySelectorAll('.tableWrapper.lv-hit').forEach(function (w) { w.classList.remove('lv-hit'); });
+        if (!t || !view.editable) return false;
+        mark(t, boundary(t, ev.clientX)); return false;
+      },
+      mousedown: function (view, ev) {
+        var t = ev.target && ev.target.closest ? ev.target.closest('table') : null; if (!t || !view.editable || ev.button !== 0) return false;
+        var i = boundary(t, ev.clientX); if (i < 0) return false;
+        ev.preventDefault(); dragging = true;
+        var cols = [].slice.call(t.querySelectorAll(':scope > colgroup > col')), w0 = cols.map(function (c) { return parseFloat(c.style.width) || 0; }), x0 = ev.clientX, width = t.getBoundingClientRect().width, cur = w0.slice();
+        var pair = w0[i - 1] + w0[i];
+        function move(e) {
+          var left = Math.min(pair - MIN_COL, Math.max(MIN_COL, w0[i - 1] + (e.clientX - x0) / width * 100));
+          cur = w0.slice(); cur[i - 1] = left; cur[i] = pair - left; cols[i - 1].style.width = cur[i - 1] + '%'; cols[i].style.width = cur[i] + '%'; mark(t, i);
+        }
+        function up() {
+          document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); dragging = false;
+          var pos; try { pos = view.posAtDOM(t, 0); } catch (err) { return; }
+          var $p = view.state.doc.resolve(pos), d; for (d = $p.depth; d > 0; d--) if ($p.node(d).type.name === 'table') break;
+          if (d === 0 && $p.nodeAfter && $p.nodeAfter.type.name === 'table') { var node0 = $p.nodeAfter; view.dispatch(view.state.tr.setNodeMarkup(pos, null, Object.assign({}, node0.attrs, { widths: cur }))); return; }
+          if (d > 0) view.dispatch(view.state.tr.setNodeMarkup($p.before(d), null, Object.assign({}, $p.node(d).attrs, { widths: cur })));
+        }
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up); return true;
+      }
+    } } })];
+  }
+});
+
 function extensions() {
   return [StarterKit.configure({ history: false, heading: { levels: [2] }, blockquote: false, codeBlock: false, code: false, horizontalRule: false }),
-    Table.configure({ resizable: true }), TableRow, TableHeader, TableCell, Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
+    PolicyTable.configure({ resizable: false }), TableRow, TableHeader, TableCell, Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
 }
 function seed(ydoc, markdown) {                       // turn markdown into the shared document, once, when nothing has been shared yet
   var ed = new Editor({ element: document.createElement('div'), extensions: extensions(), content: markdown || '' });
@@ -280,7 +352,7 @@ function seed(ydoc, markdown) {                       // turn markdown into the 
 }
 function create(o) {
   var ed = new Editor({ element: o.element, editable: o.editable !== false,
-    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, Comments.configure({ onClick: o.onNoteClick })]),
+    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, TableResize, Comments.configure({ onClick: o.onNoteClick })]),
     onUpdate: o.onUpdate || function () {}, onSelectionUpdate: o.onSelection || function () {} });
   if (o.editable !== false && ed.state.doc.childCount === 1 && ed.state.doc.textContent === '') { var t0 = fixStructure(ed.state); if (t0) ed.view.dispatch(t0); }   // opening a blank document gives it its first article
   return ed;

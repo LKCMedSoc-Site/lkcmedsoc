@@ -985,3 +985,11 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror>ol>li::before{content:counter(cl) "."}
 .lv-editor .ProseMirror>ol>li ol ol>li::before{content:counter(sub3,lower-roman) "."}
 .lv-editor .ProseMirror>ol>li ol ol ol>li::before{content:"(" counter(sub4,upper-alpha) ")"}
+
+/* tables: always the full width of the level they sit at; only the column borders move (see tableResize in live-editor) */
+.lv-editor .tableWrapper{position:relative;overflow:visible;width:100%;max-width:100%}
+.lv-editor table{width:100%!important;min-width:0!important;max-width:100%;table-layout:fixed;border-collapse:collapse}
+.lv-editor td,.lv-editor th{overflow-wrap:anywhere;word-break:normal}
+.lv-editor .tableWrapper.lv-hit{cursor:col-resize}
+.lv-editor .tableWrapper.lv-hit table{cursor:col-resize}
+.lv-editor .tableWrapper.lv-hit::after{content:'';position:absolute;top:0;bottom:0;width:3px;left:var(--lv-hit);background:#8a2a6d;pointer-events:none;border-radius:2px}
