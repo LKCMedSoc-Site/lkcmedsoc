@@ -390,6 +390,55 @@ var TableKeys = Extension.create({
   }
 });
 
+// ---- collapse: a small arrow in the margin folds an article (everything under its title) or a clause or sub-item (everything under its first line). It is a view setting for
+// whoever clicks it, not part of the document, so it is never saved or shown to anyone else. Alt+click folds or unfolds every article. Putting the cursor inside folded text opens it.
+var foldKey = new PluginKey('policyFold');
+function foldRange(doc, p) {                                                      // the hidden stretch for the folded node starting at p, or null
+  var n = doc.nodeAt(p); if (!n) return null;
+  if (n.type.name === 'heading') { var end = p + n.nodeSize, i = doc.resolve(p).index(0) + 1; for (; i < doc.childCount && doc.child(i).type.name !== 'heading'; i++) end += doc.child(i).nodeSize; return end > p + n.nodeSize ? [p + n.nodeSize, end] : null; }
+  if (n.type.name === 'listItem' && n.childCount > 1) return [p + 1 + n.firstChild.nodeSize, p + n.nodeSize - 1];
+  return null;
+}
+var chevronSvg = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+var Fold = Extension.create({
+  name: 'policyFold',
+  addProseMirrorPlugins: function () {
+    return [new Plugin({ key: foldKey,
+      state: { init: function () { return { folded: [] }; },
+        apply: function (tr, st, oldS, newS) {
+          var folded = st.folded.map(function (p) { return tr.mapping.map(p, 1); }), m = tr.getMeta(foldKey);
+          if (m && m.toggle != null) { var i = folded.indexOf(m.toggle); if (i >= 0) folded.splice(i, 1); else folded.push(m.toggle); }
+          if (m && m.all) { var heads = []; newS.doc.forEach(function (n, off) { if (n.type.name === 'heading' && foldRange(newS.doc, off)) heads.push(off); }); folded = m.all === 'fold' ? heads.concat(folded.filter(function (p) { return heads.indexOf(p) < 0; })) : folded.filter(function (p) { return heads.indexOf(p) < 0; }); }
+          folded = folded.filter(function (p, i, a) { return a.indexOf(p) === i && foldRange(newS.doc, p); });
+          if (tr.selectionSet || tr.docChanged) { var f = newS.selection.from, t = newS.selection.to; folded = folded.filter(function (p) { var r = foldRange(newS.doc, p); return !(r && f >= r[0] && t <= r[1]); }); }
+          return { folded: folded };
+        } },
+      props: { decorations: function (state) {
+        var doc = state.doc, folded = foldKey.getState(state).folded, set = {}, decos = [];
+        folded.forEach(function (p) { set[p] = true; });
+        function btn(pos, isF) {
+          return Decoration.widget(pos + 1, function (view) {
+            var b = document.createElement('button'); b.type = 'button'; b.className = 'lv-fold' + (isF ? ' on' : ''); b.contentEditable = 'false'; b.setAttribute('aria-label', isF ? 'Expand' : 'Collapse'); b.title = isF ? 'Expand' : 'Collapse (Alt+click: all articles)'; b.innerHTML = chevronSvg;
+            b.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
+            b.addEventListener('click', function (ev) { ev.preventDefault(); var n = view.state.doc.nodeAt(pos), all = ev.altKey && n && n.type.name === 'heading'; view.dispatch(view.state.tr.setMeta(foldKey, all ? { all: isF ? 'unfold' : 'fold' } : { toggle: pos })); });
+            return b;
+          }, { side: -1, key: 'fold' + pos + (isF ? 'f' : 'o') });
+        }
+        doc.descendants(function (n, pos) {
+          var r = foldRange(doc, pos); if (!r) return true;
+          var isF = !!set[pos]; decos.push(btn(pos, isF));
+          if (isF) {
+            decos.push(Decoration.node(pos, pos + n.nodeSize, { class: 'lv-folded' }));
+            if (n.type.name === 'heading') { var q = pos + n.nodeSize, d = doc.resolve(pos).index(0) + 1; for (; d < doc.childCount && doc.child(d).type.name !== 'heading'; d++) { var c = doc.child(d); decos.push(Decoration.node(q, q + c.nodeSize, { class: 'lv-hidden' })); q += c.nodeSize; } }
+            else { var o = pos + 1 + n.firstChild.nodeSize; for (var k = 1; k < n.childCount; k++) { var ch = n.child(k); decos.push(Decoration.node(o, o + ch.nodeSize, { class: 'lv-hidden' })); o += ch.nodeSize; } }
+          }
+          return !isF;                                                            // inside a folded node there is nothing to show
+        });
+        return DecorationSet.create(doc, decos);
+      } } })];
+  }
+});
+
 function extensions() {
   return [StarterKit.configure({ history: false, heading: { levels: [2] }, blockquote: false, codeBlock: false, code: false, horizontalRule: false }),
     PolicyTable.configure({ resizable: false }), TableRow, PolicyHeader, PolicyCell, Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
@@ -400,7 +449,7 @@ function seed(ydoc, markdown) {                       // turn markdown into the 
 }
 function create(o) {
   var ed = new Editor({ element: o.element, editable: o.editable !== false,
-    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, TableResize, TableKeys.configure({ onTableMenu: o.onTableMenu }), Comments.configure({ onClick: o.onNoteClick })]),
+    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, TableResize, Fold, TableKeys.configure({ onTableMenu: o.onTableMenu }), Comments.configure({ onClick: o.onNoteClick })]),
     onUpdate: o.onUpdate || function () {}, onSelectionUpdate: o.onSelection || function () {} });
   if (o.editable !== false && ed.state.doc.childCount === 1 && ed.state.doc.textContent === '') { var t0 = fixStructure(ed.state); if (t0) ed.view.dispatch(t0); }   // opening a blank document gives it its first article
   return ed;
