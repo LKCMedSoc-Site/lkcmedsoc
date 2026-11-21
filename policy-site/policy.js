@@ -41,7 +41,7 @@
   function longDate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? (+m[3]) + ' ' + MONTHS[+m[2] - 1] + ' ' + m[1] : ''; }
   function when(s) { return s ? longDate(String(s).slice(0, 10)) : ''; }
   function aNo(n) { return 'A-' + String(n).padStart(3, '0'); }
-  function docPill(d) { return d.status === 'in_force' ? P.pill('In force · version ' + d.version, 'dark') : P.pill('Draft · ExCo only', 'warn'); }
+  function docPill(d) { return d.status === 'in_force' ? P.pill('In force · version ' + d.version, 'dark') : P.pill('Not published · ExCo only', 'warn'); }
   // A link to a document (and a provision in it) inside this app.
   function docLink(slug, ref, v) { var q = []; if (v) q.push('v=' + v); if (ref) q.push('at=' + encodeURIComponent(ref)); return location.origin + location.pathname + '#/d/' + slug + (q.length ? '?' + q.join('&') : ''); }
 
@@ -70,7 +70,7 @@
       }));
     var list = shown.length ? h('div', { class: 'list' }, shown.map(function (d) {
       var meta = [h('span', { class: 'kind' }, TIER_ONE[d.tier]), docPill(d)];
-      if (exco && d.has_changes) { var dp = P.pill('Draft', 'warn'); dp.title = 'The working copy has changes that are not published yet'; meta.push(dp); }
+      if (exco && d.has_changes) { var dp = P.pill('Unpublished changes', 'warn'); dp.title = 'The working copy has changes that are not published yet'; meta.push(dp); }
       return h('div', { class: 'item' }, h('a', { class: 't', href: '#/d/' + d.slug, style: 'text-decoration:none' }, d.title), h('div', { class: 's' }, d.summary), h('div', { class: 'meta' }, meta));
     })) : h('div', { class: 'list' }, h('div', { class: 'item empty' }, 'Nothing here yet.'));
     var how = h('details', { class: 'how' }, h('summary', null, 'How documents are changed'),
@@ -1213,7 +1213,7 @@
   // One control for "is this document published?". A draft is for ExCo only; publishing shows it to members.
   function publishSwitch(d, draft) {
     var state = draft ? 'off' : 'on';
-    var title = draft ? 'Draft · ExCo only' : 'Published · version ' + d.version;
+    var title = draft ? 'Not published · ExCo only' : 'Published · version ' + d.version;
     var sub = draft ? (P.canConfirm ? 'Switch on to publish' : 'The President publishes it')
       : (d.effective_on ? 'In force from ' + longDate(d.effective_on) : 'Members can read it');
     var tip = draft ? 'Members cannot see it yet.' + (P.canConfirm ? ' Switch on to publish it.' : ' The President publishes it.') : 'Members see the published version.';

@@ -239,7 +239,7 @@
       function build() {                                                          // one section per published version, newest first; the saves are filed under the version they led up to
         var vers = items.filter(function (x) { return x.kind === 'pub'; }).sort(function (a, b) { return b.version - a.version; }), saves = items.filter(function (x) { return x.kind === 'save'; }), cur = items.filter(function (x) { return x.kind === 'current'; })[0];
         var T = function (x) { return new Date(x.at).getTime(); }, latest = vers.length ? T(vers[0]) : -Infinity;
-        groups = [{ key: 'draft', title: vers.length ? 'Draft \u00b7 since version ' + vers[0].version : 'Draft', rows: [cur].concat(saves.filter(function (x) { return T(x) > latest; })) }];
+        groups = [{ key: 'draft', title: vers.length ? 'Unpublished changes \u00b7 since version ' + vers[0].version : 'Not published', rows: [cur].concat(saves.filter(function (x) { return T(x) > latest; })) }];
         vers.forEach(function (v, k) { var lo = k + 1 < vers.length ? T(vers[k + 1]) : -Infinity, hi = T(v); groups.push({ key: 'v' + v.version, head: v, live: k === 0, rows: saves.filter(function (x) { return T(x) <= hi && T(x) > lo; }) }); });
       }
       function chevron(open) { var b = h('span', { class: 'gd-gchev' + (open ? ' open' : '') }); b.appendChild(svg('<path d="m6 9 6 6 6-6"/>', 16)); return b; }
@@ -290,9 +290,9 @@
     // ---- name and description (ExCo): click the name to rename; the info button edits the description ----
     var docInfo = { title: data.doc.title, summary: '' };
     function longDate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
-    // ---- the version token under the title: "Draft" or "Version N", opening a log of every publish with the President's comments ----
+    // ---- the version token under the title: "Not published" or "Version N", opening a log of every publish with the President's comments ----
     var meta = { versions: [], status: data.doc.status, version: data.doc.version, effective_on: null };
-    var tokenT = h('span', null, data.doc.version > 0 ? 'Version ' + data.doc.version : 'Draft'), tokenCaret = svg('<path d="m6 9 6 6 6-6"/>', 14);
+    var tokenT = h('span', null, data.doc.version > 0 ? 'Version ' + data.doc.version : 'Not published'), tokenCaret = svg('<path d="m6 9 6 6 6-6"/>', 14);
     var token = h('button', { type: 'button', class: 'lv-token', 'aria-expanded': 'false', 'aria-controls': 'lv-log', title: 'Version log', onclick: toggleLog }, tokenT, tokenCaret);
     var logEl = h('div', { class: 'lv-log', id: 'lv-log', hidden: true }), metaLine = h('div', { class: 'lv-meta' }, token, logEl);
     function toggleLog() { var open = logEl.hidden; logEl.hidden = !open; token.setAttribute('aria-expanded', open ? 'true' : 'false'); token.classList.toggle('open', open); }
@@ -306,11 +306,11 @@
           h('div', { class: 'lv-log-by' }, 'Published by ' + (v.by || 'the President')), v.note ? h('p', { class: 'lv-log-note' }, v.note) : null));
       });
     }
-    // The token says Draft the moment the working copy differs from the published text (ExCo can compare; others just see the version).
+    // The token says Unpublished changes the moment the working copy differs from the published text (ExCo can compare; others just see the version).
     function updateToken() {
       var inForce = meta.status === 'in_force' && meta.version > 0, dirty = false;
       if (inForce && meta.published_md !== null && meta.published_md !== undefined && ed) { try { dirty = LE.markdownOf(ed).trim() !== meta.published_md.trim(); } catch (e) { dirty = false; } }
-      tokenT.textContent = !inForce ? 'Draft' : dirty ? 'Draft \u00b7 edited since version ' + meta.version : 'Version ' + meta.version + (meta.effective_on ? ' \u00b7 ' + longDate(meta.effective_on) : '');
+      tokenT.textContent = !inForce ? 'Not published' : dirty ? 'Unpublished changes \u00b7 since version ' + meta.version : 'Version ' + meta.version + (meta.effective_on ? ' \u00b7 ' + longDate(meta.effective_on) : '');
       token.classList.toggle('dirty', inForce && dirty);
     }
     var metaFirst = true;
