@@ -11,7 +11,7 @@ import TableHeader from '@tiptap/extension-table-header';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import { Markdown } from 'tiptap-markdown';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { Fragment } from '@tiptap/pm/model';
 
@@ -79,6 +79,38 @@ var Structure = Extension.create({
   }
 });
 
+
+// Backspace at the very start of a clause joins its text onto the end of the clause above (Google Docs style). A clause cannot be un-numbered, so the default
+// "lift out of the list" would only be put back by the structure rules (and threw the cursor to the next clause). Sub-items, tables and lead-in text follow the text up.
+var ClauseBackspace = Extension.create({
+  name: 'clauseBackspace', priority: 1000,
+  addKeyboardShortcuts: function () {
+    return { Backspace: function (ctx) {
+      var ed = ctx.editor, st = ed.state, sel = st.selection;
+      if (!sel.empty) return false;
+      var $f = sel.$from, d = $f.depth;
+      if (d !== 3 || $f.parentOffset !== 0 || $f.parent.type.name !== 'paragraph') return false;
+      if ($f.node(d - 1).type.name !== 'listItem' || $f.node(d - 2).type.name !== 'orderedList' || $f.index(d - 1) !== 0) return false;
+      var list = $f.node(d - 2), idx = $f.index(d - 2), item = $f.node(d - 1), itemPos = $f.before(d - 1);
+      if (idx === 0) return true;                                         // the first clause of an article has nothing above it to join
+      var prev = list.child(idx - 1), prevStart = itemPos - prev.nodeSize, target = -1;
+      prev.descendants(function (n, p, parent) { if (n.type.name === 'table') return false; if (n.type.name === 'paragraph') target = prevStart + 1 + p + n.nodeSize - 1; return true; });
+      if (target < 0) return true;
+      var tr = st.tr, rest = []; item.forEach(function (c, off, i) { if (i > 0) rest.push(c); });
+      tr.delete(itemPos, itemPos + item.nodeSize);
+      var itemEnd = prevStart + prev.nodeSize - 1;
+      if (rest.length && prev.lastChild && isList(prev.lastChild) && prev.childCount > 1 && isList(rest[0]) && rest[0].type === prev.lastChild.type) {   // two lists in a row would show a, b, c then a, b: join them
+        if (rest.length > 1) tr.insert(itemEnd, Fragment.fromArray(rest.slice(1)));
+        tr.insert(itemEnd - 1, rest[0].content);
+      } else if (rest.length) tr.insert(itemEnd, Fragment.fromArray(rest));
+      tr.insert(target, $f.parent.content);
+      tr.setSelection(TextSelection.near(tr.doc.resolve(target), -1));
+      ed.view.dispatch(tr.scrollIntoView());
+      return true;
+    } };
+  }
+});
+
 // ---- comment highlights, anchored by quoted text like policy_notes ----
 var cmKey = new PluginKey('policyComments');
 function docText(doc) { var parts = [], map = []; doc.descendants(function (node, pos) { if (node.isText) { for (var i = 0; i < node.text.length; i++) map.push(pos + i); parts.push(node.text); } else if (node.isBlock && parts.length) { parts.push('\n'); map.push(-1); } return true; }); return { text: parts.join(''), map: map }; }
@@ -117,7 +149,7 @@ function seed(ydoc, markdown) {                       // turn markdown into the 
 }
 function create(o) {
   var ed = new Editor({ element: o.element, editable: o.editable !== false,
-    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, Comments.configure({ onClick: o.onNoteClick })]),
+    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, Comments.configure({ onClick: o.onNoteClick })]),
     onUpdate: o.onUpdate || function () {}, onSelectionUpdate: o.onSelection || function () {} });
   return ed;
 }
