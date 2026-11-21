@@ -267,12 +267,30 @@
 
     // ---- name and description (ExCo): click the name to rename; the info button edits the description ----
     var docInfo = { title: data.doc.title, summary: '' };
-    var metaLine = h('div', { class: 'lv-meta' }, data.doc.version > 0 ? 'Version ' + data.doc.version : 'Draft');
     function longDate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
-    var sumP = (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(function (w) {
-      if (!w || !w.doc) return; docInfo.summary = w.doc.summary || '';
-      metaLine.textContent = w.doc.status === 'in_force' && w.doc.version > 0 ? 'Version ' + w.doc.version + (w.doc.effective_on ? ' · In force from ' + longDate(w.doc.effective_on) : ' · In force') : 'Draft · not yet in force';
-    }).catch(function () { /* none */ });
+    // ---- the version token under the title: "Draft" or "Version N", opening a log of every publish with the President's comments ----
+    var meta = { versions: [], status: data.doc.status, version: data.doc.version, effective_on: null };
+    var tokenT = h('span', null, data.doc.version > 0 ? 'Version ' + data.doc.version : 'Draft · not yet in force'), tokenCaret = svg('<path d="m6 9 6 6 6-6"/>', 14);
+    var token = h('button', { type: 'button', class: 'lv-token', 'aria-expanded': 'false', 'aria-controls': 'lv-log', title: 'Version log', onclick: toggleLog }, tokenT, tokenCaret);
+    var logEl = h('div', { class: 'lv-log', id: 'lv-log', hidden: true }), metaLine = h('div', { class: 'lv-meta' }, token, logEl);
+    function toggleLog() { var open = logEl.hidden; logEl.hidden = !open; token.setAttribute('aria-expanded', open ? 'true' : 'false'); token.classList.toggle('open', open); }
+    function drawLog() {
+      logEl.replaceChildren();
+      if (!meta.versions.length) { logEl.appendChild(h('p', { class: 'lv-log-empty' }, 'Not published yet. When the President publishes, the document becomes a numbered version that members can read, and each publish is recorded here with the President\u2019s comments.')); return; }
+      meta.versions.forEach(function (v) {
+        logEl.appendChild(h('div', { class: 'lv-log-item' }, h('div', { class: 'lv-log-h' }, h('b', null, 'Version ' + v.version), v.effective_on ? ' \u00b7 in force from ' + longDate(v.effective_on) : ''),
+          h('div', { class: 'lv-log-by' }, 'Published by ' + (v.by || 'the President')), v.note ? h('p', { class: 'lv-log-note' }, v.note) : null));
+      });
+    }
+    var metaFirst = true;
+    function refreshMeta(w) {
+      if (!w || !w.doc) return; if (metaFirst) { docInfo.summary = w.doc.summary || ''; metaFirst = false; }
+      meta.versions = w.versions || []; meta.status = w.doc.status; meta.version = w.doc.version; meta.effective_on = w.doc.effective_on;
+      tokenT.textContent = w.doc.status === 'in_force' && w.doc.version > 0 ? 'Version ' + w.doc.version + (w.doc.effective_on ? ' \u00b7 In force from ' + longDate(w.doc.effective_on) : ' \u00b7 In force') : 'Draft \u00b7 not yet in force';
+      drawLog(); if (typeof pubLink !== 'undefined' && pubLink) { pubLink.hidden = !(w.doc.version > 0); pubLink.href = '#/d/' + slug + '?v=' + w.doc.version; pubLink.textContent = 'Published version ' + w.doc.version; }
+    }
+    function loadMeta() { return (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(refreshMeta).catch(function () { /* none */ }); }
+    var sumP = loadMeta();
     async function saveInfo() {
       if (docInfo.title.trim().length < 3) { P.toast('The name needs at least 3 letters', true); setTitle(lastTitle, null); return false; }
       try { await rpc('policy_doc_save', { p_slug: slug, p_title: docInfo.title, p_summary: docInfo.summary }); lastTitle = docInfo.title.trim(); lastSummary = docInfo.summary; return true; } catch (e) { P.toast(P.friendly(e), true); return false; }
@@ -314,9 +332,29 @@
     var infoBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Name and description', 'aria-label': 'Name and description', onclick: openDetails }); infoBtn.appendChild(svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 20));
     var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
     var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
+    var pubLink = h('a', { href: '#/d/' + slug + '?v=' + data.doc.version, hidden: !(data.doc.version > 0) }, 'Published version ' + data.doc.version);
+    // ---- Publish (the President only): asks for comments, saves what is pending, then publishes the working copy as the next version ----
+    async function flushPending() { clearTimeout(pushT); for (var n = 0; n < 60 && (pending.length || pushing); n++) { if (!pushing && pending.length) await push(); else await new Promise(function (r) { setTimeout(r, 100); }); } return !pending.length; }
+    function openPublish() {
+      var next = (meta.version || 0) + 1, overlay = h('div', { class: 'gd-overlay', onclick: function (ev) { if (ev.target === overlay) close(); } });
+      function close() { overlay.remove(); document.removeEventListener('keydown', onKey); } function onKey(ev) { if (ev.key === 'Escape') close(); } document.addEventListener('keydown', onKey);
+      var note = h('textarea', { class: 'gd-field', rows: 4, maxlength: 140, placeholder: 'What changed in this version? These comments go in the version log.', 'aria-label': 'Comments for this version' }), count = h('div', { class: 'gd-sub' }, '0 / 140');
+      var eff = h('input', { type: 'date', class: 'gd-field', value: new Date(Date.now() + 8 * 36e5).toISOString().slice(0, 10), 'aria-label': 'In force from' });
+      var go = h('button', { type: 'button', class: 'gd-btn fill', disabled: true, onclick: async function () {
+        go.disabled = true; var saved = await flushPending(); if (!saved) { P.toast('Your latest changes are not saved yet. Try again in a moment.', true); go.disabled = false; return; }
+        var nv = await P.run(function () { return rpc('policy_text_publish', { p_slug: slug, p_note: note.value.trim(), p_effective: eff.value, p_name: myName() }); }, 'Published version ' + next);
+        if (nv) { close(); await loadMeta(); logEl.hidden = false; token.setAttribute('aria-expanded', 'true'); token.classList.add('open'); } else go.disabled = false; } }, 'Publish version ' + next);
+      note.addEventListener('input', function () { count.textContent = note.value.length + ' / 140'; go.disabled = note.value.trim().length < 3; });
+      overlay.appendChild(h('div', { class: 'gd-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Publish' }, h('div', { class: 'gd-title' }, 'Publish version ' + next),
+        h('p', { class: 'gd-sub', style: 'font-size:.9rem;margin:0 0 6px' }, 'Members will see the document as it is now. Editing carries on in the working copy and members see no change until the next version.'),
+        h('label', { class: 'gd-lab' }, 'Comments (required)'), note, count, h('label', { class: 'gd-lab' }, 'In force from'), eff,
+        h('div', { class: 'gd-foot', style: 'justify-content:flex-end;gap:8px' }, h('button', { type: 'button', class: 'gd-btn', onclick: close }, 'Cancel'), go)));
+      document.body.appendChild(overlay); note.focus();
+    }
+    var pubBtn = P.canConfirm ? h('button', { type: 'button', class: 'gd-btn fill gd-pub', onclick: openPublish }, 'Publish') : null;
     var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, P.exco ? infoBtn : null, h('span', { class: 'pill warn', title: canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.' }, canEdit ? 'Working copy' : 'Working copy · read only'),
-      data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, status, h('span', { class: 'lv-spacer' }), people,
-      P.exco ? histBtn : null, P.exco || canEdit ? shareBtn : null);
+      pubLink, status, h('span', { class: 'lv-spacer' }), people,
+      P.exco ? histBtn : null, pubBtn, P.exco || canEdit ? shareBtn : null);
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
     // ---- zoom: the − and + buttons, Ctrl/Cmd + scroll, trackpad pinch (Chrome, Firefox, Safari) and two-finger pinch on a touch screen ----
     var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }
@@ -363,7 +401,7 @@
     ed.on('transaction', refreshTb); drawPeople(); announce(); send('hello', {}); setStatus(canEdit ? 'All changes saved' : 'Read only'); await reloadNotes();
     var dtimer = setInterval(function () { paintNotes(); }, 15000);   // highlights follow the words as other people type
     ed.on('update', function () { clearTimeout(ed._pn); ed._pn = setTimeout(paintNotes, 400); });
-    window.__live = { ed: ed, ydoc: ydoc, awareness: awareness };
+    window.__live = { ed: ed, ydoc: ydoc, awareness: awareness, refreshMeta: refreshMeta };   // refreshMeta: handy for checking the version log without publishing
     P.onLeave(function () {
       closed = true; closePalette(); closeTableMenu(); clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
       if (pending.length) { var b = pending; pending = []; rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(b)), p_md: LE.markdownOf(ed), p_name: myName(), p_epoch: epoch }).catch(function () { /* lost only if the tab died */ }); }

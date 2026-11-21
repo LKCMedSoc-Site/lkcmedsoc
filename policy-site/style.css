@@ -1010,3 +1010,13 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 /* selected cells show clearly even when they have a colour: a tint and a border drawn over the cell */
 .lv-editor .selectedCell{position:relative}
 .lv-editor .selectedCell::after{content:'';position:absolute;inset:0;background:rgba(138,42,109,.22);border:2px solid #8a2a6d;pointer-events:none;box-sizing:border-box}
+
+/* version token and log */
+.lv-token{display:inline-flex;align-items:center;gap:6px;border:1px solid #c9bcc5;border-radius:999px;background:transparent;padding:3px 10px;font:inherit;font-size:.85rem;color:#5b5057;cursor:pointer}
+.lv-token:hover{background:#f6eff4}.lv-token .lv-ic{transition:transform .15s}.lv-token.open .lv-ic{transform:rotate(180deg)}
+.lv-meta{margin-top:8px}
+.lv-log{margin-top:10px;border:1px solid #e3dde1;border-radius:8px;padding:4px 14px;max-height:280px;overflow:auto;background:#fcfafb}
+.lv-log-item{padding:10px 0;border-top:1px solid #eee5ea}.lv-log-item:first-child{border-top:0}
+.lv-log-h{font-size:.9rem;color:#202124}.lv-log-by{font-size:.8rem;color:#6b5a65;margin-top:2px}.lv-log-note{margin:6px 0 0;font-size:.9rem;color:#202124;white-space:pre-wrap}
+.lv-log-empty{margin:10px 0;font-size:.88rem;color:#5b5057}
+.gd-pub{height:40px}
