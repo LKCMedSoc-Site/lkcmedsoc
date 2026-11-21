@@ -1020,3 +1020,5 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-log-h{font-size:.9rem;color:#202124}.lv-log-by{font-size:.8rem;color:#6b5a65;margin-top:2px}.lv-log-note{margin:6px 0 0;font-size:.9rem;color:#202124;white-space:pre-wrap}
 .lv-log-empty{margin:10px 0;font-size:.88rem;color:#5b5057}
 .gd-pub{height:40px}
+
+.lv-token.dirty{background:#fff4d6;border-color:#e0b84a;color:#6b4e00}

@@ -282,12 +282,18 @@
           h('div', { class: 'lv-log-by' }, 'Published by ' + (v.by || 'the President')), v.note ? h('p', { class: 'lv-log-note' }, v.note) : null));
       });
     }
+    // The token says Draft the moment the working copy differs from the published text (ExCo can compare; others just see the version).
+    function updateToken() {
+      var inForce = meta.status === 'in_force' && meta.version > 0, dirty = false;
+      if (inForce && meta.published_md !== null && meta.published_md !== undefined && ed) { try { dirty = LE.markdownOf(ed).trim() !== meta.published_md.trim(); } catch (e) { dirty = false; } }
+      tokenT.textContent = !inForce ? 'Draft' : dirty ? 'Draft \u00b7 edited since version ' + meta.version : 'Version ' + meta.version + (meta.effective_on ? ' \u00b7 ' + longDate(meta.effective_on) : '');
+      token.classList.toggle('dirty', inForce && dirty);
+    }
     var metaFirst = true;
     function refreshMeta(w) {
       if (!w || !w.doc) return; if (metaFirst) { docInfo.summary = w.doc.summary || ''; metaFirst = false; }
       meta.versions = w.versions || []; meta.status = w.doc.status; meta.version = w.doc.version; meta.effective_on = w.doc.effective_on;
-      tokenT.textContent = w.doc.status === 'in_force' && w.doc.version > 0 ? 'Version ' + w.doc.version + (w.doc.effective_on ? ' \u00b7 ' + longDate(w.doc.effective_on) : '') : 'Draft';
-      drawLog();
+      meta.published_md = typeof w.published_md === 'string' ? w.published_md : null; updateToken(); drawLog();
     }
     function loadMeta() { return (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(refreshMeta).catch(function () { /* none */ }); }
     var sumP = loadMeta();
@@ -397,7 +403,8 @@
       } });
     ed.on('transaction', refreshTb); drawPeople(); announce(); send('hello', {}); setStatus(canEdit ? 'All changes saved' : 'Read only'); await reloadNotes();
     var dtimer = setInterval(function () { paintNotes(); }, 15000);   // highlights follow the words as other people type
-    ed.on('update', function () { clearTimeout(ed._pn); ed._pn = setTimeout(paintNotes, 400); });
+    ed.on('update', function () { clearTimeout(ed._pn); ed._pn = setTimeout(paintNotes, 400); clearTimeout(ed._tk); ed._tk = setTimeout(updateToken, 500); });
+    updateToken();
     window.__live = { ed: ed, ydoc: ydoc, awareness: awareness, refreshMeta: refreshMeta };   // refreshMeta: handy for checking the version log without publishing
     P.onLeave(function () {
       closed = true; closePalette(); closeTableMenu(); clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
