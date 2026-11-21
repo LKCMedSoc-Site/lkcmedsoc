@@ -149,7 +149,14 @@ function listDepth($p) { var n = 0; for (var d = $p.depth; d > 0; d--) if (isLis
 function canIndent(ed) { return listDepth(ed.state.selection.$from) < 4; }
 var IndentCap = Extension.create({
   name: 'indentCap', priority: 1000,
-  addKeyboardShortcuts: function () { return { Tab: function (ctx) { return !canIndent(ctx.editor) && listDepth(ctx.editor.state.selection.$from) > 0; } }; }
+  addKeyboardShortcuts: function () {
+    return {
+      // inside a list Tab never leaves the editor: it indents when it can and otherwise does nothing (the first item of a list has nothing above to go under; four levels is the most)
+      Tab: function (ctx) { var ed = ctx.editor, d = listDepth(ed.state.selection.$from); if (d === 0) return false; return !(canIndent(ed) && ed.can().sinkListItem('listItem')); },
+      // a clause cannot be un-numbered, so Shift+Tab on one does nothing; on a sub-item it moves it out one level
+      'Shift-Tab': function (ctx) { return listDepth(ctx.editor.state.selection.$from) === 1; }
+    };
+  }
 });
 
 // Enter at the end of an article title starts a new article (Enter makes another of the same kind, like Enter in a clause makes another clause). Shift+Enter is left alone: it is a line break, as everywhere else.
