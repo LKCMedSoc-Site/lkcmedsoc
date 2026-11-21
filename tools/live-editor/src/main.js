@@ -107,12 +107,18 @@ var ClauseBackspace = Extension.create({
           var t2 = st.tr.delete(itemPos, itemPos + item.nodeSize); t2.setSelection(TextSelection.near(t2.doc.resolve(itemPos + 2), 1));
           ed.view.dispatch(t2.scrollIntoView()); return true;
         }
-        if (clause) return true;                                          // the first clause of an article has nothing above it to join
-        var pItem = $f.node(d - 3); if (pItem.type.name !== 'listItem') return true;
+        var pItem = null, tgt = -1;
+        if (clause) {                                                     // the first clause of an article joins the article's title, as the first (a) joins its clause
+          var hi = $f.index(0), hPrev = hi > 0 ? st.doc.child(hi - 1) : null;
+          if (!hPrev || hPrev.type.name !== 'heading') return true;
+          tgt = $f.before(1) - 1;                                         // the end of the title text
+        } else { pItem = $f.node(d - 3); if (pItem.type.name !== 'listItem') return true; }
         var promoted = [], ok = rest.every(function (c) { if (!isList(c) || c.type !== list.type) return false; c.forEach(function (x) { promoted.push(x); }); return true; });
         if (rest.length && !ok) return true;                              // something other than deeper items hangs under it: leave it alone
-        var pStart = $f.before(d - 3), li = $f.index(d - 3), tgt = -1;
-        pItem.forEach(function (c, off, i) { if (i < li && c.type.name === 'paragraph') tgt = pStart + 1 + off + c.nodeSize - 1; });   // the clause's own line, above its sub-items
+        if (!clause) {
+          var pStart = $f.before(d - 3), li = $f.index(d - 3);
+          pItem.forEach(function (c, off, i) { if (i < li && c.type.name === 'paragraph') tgt = pStart + 1 + off + c.nodeSize - 1; });   // the clause's own line, above its sub-items
+        }
         if (tgt < 0) return true;
         if (rest.length) tr.replaceWith(itemPos, itemPos + item.nodeSize, Fragment.fromArray(promoted));    // its deeper items take its place in the list
         else if (list.childCount === 1) tr.delete($f.before(d - 2), $f.after(d - 2)); else tr.delete(itemPos, itemPos + item.nodeSize);
@@ -191,6 +197,13 @@ var ArticleEnter = Extension.create({
       var $f = sel.$from;
       // Enter straight after a line break (Backspace leaves the cursor there): the break goes, so the clause above does not keep a blank last line
       if ($f.nodeBefore && $f.nodeBefore.type.name === 'hardBreak' && listDepth($f) > 0) return ed.chain().command(function (c) { c.tr.delete(sel.from - 1, sel.from); return true; }).splitListItem('listItem').run();
+      // Enter right after a line break in an article title undoes what Backspace did: the text after the break goes back to being the article's first clause
+      if ($f.depth === 1 && $f.parent.type.name === 'heading' && $f.nodeBefore && $f.nodeBefore.type.name === 'hardBreak') {
+        var T0 = st.schema.nodes, rest = $f.parent.content.cut($f.parentOffset), delta = $f.end() - (sel.from - 1), afterPos = $f.after(1) - delta, next = st.doc.maybeChild($f.index(0) + 1);
+        var item0 = T0.listItem.create(null, T0.paragraph.create(null, rest)), tr1 = st.tr.delete(sel.from - 1, $f.end()), cur;
+        if (next && next.type === T0.orderedList) { tr1.insert(afterPos + 1, item0); cur = afterPos + 3; } else { tr1.insert(afterPos, T0.orderedList.create(null, item0)); cur = afterPos + 3; }
+        tr1.setSelection(TextSelection.near(tr1.doc.resolve(cur), 1)); ed.view.dispatch(tr1.scrollIntoView()); return true;
+      }
       if ($f.depth !== 1 || $f.parent.type.name !== 'heading' || $f.parentOffset !== $f.parent.content.size) return false;
       var at = $f.after(1);                                              // straight below the title; any clauses under it follow the new title
       var tr = st.tr.insert(at, st.schema.nodes.heading.create({ level: 2 }));
