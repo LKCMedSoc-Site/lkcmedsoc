@@ -153,7 +153,7 @@ var IndentCap = Extension.create({
 });
 
 // Enter at the end of an article title starts a new article (Enter makes another of the same kind, like Enter in a clause makes another clause). Shift+Enter is left alone: it is a line break, as everywhere else.
-// It goes after the last clause of this article, or straight below the title when the article has no clauses yet.
+// It goes straight below the title.
 var ArticleEnter = Extension.create({
   name: 'articleEnter', priority: 1000,
   addKeyboardShortcuts: function () {
@@ -162,8 +162,7 @@ var ArticleEnter = Extension.create({
       if (!sel.empty) return false;
       var $f = sel.$from;
       if ($f.depth !== 1 || $f.parent.type.name !== 'heading' || $f.parentOffset !== $f.parent.content.size) return false;
-      var idx = $f.index(0), doc = st.doc, at = $f.after(1);
-      for (var i = idx + 1; i < doc.childCount && doc.child(i).type.name !== 'heading'; i++) at += doc.child(i).nodeSize;
+      var at = $f.after(1);                                              // straight below the title; any clauses under it follow the new title
       var tr = st.tr.insert(at, st.schema.nodes.heading.create({ level: 2 }));
       tr.setSelection(TextSelection.near(tr.doc.resolve(at + 1), 1));
       ed.view.dispatch(tr.scrollIntoView());
