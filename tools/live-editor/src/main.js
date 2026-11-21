@@ -144,6 +144,27 @@ var ClauseBackspace = Extension.create({
 });
 
 
+// Tab on an article title tucks the article under the one above: the title becomes the last clause of that article and its clauses become that clause's sub-items,
+// everything one level deeper. Refused when that would make a fifth level.
+function listLevels(node) { var m = 0; node.forEach(function (c) { if (isList(c)) { m = Math.max(m, 1 + listLevels(c)); } else if (c.childCount) { m = Math.max(m, listLevels(c)); } }); return m; }
+function demoteArticle(ed) {
+  var st = ed.state, sel = st.selection, $f = sel.$from, T = st.schema.nodes, doc = st.doc;
+  var idx = $f.index(0), h = doc.child(idx), hPos = $f.before(1);
+  var prevIdx = -1; for (var i = idx - 1; i >= 0; i--) if (doc.child(i).type === T.heading) { prevIdx = i; break; }
+  if (prevIdx < 0) return;                                                         // nothing above to go under
+  var kids = [], end = hPos + h.nodeSize, j; for (j = idx + 1; j < doc.childCount && doc.child(j).type !== T.heading; j++) { kids.push(doc.child(j)); end += doc.child(j).nodeSize; }
+  var subItems = []; kids.forEach(function (k) { if (k.type === T.orderedList) k.forEach(function (it) { subItems.push(it); }); });
+  if (kids.some(function (k) { return k.type !== T.orderedList; })) return;        // loose content: leave it for the structure rules
+  var depth = 0; kids.forEach(function (k) { depth = Math.max(depth, 1 + listLevels(k)); });
+  if (depth > 3) return;                                                           // would pass four levels
+  var para = T.paragraph.create(null, h.content), clause = T.listItem.create(null, subItems.length ? [para, T.orderedList.create(null, subItems)] : [para]);
+  var tr = st.tr.delete(hPos, end), at, last = doc.child(idx - 1);
+  if (idx - 1 > prevIdx && last.type === T.orderedList) { at = hPos - 1; tr.insert(at, clause); }                   // the end of the clause list above
+  else { at = hPos; tr.insert(at, T.orderedList.create(null, clause)); at += 1; }                                 // the article above has no clauses yet
+  tr.setSelection(TextSelection.near(tr.doc.resolve(at + 2 + Math.min($f.parentOffset, h.content.size)), 1));
+  ed.view.dispatch(tr.scrollIntoView());
+}
+
 // Four levels at most under an article: clause 1.1, (a), (i), (A). Tab and the indent button stop there.
 function listDepth($p) { var n = 0; for (var d = $p.depth; d > 0; d--) if (isList($p.node(d))) n++; return n; }
 function canIndent(ed) { return listDepth(ed.state.selection.$from) < 4; }
@@ -152,7 +173,7 @@ var IndentCap = Extension.create({
   addKeyboardShortcuts: function () {
     return {
       // inside a list Tab never leaves the editor: it indents when it can and otherwise does nothing (the first item of a list has nothing above to go under; four levels is the most)
-      Tab: function (ctx) { var ed = ctx.editor, d = listDepth(ed.state.selection.$from); if (d === 0) return false; return !(canIndent(ed) && ed.can().sinkListItem('listItem')); },
+      Tab: function (ctx) { var ed = ctx.editor, $s = ed.state.selection.$from, d = listDepth($s); if (d === 0 && $s.depth === 1 && $s.parent.type.name === 'heading') { demoteArticle(ed); return true; }  if (d === 0) return false; return !(canIndent(ed) && ed.can().sinkListItem('listItem')); },
       // a clause cannot be un-numbered, so Shift+Tab on one does nothing; on a sub-item it moves it out one level
       'Shift-Tab': function (ctx) { return listDepth(ctx.editor.state.selection.$from) === 1; }
     };
