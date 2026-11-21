@@ -902,3 +902,10 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-doctitle textarea.doc-title{font-size:clamp(26px,3.4vw,34px);margin-top:0}
 .lv-doctitle textarea.muted{margin-top:2px;font-size:1rem}
 .lv-col .lv-editor .ProseMirror{border:0;border-radius:0;padding-top:8px}
+/* a little more air between lines */
+.lv-editor .ProseMirror{line-height:1.75}
+.lv-editor .ProseMirror li>p{margin:.3em 0}
+.lv-editor .ProseMirror>ol>li{margin:.9em 0}
+.lv-editor .ProseMirror>ol>li ol,.lv-editor .ProseMirror>ol>li ul{margin:.3em 0}
+.lv-editor .ProseMirror h2{margin:1.8em 0 .7em}
+.lv-doctitle textarea.muted{line-height:1.6}
