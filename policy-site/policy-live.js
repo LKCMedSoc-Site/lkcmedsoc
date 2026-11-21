@@ -229,7 +229,12 @@
 
     // ---- name and description (ExCo): click the name to rename; the info button edits the description ----
     var docInfo = { title: data.doc.title, summary: '' };
-    var sumP = (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(function (w) { if (w && w.doc) docInfo.summary = w.doc.summary || ''; }).catch(function () { /* none */ });
+    var metaLine = h('div', { class: 'lv-meta' }, data.doc.version > 0 ? 'Version ' + data.doc.version : 'Draft');
+    function longDate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''; }
+    var sumP = (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(function (w) {
+      if (!w || !w.doc) return; docInfo.summary = w.doc.summary || '';
+      metaLine.textContent = w.doc.status === 'in_force' && w.doc.version > 0 ? 'Version ' + w.doc.version + (w.doc.effective_on ? ' · In force from ' + longDate(w.doc.effective_on) : ' · In force') : 'Draft · not yet in force';
+    }).catch(function () { /* none */ });
     async function saveInfo() {
       if (docInfo.title.trim().length < 3) { P.toast('The name needs at least 3 letters', true); setTitle(lastTitle, null); return false; }
       try { await rpc('policy_doc_save', { p_slug: slug, p_title: docInfo.title, p_summary: docInfo.summary }); lastTitle = docInfo.title.trim(); lastSummary = docInfo.summary; return true; } catch (e) { P.toast(P.friendly(e), true); return false; }
@@ -256,7 +261,7 @@
       titleT.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); descT.focus(); } });
       descT.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); ed.commands.focus('start'); } });
     }
-    var titleBlock = h('div', { class: 'lv-doctitle' }, titleT, descT);
+    var titleBlock = h('div', { class: 'lv-doctitle' }, h('div', { class: 'lv-org' }, (P.cfg && P.cfg.ORG_NAME) || 'LKCMedSoc'), titleT, descT, metaLine, h('hr', { class: 'lv-rule' }));
     function fitAll() { fit(titleT); fit(descT); }
     function openDetails() {
       var overlay = h('div', { class: 'gd-overlay', onclick: function (ev) { if (ev.target === overlay) overlay.remove(); } });

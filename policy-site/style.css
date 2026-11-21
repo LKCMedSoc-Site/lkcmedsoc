@@ -909,3 +909,18 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror>ol>li ol,.lv-editor .ProseMirror>ol>li ul{margin:.3em 0}
 .lv-editor .ProseMirror h2{margin:1.8em 0 .7em}
 .lv-doctitle textarea.muted{line-height:1.6}
+/* official look: serif text, a formal title block, articles set off with a small-caps label and a rule */
+.lv-col{font-family:'Source Serif 4',Georgia,'Times New Roman',serif}
+.lv-doctitle{text-align:center;padding-top:44px}
+.lv-org{font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:#6b5a65;margin-bottom:10px}
+.lv-doctitle textarea.edit-in-place{text-align:center;font-family:inherit}
+.lv-doctitle textarea.doc-title{font-weight:700;letter-spacing:-.01em;font-size:clamp(28px,3.6vw,38px)}
+.lv-doctitle textarea.muted{font-style:italic;font-size:1.02rem;color:#5b5057}
+.lv-meta{font-size:.85rem;letter-spacing:.06em;color:#6b5a65;margin-top:8px;font-variant:small-caps}
+.lv-rule{border:0;border-top:2px solid #3a0a2e;width:64px;margin:22px auto 6px}
+.lv-editor .ProseMirror{font-size:1.04rem;text-align:justify;hyphens:auto;-webkit-hyphens:auto;color:#1f1a1d}
+.lv-editor .ProseMirror h2{text-align:center;font-weight:700;font-size:1.12rem;letter-spacing:.04em;border-bottom:1px solid #cfc5cb;padding-bottom:.55em}
+.lv-editor .ProseMirror h2::before{content:'Article ' counter(art);display:block;font-size:.72rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:#6b5a65;margin-bottom:.35em}
+.lv-editor .ProseMirror>ol>li::before{font-weight:600;color:#3a0a2e}
+.lv-col textarea::placeholder{font-style:italic}
+.lv-editor .ProseMirror{text-align:left;hyphens:manual;-webkit-hyphens:manual}
