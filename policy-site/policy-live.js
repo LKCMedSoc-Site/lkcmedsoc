@@ -402,7 +402,7 @@
     var infoBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Name and description', 'aria-label': 'Name and description', onclick: openDetails }); infoBtn.appendChild(svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 20));
     var pdfBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Save as PDF', 'aria-label': 'Save as PDF', onclick: async function () {
       pdfBtn.disabled = true; P.toast('Preparing the PDF\u2026');
-      try { await LE.savePdf(ed.getJSON(), { org: "LKCMedicine Students' Medical Society", title: docInfo.title, summary: docInfo.summary, versionLine: tokenT.textContent, filename: slug + (meta.version > 0 ? '-v' + meta.version : '-working-copy') }); }
+      try { await LE.savePdf(ed.getJSON(), { org: "LKCMedicine Students' Medical Society", title: docInfo.title, summary: docInfo.summary, versionLine: tokenT.textContent, filename: slug + (meta.version > 0 ? '-v' + meta.version : '-working-copy')  }, { resolveImage: resolveImage }); }
       catch (e) { P.toast('Could not make the PDF. Check your connection and try again.', true); }
       pdfBtn.disabled = false; } });
     pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20));

@@ -19,7 +19,7 @@ function ready() {
 function roman(n) { var m = [[10, 'x'], [9, 'ix'], [5, 'v'], [4, 'iv'], [1, 'i']], s = ''; m.forEach(function (p) { while (n >= p[0]) { s += p[1]; n -= p[0]; } }); return s; }
 function alpha(n) { return String.fromCharCode(96 + ((n - 1) % 26) + 1); }
 function runs(content) {
-  var out = (content || []).map(function (n) {
+  var out = (content || []).filter(function (n) { return n.type !== 'image'; }).map(function (n) {
     if (n.type === 'hardBreak') return { text: '\n' };
     var o = { text: n.text || '' };
     (n.marks || []).forEach(function (m) { if (m.type === 'bold') o.bold = true; else if (m.type === 'italic') o.italics = true; else if (m.type === 'strike') o.decoration = 'lineThrough'; else if (m.type === 'link' && m.attrs) { o.link = m.attrs.href; o.color = '#1a56db'; o.decoration = 'underline'; } });
@@ -27,15 +27,37 @@ function runs(content) {
   });
   return out.length ? out : [{ text: ' ' }];
 }
-var IND = 36;
+var IND = 36, PAGE_W = 453;                                                         // text width of an A4 page with 25 mm margins, in points
+var IMAGES = {}, IMAGES_DATA = {}, DIMS = {};                                                                    // src -> key in the document's image list, filled by savePdf before the layout is built
+function figInfo(title) { var m = /(?:^|;)w=(\d+)/.exec(title || ''), c = /(?:^|;)c=(.*)$/.exec(title || ''); return { w: m ? Math.min(100, Math.max(10, +m[1])) : 100, c: c ? c[1] : '' }; }
+function imageNodes(json, out) { (function walk(n) { if (!n) return; if (n.type === 'image' && n.attrs && n.attrs.src) out[n.attrs.src] = true; (n.content || []).forEach(walk); })(json); return out; }
+async function loadImage(url) {                                                     // any picture the browser can show -> a PNG data URL (pdfmake draws PNG and JPEG, not WebP)
+  var r = await fetch(url); if (!r.ok) throw new Error('image'); var blob = await r.blob(), obj = URL.createObjectURL(blob);
+  try {
+    var img = await new Promise(function (ok, bad) { var i = new window.Image(); i.onload = function () { ok(i); }; i.onerror = bad; i.src = obj; });
+    var cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight; var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0);
+    return { data: cv.toDataURL('image/png'), w: cv.width, h: cv.height };
+  } finally { URL.revokeObjectURL(obj); }
+}
 function blocks(nodes, level) {                                                       // paragraphs, tables and lists inside a clause or sub-item
   var out = [];
   (nodes || []).forEach(function (n) {
-    if (n.type === 'paragraph') out.push({ text: runs(n.content), margin: [0, 0, 0, 5], lineHeight: 1.25 });
+    if (n.type === 'paragraph') {
+      var kids = n.content || [], hasText = kids.some(function (k) { return k.type !== 'image' && !(k.type === 'text' && !String(k.text || '').trim()); });
+      if (hasText || !kids.some(function (k) { return k.type === 'image'; })) out.push({ text: runs(n.content), margin: [0, 0, 0, 5], lineHeight: 1.25 });
+      kids.forEach(function (k) { if (k.type === 'image') out.push(picture(k, level)); });
+    }
     else if (n.type === 'orderedList' || n.type === 'bulletList') out.push(list(n, level + 1));
     else if (n.type === 'table') out.push(table(n));
   });
   return out;
+}
+function picture(node, level) {                                                   // the picture at its share of the width of the level it sits at, with its caption
+  var key = IMAGES[node.attrs.src], fi = figInfo(node.attrs.title), avail = level <= 0 ? PAGE_W : PAGE_W - IND - 30 * (level - 1);
+  if (!key) return { text: '[image not available: ' + (node.attrs.alt || '') + ']', italics: true, color: '#8a2a2a', margin: [0, 0, 0, 5] };
+  var d = DIMS[key] || [4, 3], w = Math.min(avail * fi.w / 100, 600 * d[0] / d[1]);                    // never wider than its share of the level, never taller than 600 pt
+  var stack = [{ image: key, width: w }]; if (fi.c) stack.push({ text: fi.c, fontSize: 9, color: '#5b5057', margin: [0, 3, 0, 0] });
+  return { stack: stack, margin: [0, 2, 0, 8], unbreakable: true };
 }
 function list(node, level) {
   var stack = [], label;
@@ -74,17 +96,21 @@ function definition(json, meta) {
       content.push({ columns: [{ width: IND, text: (art < 26 ? String.fromCharCode(65 + art) : art + 1) + '.', bold: true }, { width: '*', text: runs(n.content).map(function (r) { return Object.assign({}, r, { bold: true, decoration: 'underline' }); }) }], margin: [0, 14, 0, 8], pageBreak: undefined, unbreakable: false });
       art++;
     } else if (n.type === 'orderedList') content.push(list(n, 1));
-    else if (n.type === 'paragraph') content.push({ text: runs(n.content), margin: [0, 0, 0, 5] });
+    else if (n.type === 'paragraph') blocks([n], 0).forEach(function (b) { content.push(b); });
     else if (n.type === 'table') content.push(table(n));
   });
   return {
     pageSize: 'A4', pageMargins: [MARGIN, MARGIN, MARGIN, 64], defaultStyle: { font: 'Inter', fontSize: 11, lineHeight: 1.3, color: '#1f1a1d' }, info: { title: meta.title || 'Policy', author: meta.org || '' },
     footer: function (cur, total) { return { columns: [{ text: (meta.title || '') + (meta.versionLine ? ' · ' + meta.versionLine : ''), fontSize: 8, color: '#6b5a65', margin: [MARGIN, 0, 0, 0] }, { text: 'Page ' + cur + ' of ' + total, fontSize: 8, color: '#6b5a65', alignment: 'right', margin: [0, 0, MARGIN, 0] }], margin: [0, 24, 0, 0] }; },
+    images: IMAGES_DATA,
     content: content
   };
 }
 async function savePdf(json, meta, opts) {
   await ready();
+  IMAGES = {}; IMAGES_DATA = {}; DIMS = {}; var srcs = Object.keys(imageNodes(json, {})), n = 0;
+  if (srcs.length && !(opts && opts.resolveImage)) srcs = [];
+  await Promise.all(srcs.map(async function (src) { try { var data = await loadImage(await opts.resolveImage(src)); var key = 'img' + (n++); IMAGES[src] = key; IMAGES_DATA[key] = data.data; DIMS[key] = [data.w, data.h]; } catch (e) { /* drawn as a note */ } }));
   var pdf = window.pdfMake.createPdf(definition(json, meta));
   if (opts && opts.blob) return new Promise(function (ok) { pdf.getBlob(ok); });
   pdf.download((meta.filename || 'policy') + '.pdf');

@@ -41,7 +41,7 @@
     copyBtn.appendChild(svg('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 20));
     var pdfBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Save as PDF', 'aria-label': 'Save as PDF', onclick: async function () {
       pdfBtn.disabled = true; P.toast('Preparing the PDF\u2026');
-      try { await LE.savePdf(ed.getJSON(), { org: "LKCMedicine Students' Medical Society", title: d.title, summary: d.summary, versionLine: token.textContent, filename: slug + '-v' + shown }); }
+      try { await LE.savePdf(ed.getJSON(), { org: "LKCMedicine Students' Medical Society", title: d.title, summary: d.summary, versionLine: token.textContent, filename: slug + '-v' + shown  }, { resolveImage: resolveImage }); }
       catch (e) { P.toast('Could not make the PDF. Check your connection and try again.', true); }
       pdfBtn.disabled = false; } });
     pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20));
