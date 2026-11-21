@@ -881,3 +881,5 @@ html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none;
 @media(max-width:900px){.lv.hist .lv-body{grid-template-columns:1fr}.gd-hist{position:static;max-height:50vh;border-left:0;border-top:1px solid #dadce0}}
 .lv-head[hidden],.lv [hidden]{display:none!important}
 .gd-hist{min-height:calc(100vh - 140px)}
+.lv-tbwrap{display:contents}
+.lv-toolbar{top:54px}

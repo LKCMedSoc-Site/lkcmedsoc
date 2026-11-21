@@ -233,7 +233,7 @@
       data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, status, h('span', { class: 'lv-spacer' }), people,
       P.exco ? histBtn : null, P.exco || canEdit ? shareBtn : null);
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
-    var toolbarWrap = h('div', null, toolbar);
+    var toolbarWrap = h('div', { class: 'lv-tbwrap' }, toolbar);
     var lvBody = h('div', { class: 'lv-body' }, editorEl, notesCol);
     var lvEl = h('div', { class: 'lv' }, lvHead, lvIntro, toolbarWrap, lvBody), lvRoot = lvEl;
     P.show(lvEl);
