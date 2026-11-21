@@ -24,6 +24,7 @@
     var token = h('button', { type: 'button', class: 'lv-token', 'aria-expanded': 'false', 'aria-controls': 'lv-log', title: 'Version log',
       onclick: function () { var open = logEl.hidden; logEl.hidden = !open; token.setAttribute('aria-expanded', open ? 'true' : 'false'); token.classList.toggle('open', open); } },
       h('span', null, 'Version ' + shown + (versions.filter(function (v) { return v.version === shown; }).map(function (v) { return v.effective_on ? ' · ' + longDate(v.effective_on) : ''; })[0] || '')), svg('<path d="m6 9 6 6 6-6"/>', 14));
+    if (P.exco) logEl.appendChild(h('div', { class: 'lv-log-item draftitem' }, h('div', { class: 'lv-log-h' }, h('b', null, 'Working copy'), ' \u00b7 ', h('a', { href: '#/live/' + slug }, 'Edit')), h('div', { class: 'lv-log-by' }, 'The draft ExCo are editing. Changes here are not published until the President publishes.')));
     versions.slice().sort(function (a, b) { return b.version - a.version; }).forEach(function (v) {
       var isLive = v.version === current, isShown = v.version === shown;
       logEl.appendChild(h('div', { class: 'lv-log-item' + (isLive ? ' live' : ' old') }, h('div', { class: 'lv-log-h' }, h('b', null, 'Version ' + v.version), isLive ? h('span', { class: 'lv-live' }, 'Live now') : null,
@@ -46,7 +47,7 @@
       pdfBtn.disabled = false; } });
     pdfBtn.appendChild(svg('<path d="M12 4v10m0 0-4-4m4 4 4-4M5 19h14"/>', 20));
     var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, d.title), h('span', { class: 'lv-spacer' }),
-      P.exco ? h('a', { class: 'gd-btn', href: '#/live/' + slug, style: 'text-decoration:none' }, 'Edit') : null, pdfBtn, copyBtn);
+      pdfBtn, copyBtn);
 
     // ---- toolbar: outline and zoom, as in the editor ----
     var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }
