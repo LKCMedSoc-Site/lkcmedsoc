@@ -999,3 +999,11 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-sw{width:28px;height:28px;border-radius:50%;border:1px solid #c9c2c7;cursor:pointer;padding:0}.lv-sw:hover{outline:2px solid #8a2a6d;outline-offset:1px}
 .lv-sw.none{background:#fff linear-gradient(135deg,transparent 46%,#c0392b 46%,#c0392b 54%,transparent 54%)}
 .lv-editor th{background:transparent;position:static;color:inherit}
+
+/* table options menu (right-click) */
+.lv-ctx{position:fixed;z-index:2147483000;min-width:220px;padding:6px 0;background:#fff;border:1px solid #dadce0;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.22);font-size:.9rem}
+.lv-ctx hr{border:0;border-top:1px solid #e3e3e3;margin:6px 0}
+.lv-mi{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 18px;font:inherit;color:#202124;cursor:pointer}
+.lv-mi:hover:not(:disabled){background:#f1f3f4}.lv-mi:disabled{color:#b0b0b0;cursor:default}
+.lv-mi-lab{padding:4px 18px;font-size:.8rem;color:#5f6368}
+.lv-mi-sw{display:grid;grid-template-columns:repeat(8,24px);gap:6px;padding:4px 18px 8px}.lv-mi-sw .lv-sw{width:24px;height:24px}

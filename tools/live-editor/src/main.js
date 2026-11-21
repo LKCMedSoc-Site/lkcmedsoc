@@ -351,6 +351,37 @@ var PolicyHeader = TableHeader.extend({ addAttributes: function () { return Obje
 function setCellColor(ed, color) { return ed.chain().focus().setCellAttribute('backgroundColor', color || null).run(); }
 function inTable(ed) { return ed.isActive('table'); }
 
+// ---- Shift+Enter in a table adds a row below and moves into it; right-click a table for the options menu (built by the page: it gets onTableMenu({x, y})) ----
+function resetTableWidths(ed) {
+  var $f = ed.state.selection.$from, d; for (d = $f.depth; d > 0; d--) if ($f.node(d).type.name === 'table') break; if (!d) return false;
+  ed.view.dispatch(ed.state.tr.setNodeMarkup($f.before(d), null, Object.assign({}, $f.node(d).attrs, { widths: null }))); return true;
+}
+var TableKeys = Extension.create({
+  name: 'tableKeys', priority: 1000,
+  addOptions: function () { return { onTableMenu: null }; },
+  addKeyboardShortcuts: function () {
+    return { 'Shift-Enter': function (ctx) {
+      var ed = ctx.editor; if (!ed.isActive('table')) return false;
+      var $f = ed.state.selection.$from, d; for (d = $f.depth; d > 0; d--) { var nm = $f.node(d).type.name; if (nm === 'tableCell' || nm === 'tableHeader') break; } if (!d) return false;
+      var tablePos = $f.before(d - 2), rowIdx = $f.index(d - 2), cellIdx = $f.index(d - 1);
+      if (!ed.chain().addRowAfter().run()) return true;
+      var table = ed.state.doc.nodeAt(tablePos), pos = tablePos + 1, i, row; for (i = 0; i <= rowIdx; i++) pos += table.child(i).nodeSize;
+      row = table.child(rowIdx + 1); pos += 1; for (i = 0; i < Math.min(cellIdx, row.childCount - 1); i++) pos += row.child(i).nodeSize;
+      ed.commands.setTextSelection(pos + 2); return true;
+    } };
+  },
+  addProseMirrorPlugins: function () {
+    var opts = this.options;
+    return [new Plugin({ key: new PluginKey('tableMenu'), props: { handleDOMEvents: { contextmenu: function (view, ev) {
+      var cell = ev.target && ev.target.closest ? ev.target.closest('td, th') : null; if (!cell || !view.editable || !opts.onTableMenu) return false;
+      var sel = view.state.selection, onCell = sel.$anchorCell && sel.constructor.name === 'CellSelection';   // a block of selected cells stays selected when you right-click inside it
+      var hit = view.posAtCoords({ left: ev.clientX, top: ev.clientY });
+      if (hit) { var inSel = sel.ranges && sel.ranges.some(function (r) { return hit.pos >= r.$from.pos && hit.pos <= r.$to.pos; }); if (!(onCell && inSel)) view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(hit.pos), 1))); }
+      ev.preventDefault(); opts.onTableMenu({ x: ev.clientX, y: ev.clientY }); return true;
+    } } } })];
+  }
+});
+
 function extensions() {
   return [StarterKit.configure({ history: false, heading: { levels: [2] }, blockquote: false, codeBlock: false, code: false, horizontalRule: false }),
     PolicyTable.configure({ resizable: false }), TableRow, PolicyHeader, PolicyCell, Markdown.configure({ html: false, tightLists: true, bulletListMarker: '-' })];
@@ -361,7 +392,7 @@ function seed(ydoc, markdown) {                       // turn markdown into the 
 }
 function create(o) {
   var ed = new Editor({ element: o.element, editable: o.editable !== false,
-    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, TableResize, Comments.configure({ onClick: o.onNoteClick })]),
+    extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, TableResize, TableKeys.configure({ onTableMenu: o.onTableMenu }), Comments.configure({ onClick: o.onNoteClick })]),
     onUpdate: o.onUpdate || function () {}, onSelectionUpdate: o.onSelection || function () {} });
   if (o.editable !== false && ed.state.doc.childCount === 1 && ed.state.doc.textContent === '') { var t0 = fixStructure(ed.state); if (t0) ed.view.dispatch(t0); }   // opening a blank document gives it its first article
   return ed;
@@ -375,4 +406,4 @@ function preview(el, md) { return new Editor({ element: el, editable: false, ext
 // A title can have a line break in the editor (Shift+Enter) but a markdown title is one line, so in the saved/published text the lines of a title are joined with a space.
 function markdownOf(ed) { var md = ed.storage.markdown.getMarkdown(), re = /^(#{1,6} [^\n]*?)\\\n([^\n]+)/m; while (re.test(md)) md = md.replace(re, '$1 $2'); return md; }
 window.LiveEditor = { Y: Y, Awareness: Awareness, applyAwarenessUpdate: applyAwarenessUpdate, encodeAwarenessUpdate: encodeAwarenessUpdate, removeAwarenessStates: removeAwarenessStates,
-  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, canIndent: canIndent, setCellColor: setCellColor, inTable: inTable, preview: preview, fixStructure: fixStructure };
+  b64: b64, unb64: unb64, seed: seed, create: create, setNotes: setNotes, selectionQuote: selectionQuote, markdownOf: markdownOf, canIndent: canIndent, setCellColor: setCellColor, resetTableWidths: resetTableWidths, inTable: inTable, preview: preview, fixStructure: fixStructure };

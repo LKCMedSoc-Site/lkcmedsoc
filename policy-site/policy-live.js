@@ -100,6 +100,28 @@
         CELL_COLORS.map(function (c) { return h('button', { type: 'button', class: 'lv-sw' + (c[1] ? '' : ' none'), title: c[0], 'aria-label': c[0], style: c[1] ? 'background:' + c[1] : '', onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { LE.setCellColor(ed, c[1]); closePalette(); } }); }));
       document.body.appendChild(pal); document.addEventListener('mousedown', outside, true); document.addEventListener('keydown', escPal, true);
     }
+    // ---- right-click a table: the options menu ----
+    var tmenu = null;
+    function closeTableMenu() { if (tmenu) { tmenu.remove(); tmenu = null; document.removeEventListener('mousedown', outsideMenu, true); document.removeEventListener('keydown', escMenu, true); window.removeEventListener('scroll', closeTableMenu, true); window.removeEventListener('blur', closeTableMenu); } }
+    function outsideMenu(ev) { if (tmenu && !tmenu.contains(ev.target)) closeTableMenu(); }
+    function escMenu(ev) { if (ev.key === 'Escape') closeTableMenu(); }
+    function openTableMenu(pt) {
+      closeTableMenu(); closePalette();
+      function canDo(name) { try { return !!ed.can()[name](); } catch (e) { return false; } }
+      function item(label, name, fn) {
+        var ok = fn ? true : canDo(name);
+        return h('button', { type: 'button', role: 'menuitem', class: 'lv-mi', disabled: !ok, onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { closeTableMenu(); if (fn) fn(); else ed.chain().focus()[name]().run(); } }, label);
+      }
+      var sw = h('div', { class: 'lv-mi-sw' }, CELL_COLORS.map(function (c) { return h('button', { type: 'button', class: 'lv-sw' + (c[1] ? '' : ' none'), title: c[0], 'aria-label': 'Cell colour: ' + c[0], style: c[1] ? 'background:' + c[1] : '', onmousedown: function (ev) { ev.preventDefault(); }, onclick: function () { LE.setCellColor(ed, c[1]); closeTableMenu(); } }); }));
+      tmenu = h('div', { class: 'lv-ctx', role: 'menu', 'aria-label': 'Table options' },
+        item('Insert row above', 'addRowBefore'), item('Insert row below', 'addRowAfter'), item('Insert column left', 'addColumnBefore'), item('Insert column right', 'addColumnAfter'), h('hr'),
+        item('Delete row', 'deleteRow'), item('Delete column', 'deleteColumn'), item('Delete table', 'deleteTable'), h('hr'),
+        item('Merge cells', 'mergeCells'), item('Split cell', 'splitCell'), item('Header row on or off', 'toggleHeaderRow'), item('Equal column widths', null, function () { LE.resetTableWidths(ed); }), h('hr'),
+        h('div', { class: 'lv-mi-lab' }, 'Cell colour'), sw);
+      tmenu.style.left = pt.x + 'px'; tmenu.style.top = pt.y + 'px'; document.body.appendChild(tmenu);
+      var w = tmenu.offsetWidth, hh = tmenu.offsetHeight; tmenu.style.left = Math.max(8, Math.min(pt.x, window.innerWidth - w - 8)) + 'px'; tmenu.style.top = Math.max(8, Math.min(pt.y, window.innerHeight - hh - 8)) + 'px';
+      document.addEventListener('mousedown', outsideMenu, true); document.addEventListener('keydown', escMenu, true); window.addEventListener('scroll', closeTableMenu, true); window.addEventListener('blur', closeTableMenu);
+    }
     var colourBtn = h('button', { type: 'button', class: 'lv-tb', title: 'Cell colour (select cells first)', 'aria-label': 'Cell colour', onmousedown: function (ev) { ev.preventDefault(); }, onclick: openPalette }); colourBtn.appendChild(icon('palette'));
     // (the inserted table has a header row because a markdown table needs one to be saved; the header has no colour, only bold text)
     var toolbar = canEdit ? h('div', { class: 'lv-toolbar noprint', role: 'toolbar', 'aria-label': 'Formatting' },
@@ -332,7 +354,7 @@
     var viewEl = document.getElementById('view'); viewEl.classList.add('lv-wide'); P.onLeave(function () { viewEl.classList.remove('lv-wide'); }); setTimeout(fitAll, 0); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll); window.addEventListener('resize', fitAll);
     document.body.appendChild(cmBtn);
     awareness.setLocalStateField('user', me);
-    ed = LE.create({ element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,
+    ed = LE.create({ onTableMenu: openTableMenu, element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,
       onNoteClick: function (id) { activeId = id; paintNotes(); },
       onSelection: function () {
         refreshTb(); var s = ed.state.selection; if (s.empty) { cmBtn.hidden = true; return; }
@@ -343,7 +365,7 @@
     ed.on('update', function () { clearTimeout(ed._pn); ed._pn = setTimeout(paintNotes, 400); });
     window.__live = { ed: ed, ydoc: ydoc, awareness: awareness };
     P.onLeave(function () {
-      closed = true; closePalette(); clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
+      closed = true; closePalette(); closeTableMenu(); clearInterval(dtimer); clearTimeout(pushT); cmBtn.remove();
       if (pending.length) { var b = pending; pending = []; rpc('policy_live_push', { p_slug: slug, p_update: LE.b64(Y.mergeUpdates(b)), p_md: LE.markdownOf(ed), p_name: myName(), p_epoch: epoch }).catch(function () { /* lost only if the tab died */ }); }
       LE.removeAwarenessStates(awareness, [ydoc.clientID], 'local'); try { P.sb.removeChannel(chan); } catch (e) { /* closing */ } ed.destroy();
     });
