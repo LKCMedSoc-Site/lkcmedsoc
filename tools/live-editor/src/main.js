@@ -38,7 +38,9 @@ function fixStructure(state) {
     var k = kids[i], node = k.node, prev = i ? kids[i - 1].node : null;
     if (node.type === T.heading || node.type === T.orderedList) continue;
     if (i === 0) {                                                                   // nothing before the first article: give it one
-      if (node.type === T.paragraph && node.content.size === 0 && kids.length === 1) return null;   // a brand-new empty document
+      if (node.type === T.paragraph && node.content.size === 0 && kids.length === 1) {   // an empty document is never blank: it begins as one article, with the cursor in its title
+        var te = state.tr.replaceWith(0, node.nodeSize, T.heading.create({ level: 2 })); te.setSelection(TextSelection.near(te.doc.resolve(1), 1)); return te;
+      }
       return state.tr.insert(0, T.heading.create({ level: 2 }, schema.text('Untitled article')));
     }
     var isTable = node.type === T.table;
@@ -259,6 +261,7 @@ function create(o) {
   var ed = new Editor({ element: o.element, editable: o.editable !== false,
     extensions: extensions().concat([Collaboration.configure({ document: o.ydoc }), CollaborationCursor.configure({ provider: { awareness: o.awareness }, user: o.user }), Structure, ClauseBackspace, IndentCap, ArticleEnter, Comments.configure({ onClick: o.onNoteClick })]),
     onUpdate: o.onUpdate || function () {}, onSelectionUpdate: o.onSelection || function () {} });
+  if (o.editable !== false && ed.state.doc.childCount === 1 && ed.state.doc.textContent === '') { var t0 = fixStructure(ed.state); if (t0) ed.view.dispatch(t0); }   // opening a blank document gives it its first article
   return ed;
 }
 function setNotes(ed, notes, active) { ed.view.dispatch(ed.state.tr.setMeta(cmKey, { notes: notes, active: active })); }
