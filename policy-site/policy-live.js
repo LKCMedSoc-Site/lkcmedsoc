@@ -16,6 +16,7 @@
     var data = await rpc('policy_live_open', { p_slug: slug });
     if (!data) { P.show(h('p', { class: 'muted' }, 'Live editing is not switched on for this document.')); return; }
     var ydoc = new Y.Doc(), awareness = new LE.Awareness(ydoc), canEdit = data.access === 'edit', lastId = data.last_id || 0, epoch = data.epoch || 1;
+    var canWork = P.exco || canEdit;   // ExCo and people shared with as Editor: rename, version history, restore
     var ed = null, notes = [], activeId = null, pending = [], pushT = null, pushing = false, closed = false, status = h('span', { class: 'savestate', role: 'status', 'aria-live': 'polite' }, 'Connecting…');
 
     // ---- the channel: changes and cursors go straight to the other browsers ----
@@ -318,27 +319,27 @@
       meta.versions = w.versions || []; meta.status = w.doc.status; meta.version = w.doc.version; meta.effective_on = w.doc.effective_on;
       meta.published_md = typeof w.published_md === 'string' ? w.published_md : null; updateToken(); drawLog();
     }
-    function loadMeta() { return (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(refreshMeta).catch(function () { /* none */ }); }
+    function loadMeta() { return rpc('policy_live_info', { p_slug: slug }).then(refreshMeta).catch(function () { /* none */ }); }
     var sumP = loadMeta();
     async function saveInfo() {
       if (docInfo.title.trim().length < 3) { P.toast('The name needs at least 3 letters', true); setTitle(lastTitle, null); return false; }
       try { await rpc('policy_doc_save', { p_slug: slug, p_title: docInfo.title, p_summary: docInfo.summary }); lastTitle = docInfo.title.trim(); lastSummary = docInfo.summary; return true; } catch (e) { P.toast(P.friendly(e), true); return false; }
     }
     var lastTitle = data.doc.title, lastSummary = '';
-    var titleEl = P.exco ? h('input', { type: 'text', class: 'gd-titleinput', maxlength: 120, value: data.doc.title, 'aria-label': 'Document name', title: 'Rename',
+    var titleEl = canWork ? h('input', { type: 'text', class: 'gd-titleinput', maxlength: 120, value: data.doc.title, 'aria-label': 'Document name', title: 'Rename',
       oninput: function () { setTitle(titleEl.value, titleEl); }, onblur: function () { if (docInfo.title !== lastTitle) saveInfo(); },
       onkeydown: function (ev) { if (ev.key === 'Enter') titleEl.blur(); } }) : h('h1', null, data.doc.title);
-    if (P.exco) titleEl.style.width = Math.max(8, data.doc.title.length + 1) + 'ch';
+    if (canWork) titleEl.style.width = Math.max(8, data.doc.title.length + 1) + 'ch';
     // the name and description also sit at the top of the page itself; the bar, this block and the details box all show the same text
     function fit(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 3) + 'px'; }
-    var titleT = h('textarea', { class: 'doc-title edit-in-place', rows: 1, maxlength: 120, 'aria-label': 'Document name', spellcheck: 'true', readonly: !P.exco }),
-      descT = h('textarea', { class: 'muted edit-in-place', rows: 1, maxlength: 400, placeholder: P.exco ? 'Add a description' : '', 'aria-label': 'Description', readonly: !P.exco });
+    var titleT = h('textarea', { class: 'doc-title edit-in-place', rows: 1, maxlength: 120, 'aria-label': 'Document name', spellcheck: 'true', readonly: !canWork }),
+      descT = h('textarea', { class: 'muted edit-in-place', rows: 1, maxlength: 400, placeholder: canWork ? 'Add a description' : '', 'aria-label': 'Description', readonly: !P.exco });
     titleT.value = data.doc.title;
     var infoT = null;
     function setTitle(v, from) { docInfo.title = v; if (from !== titleEl && titleEl.tagName === 'INPUT') { titleEl.value = v; } if (titleEl.tagName === 'INPUT') titleEl.style.width = Math.max(8, v.length + 1) + 'ch'; if (from !== titleT) titleT.value = v; fit(titleT); }
     function setDesc(v, from) { docInfo.summary = v; if (from !== descT) descT.value = v; fit(descT); }
     sumP.then(function () { descT.value = docInfo.summary; fit(descT); });
-    if (P.exco) {
+    if (canWork) {
       [titleT, descT].forEach(function (el) {
         el.addEventListener('input', function () { if (el === titleT) setTitle(el.value, el); else setDesc(el.value, el); clearTimeout(infoT); infoT = setTimeout(function () { saveInfo(); }, 1000); });
         el.addEventListener('blur', function () { clearTimeout(infoT); if (docInfo.title !== lastTitle || descT.value !== lastSummary) saveInfo(); });
@@ -379,8 +380,8 @@
       document.body.appendChild(overlay); note.focus();
     }
     var pubBtn = P.canConfirm ? h('button', { type: 'button', class: 'gd-btn fill gd-pub', onclick: openPublish }, 'Publish') : null;
-    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, P.exco ? infoBtn : null, status, h('span', { class: 'lv-spacer' }), people,
-      P.exco ? histBtn : null, pubBtn, P.exco ? shareBtn : null);   // only ExCo can invite people
+    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, canWork ? infoBtn : null, status, h('span', { class: 'lv-spacer' }), people,
+      canWork ? histBtn : null, pubBtn, P.exco ? shareBtn : null);   // only ExCo can invite people
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
     // ---- zoom: the − and + buttons, Ctrl/Cmd + scroll, trackpad pinch (Chrome, Firefox, Safari) and two-finger pinch on a touch screen ----
     var zoom = 1; try { zoom = +localStorage.getItem('policyZoom') || 1; } catch (e) { /* no storage */ }
