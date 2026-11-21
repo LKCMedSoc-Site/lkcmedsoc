@@ -978,3 +978,10 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .lv-editor .ProseMirror>ol>li ol>li{padding-left:var(--lv-ind2)}
 .lv-editor .ProseMirror>ol>li ul{padding-left:var(--lv-ind2)}
 .lv-doctitle textarea.muted,.lv-org,.lv-meta{font-size:11pt}
+
+/* numbering after the NTU regulations: articles A., B., C.; clauses 1., 2. (starting again in each article); (a), (b); then i., ii.; then (A) */
+.lv-editor .ProseMirror h2::before{content:counter(art,upper-alpha) "."}
+.lv-editor .ProseMirror h2{text-decoration:underline;text-underline-offset:3px}
+.lv-editor .ProseMirror>ol>li::before{content:counter(cl) "."}
+.lv-editor .ProseMirror>ol>li ol ol>li::before{content:counter(sub3,lower-roman) "."}
+.lv-editor .ProseMirror>ol>li ol ol ol>li::before{content:"(" counter(sub4,upper-alpha) ")"}
