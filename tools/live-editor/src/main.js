@@ -89,26 +89,38 @@ var ClauseBackspace = Extension.create({
       var ed = ctx.editor, st = ed.state, sel = st.selection;
       if (!sel.empty) return false;
       var $f = sel.$from, d = $f.depth;
-      if (d !== 3 || $f.parentOffset !== 0 || $f.parent.type.name !== 'paragraph') return false;
-      if ($f.node(d - 1).type.name !== 'listItem' || $f.node(d - 2).type.name !== 'orderedList' || $f.index(d - 1) !== 0) return false;
-      var list = $f.node(d - 2), idx = $f.index(d - 2), item = $f.node(d - 1), itemPos = $f.before(d - 1);
-      if (idx === 0) return true;                                         // the first clause of an article has nothing above it to join
+      if (d < 3 || $f.parentOffset !== 0 || $f.parent.type.name !== 'paragraph') return false;
+      if ($f.node(d - 1).type.name !== 'listItem' || !isList($f.node(d - 2)) || $f.index(d - 1) !== 0) return false;
+      var list = $f.node(d - 2), idx = $f.index(d - 2), item = $f.node(d - 1), itemPos = $f.before(d - 1), clause = d === 3;
+      if (clause && list.type.name !== 'orderedList') return false;
+      var rest = []; item.forEach(function (c, off, i) { if (i > 0) rest.push(c); });
+      var hb = st.schema.nodes.hardBreak, tr = st.tr;
+      if (idx === 0) {                                                    // the first item of a list
+        if (clause) return true;                                          // the first clause of an article has nothing above it to join
+        var pItem = $f.node(d - 3); if (pItem.type.name !== 'listItem' || rest.length) return true;
+        var pStart = $f.before(d - 3), li = $f.index(d - 3), tgt = -1;
+        pItem.forEach(function (c, off, i) { if (i < li && c.type.name === 'paragraph') tgt = pStart + 1 + off + c.nodeSize - 1; });   // the clause's own line, above its sub-items
+        if (tgt < 0) return true;
+        if (list.childCount === 1) tr.delete($f.before(d - 2), $f.after(d - 2)); else tr.delete(itemPos, itemPos + item.nodeSize);
+        tr.insert(tgt, Fragment.from(hb.create()).append($f.parent.content));
+        tr.setSelection(TextSelection.near(tr.doc.resolve(tgt + 1), 1));
+        ed.view.dispatch(tr.scrollIntoView()); return true;
+      }
       var prev = list.child(idx - 1), prevStart = itemPos - prev.nodeSize, target = -1, seenList = false;
-      if (prev.childCount === 1 && prev.firstChild.type.name === 'paragraph' && prev.firstChild.content.size === 0) {     // the clause above is empty: this clause simply takes its place
+      if (prev.childCount === 1 && prev.firstChild.type.name === 'paragraph' && prev.firstChild.content.size === 0) {     // the item above is empty: this one simply takes its place
         var tr0 = st.tr.delete(prevStart, itemPos);
         tr0.setSelection(TextSelection.near(tr0.doc.resolve(prevStart + 2), 1));
         ed.view.dispatch(tr0.scrollIntoView()); return true;
       }
-      prev.forEach(function (c, off) { if (isList(c)) seenList = true; if (!seenList && c.type.name === 'paragraph') target = prevStart + 1 + off + c.nodeSize - 1; });   // the clause's own last paragraph, before any sub-items
+      prev.forEach(function (c, off) { if (isList(c)) seenList = true; if (!seenList && c.type.name === 'paragraph') target = prevStart + 1 + off + c.nodeSize - 1; });   // its own last paragraph, before any sub-items
       if (target < 0) return true;
-      var tr = st.tr, rest = []; item.forEach(function (c, off, i) { if (i > 0) rest.push(c); });
       tr.delete(itemPos, itemPos + item.nodeSize);
       var itemEnd = prevStart + prev.nodeSize - 1;
       if (rest.length && prev.lastChild && isList(prev.lastChild) && prev.childCount > 1 && isList(rest[0]) && rest[0].type === prev.lastChild.type) {   // two lists in a row would show a, b, c then a, b: join them
         if (rest.length > 1) tr.insert(itemEnd, Fragment.fromArray(rest.slice(1)));
         tr.insert(itemEnd - 1, rest[0].content);
       } else if (rest.length) tr.insert(itemEnd, Fragment.fromArray(rest));
-      tr.insert(target, Fragment.from(st.schema.nodes.hardBreak.create()).append($f.parent.content));   // the text carries on in the same clause, on a new line (like Shift+Enter)
+      tr.insert(target, Fragment.from(hb.create()).append($f.parent.content));   // the text carries on in the same item, on a new line (like Shift+Enter)
       tr.setSelection(TextSelection.near(tr.doc.resolve(target + 1), 1));
       ed.view.dispatch(tr.scrollIntoView());
       return true;
