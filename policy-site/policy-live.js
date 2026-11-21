@@ -277,8 +277,10 @@
     function drawLog() {
       logEl.replaceChildren();
       if (!meta.versions.length) { logEl.appendChild(h('p', { class: 'lv-log-empty' }, 'Not published yet. Each version the President publishes is listed here with their comments.')); return; }
+      var liveV = meta.versions.reduce(function (m, v) { return Math.max(m, v.version); }, 0);   // the highest published version is the one members see
       meta.versions.forEach(function (v) {
-        logEl.appendChild(h('div', { class: 'lv-log-item' }, h('div', { class: 'lv-log-h' }, h('b', null, 'Version ' + v.version), v.effective_on ? ' \u00b7 ' + longDate(v.effective_on) : '', ' \u00b7 ', h('a', { href: '#/d/' + slug + '?v=' + v.version }, 'View')),
+        var isLive = v.version === liveV;
+        logEl.appendChild(h('div', { class: 'lv-log-item' + (isLive ? ' live' : ' old') }, h('div', { class: 'lv-log-h' }, h('b', null, 'Version ' + v.version), isLive ? h('span', { class: 'lv-live' }, 'Live now') : null, v.effective_on ? ' \u00b7 ' + longDate(v.effective_on) : '', ' \u00b7 ', h('a', { href: '#/d/' + slug + '?v=' + v.version }, 'View')),
           h('div', { class: 'lv-log-by' }, 'Published by ' + (v.by || 'the President')), v.note ? h('p', { class: 'lv-log-note' }, v.note) : null));
       });
     }
