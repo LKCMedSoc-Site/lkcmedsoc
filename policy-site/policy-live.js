@@ -224,21 +224,40 @@
       show(items[0]);
     }
     function closeHistory() {
-      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(editorEl, notesCol); lvTop.hidden = false; paintNotes();
+      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(lvCol, notesCol); fitAll(); lvTop.hidden = false; paintNotes();
     }
 
     // ---- name and description (ExCo): click the name to rename; the info button edits the description ----
     var docInfo = { title: data.doc.title, summary: '' };
-    if (P.exco) rpc('policy_work', { p_slug: slug }).then(function (w) { if (w && w.doc) docInfo.summary = w.doc.summary || ''; }).catch(function () { /* none */ });
+    var sumP = (P.exco ? rpc('policy_work', { p_slug: slug }) : rpc('policy_text', { p_slug: slug })).then(function (w) { if (w && w.doc) docInfo.summary = w.doc.summary || ''; }).catch(function () { /* none */ });
     async function saveInfo() {
-      if (docInfo.title.trim().length < 3) { P.toast('The name needs at least 3 letters', true); titleEl.value = lastTitle; docInfo.title = lastTitle; return false; }
-      try { await rpc('policy_doc_save', { p_slug: slug, p_title: docInfo.title, p_summary: docInfo.summary }); lastTitle = docInfo.title.trim(); return true; } catch (e) { P.toast(P.friendly(e), true); return false; }
+      if (docInfo.title.trim().length < 3) { P.toast('The name needs at least 3 letters', true); setTitle(lastTitle, null); return false; }
+      try { await rpc('policy_doc_save', { p_slug: slug, p_title: docInfo.title, p_summary: docInfo.summary }); lastTitle = docInfo.title.trim(); lastSummary = docInfo.summary; return true; } catch (e) { P.toast(P.friendly(e), true); return false; }
     }
-    var lastTitle = data.doc.title;
+    var lastTitle = data.doc.title, lastSummary = '';
     var titleEl = P.exco ? h('input', { type: 'text', class: 'gd-titleinput', maxlength: 120, value: data.doc.title, 'aria-label': 'Document name', title: 'Rename',
-      oninput: function () { docInfo.title = titleEl.value; titleEl.style.width = Math.max(8, titleEl.value.length + 1) + 'ch'; }, onblur: function () { if (docInfo.title !== lastTitle) saveInfo(); },
+      oninput: function () { setTitle(titleEl.value, titleEl); }, onblur: function () { if (docInfo.title !== lastTitle) saveInfo(); },
       onkeydown: function (ev) { if (ev.key === 'Enter') titleEl.blur(); } }) : h('h1', null, data.doc.title);
     if (P.exco) titleEl.style.width = Math.max(8, data.doc.title.length + 1) + 'ch';
+    // the name and description also sit at the top of the page itself; the bar, this block and the details box all show the same text
+    function fit(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 3) + 'px'; }
+    var titleT = h('textarea', { class: 'doc-title edit-in-place', rows: 1, maxlength: 120, 'aria-label': 'Document name', spellcheck: 'true', readonly: !P.exco }),
+      descT = h('textarea', { class: 'muted edit-in-place', rows: 1, maxlength: 400, placeholder: P.exco ? 'Add a description' : '', 'aria-label': 'Description', readonly: !P.exco });
+    titleT.value = data.doc.title;
+    var infoT = null;
+    function setTitle(v, from) { docInfo.title = v; if (from !== titleEl && titleEl.tagName === 'INPUT') { titleEl.value = v; } if (titleEl.tagName === 'INPUT') titleEl.style.width = Math.max(8, v.length + 1) + 'ch'; if (from !== titleT) titleT.value = v; fit(titleT); }
+    function setDesc(v, from) { docInfo.summary = v; if (from !== descT) descT.value = v; fit(descT); }
+    sumP.then(function () { descT.value = docInfo.summary; fit(descT); });
+    if (P.exco) {
+      [titleT, descT].forEach(function (el) {
+        el.addEventListener('input', function () { if (el === titleT) setTitle(el.value, el); else setDesc(el.value, el); clearTimeout(infoT); infoT = setTimeout(function () { saveInfo(); }, 1000); });
+        el.addEventListener('blur', function () { clearTimeout(infoT); if (docInfo.title !== lastTitle || descT.value !== lastSummary) saveInfo(); });
+      });
+      titleT.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); descT.focus(); } });
+      descT.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); ed.commands.focus('start'); } });
+    }
+    var titleBlock = h('div', { class: 'lv-doctitle' }, titleT, descT);
+    function fitAll() { fit(titleT); fit(descT); }
     function openDetails() {
       var overlay = h('div', { class: 'gd-overlay', onclick: function (ev) { if (ev.target === overlay) overlay.remove(); } });
       var nm = h('input', { type: 'text', class: 'gd-field', maxlength: 120, value: docInfo.title, 'aria-label': 'Document name' }), ds = h('textarea', { class: 'gd-field', rows: 4, maxlength: 400, placeholder: 'Add a description', 'aria-label': 'Description' });
@@ -246,7 +265,7 @@
       overlay.appendChild(h('div', { class: 'gd-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Document details' }, h('div', { class: 'gd-title' }, 'Document details'),
         h('label', { class: 'gd-lab' }, 'Name'), nm, h('label', { class: 'gd-lab' }, 'Description'), ds, h('div', { class: 'gd-sub' }, 'The description shows in the list of documents.'),
         h('div', { class: 'gd-foot', style: 'justify-content:flex-end;gap:8px' }, h('button', { type: 'button', class: 'gd-btn', onclick: function () { overlay.remove(); } }, 'Cancel'),
-          h('button', { type: 'button', class: 'gd-btn fill', onclick: async function () { docInfo.title = nm.value; docInfo.summary = ds.value; if (await saveInfo()) { titleEl.value = docInfo.title.trim(); titleEl.style.width = Math.max(8, titleEl.value.length + 1) + 'ch'; overlay.remove(); P.toast('Saved'); } } }, 'Save'))));
+          h('button', { type: 'button', class: 'gd-btn fill', onclick: async function () { setTitle(nm.value, null); setDesc(ds.value, null); if (await saveInfo()) { overlay.remove(); P.toast('Saved'); } } }, 'Save'))));
       document.body.appendChild(overlay); nm.focus();
     }
     var infoBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Name and description', 'aria-label': 'Name and description', onclick: openDetails }); infoBtn.appendChild(svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 20));
@@ -257,10 +276,11 @@
       P.exco ? histBtn : null, P.exco || canEdit ? shareBtn : null);
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
     var toolbarWrap = h('div', { class: 'lv-tbwrap' }, toolbar);
-    var lvBody = h('div', { class: 'lv-body' }, editorEl, notesCol);
+    var lvCol = h('div', { class: 'lv-col' }, titleBlock, editorEl);
+    var lvBody = h('div', { class: 'lv-body' }, lvCol, notesCol);
     var lvTop = h('div', { class: 'lv-top' }, lvHead, toolbarWrap);
     var lvEl = h('div', { class: 'lv' }, lvTop, lvBody), lvRoot = lvEl;
-    P.show(lvEl);
+    P.show(lvEl); fitAll(); setTimeout(fitAll, 0); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll); window.addEventListener('resize', fitAll);
     document.body.appendChild(cmBtn);
     awareness.setLocalStateField('user', me);
     ed = LE.create({ element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,

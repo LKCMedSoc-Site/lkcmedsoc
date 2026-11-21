@@ -896,3 +896,9 @@ html.lkc-embedded:has(#lkc-embed:not(.lkc-hide)) .gd-hist{top:121px}
 .gd-titleinput:hover{border-color:#dadce0}.gd-titleinput:focus{outline:2px solid #8a2a6d;border-color:transparent;background:#fff}
 .gd-lab{display:block;font-size:.85rem;color:#5f6368;margin:14px 0 4px}
 .gd-field{width:100%;box-sizing:border-box;border:1px solid #747775;border-radius:4px;padding:10px;font:inherit}.gd-field:focus{outline:2px solid #8a2a6d;border-color:transparent}
+/* name and description at the top of the page, inside the same white sheet as the text */
+.lv-col{background:#fff;border:1px solid #ddd;border-radius:8px;min-width:0}
+.lv-doctitle{padding:28px 36px 0}
+.lv-doctitle textarea.doc-title{font-size:clamp(26px,3.4vw,34px);margin-top:0}
+.lv-doctitle textarea.muted{margin-top:2px;font-size:1rem}
+.lv-col .lv-editor .ProseMirror{border:0;border-radius:0;padding-top:8px}
