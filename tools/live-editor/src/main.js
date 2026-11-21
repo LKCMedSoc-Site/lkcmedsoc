@@ -189,6 +189,8 @@ var ArticleEnter = Extension.create({
       var ed = ctx.editor, st = ed.state, sel = st.selection;
       if (!sel.empty) return false;
       var $f = sel.$from;
+      // Enter straight after a line break (Backspace leaves the cursor there): the break goes, so the clause above does not keep a blank last line
+      if ($f.nodeBefore && $f.nodeBefore.type.name === 'hardBreak' && listDepth($f) > 0) return ed.chain().command(function (c) { c.tr.delete(sel.from - 1, sel.from); return true; }).splitListItem('listItem').run();
       if ($f.depth !== 1 || $f.parent.type.name !== 'heading' || $f.parentOffset !== $f.parent.content.size) return false;
       var at = $f.after(1);                                              // straight below the title; any clauses under it follow the new title
       var tr = st.tr.insert(at, st.schema.nodes.heading.create({ level: 2 }));
