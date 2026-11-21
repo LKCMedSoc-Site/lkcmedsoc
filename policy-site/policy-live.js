@@ -227,9 +227,32 @@
       if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(editorEl, notesCol); lvTop.hidden = false; paintNotes();
     }
 
+    // ---- name and description (ExCo): click the name to rename; the info button edits the description ----
+    var docInfo = { title: data.doc.title, summary: '' };
+    if (P.exco) rpc('policy_work', { p_slug: slug }).then(function (w) { if (w && w.doc) docInfo.summary = w.doc.summary || ''; }).catch(function () { /* none */ });
+    async function saveInfo() {
+      if (docInfo.title.trim().length < 3) { P.toast('The name needs at least 3 letters', true); titleEl.value = lastTitle; docInfo.title = lastTitle; return false; }
+      try { await rpc('policy_doc_save', { p_slug: slug, p_title: docInfo.title, p_summary: docInfo.summary }); lastTitle = docInfo.title.trim(); return true; } catch (e) { P.toast(P.friendly(e), true); return false; }
+    }
+    var lastTitle = data.doc.title;
+    var titleEl = P.exco ? h('input', { type: 'text', class: 'gd-titleinput', maxlength: 120, value: data.doc.title, 'aria-label': 'Document name', title: 'Rename',
+      oninput: function () { docInfo.title = titleEl.value; titleEl.style.width = Math.max(8, titleEl.value.length + 1) + 'ch'; }, onblur: function () { if (docInfo.title !== lastTitle) saveInfo(); },
+      onkeydown: function (ev) { if (ev.key === 'Enter') titleEl.blur(); } }) : h('h1', null, data.doc.title);
+    if (P.exco) titleEl.style.width = Math.max(8, data.doc.title.length + 1) + 'ch';
+    function openDetails() {
+      var overlay = h('div', { class: 'gd-overlay', onclick: function (ev) { if (ev.target === overlay) overlay.remove(); } });
+      var nm = h('input', { type: 'text', class: 'gd-field', maxlength: 120, value: docInfo.title, 'aria-label': 'Document name' }), ds = h('textarea', { class: 'gd-field', rows: 4, maxlength: 400, placeholder: 'Add a description', 'aria-label': 'Description' });
+      ds.value = docInfo.summary;
+      overlay.appendChild(h('div', { class: 'gd-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Document details' }, h('div', { class: 'gd-title' }, 'Document details'),
+        h('label', { class: 'gd-lab' }, 'Name'), nm, h('label', { class: 'gd-lab' }, 'Description'), ds, h('div', { class: 'gd-sub' }, 'The description shows in the list of documents.'),
+        h('div', { class: 'gd-foot', style: 'justify-content:flex-end;gap:8px' }, h('button', { type: 'button', class: 'gd-btn', onclick: function () { overlay.remove(); } }, 'Cancel'),
+          h('button', { type: 'button', class: 'gd-btn fill', onclick: async function () { docInfo.title = nm.value; docInfo.summary = ds.value; if (await saveInfo()) { titleEl.value = docInfo.title.trim(); titleEl.style.width = Math.max(8, titleEl.value.length + 1) + 'ch'; overlay.remove(); P.toast('Saved'); } } }, 'Save'))));
+      document.body.appendChild(overlay); nm.focus();
+    }
+    var infoBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Name and description', 'aria-label': 'Name and description', onclick: openDetails }); infoBtn.appendChild(svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>', 20));
     var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
     var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
-    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, data.doc.title), h('span', { class: 'pill warn', title: canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.' }, canEdit ? 'Working copy' : 'Working copy · read only'),
+    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), titleEl, P.exco ? infoBtn : null, h('span', { class: 'pill warn', title: canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.' }, canEdit ? 'Working copy' : 'Working copy · read only'),
       data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, status, h('span', { class: 'lv-spacer' }), people,
       P.exco ? histBtn : null, P.exco || canEdit ? shareBtn : null);
     var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
