@@ -124,31 +124,119 @@
       notesCol.prepend(box); cmBtn.hidden = true; ta.focus();
     });
 
-    // ---- invites (ExCo) ----
-    var invites = null;
-    if (P.exco) {
-      var em = h('input', { type: 'email', class: 'grow', placeholder: 'Email of someone to invite' }), mode = P.select([['edit', 'Can edit'], ['read', 'Can read and comment']], 'edit'), list = h('div', { class: 'muted' });
-      async function drawInv() { try { var l = await rpc('policy_editor_list', { p_slug: slug }); list.replaceChildren.apply(list, l.map(function (e) { return h('div', null, e.email + ' · ' + (e.can_edit ? 'can edit' : 'read and comment') + ' ', h('button', { class: 'ghost small', onclick: async function () { await rpc('policy_editor_remove', { p_slug: slug, p_email: e.email }); drawInv(); } }, 'Remove')); })); if (!l.length) list.textContent = 'Only ExCo can open this document so far.'; } catch (e) { list.textContent = ''; } }
-      invites = h('details', { class: 'lv-invite noprint' }, h('summary', null, 'Invite someone to this document'), h('div', { class: 'row' }, em, mode, h('button', { class: 'btn small', onclick: async function () {
-        if (await P.run(function () { return rpc('policy_editor_add', { p_slug: slug, p_email: em.value, p_can_edit: mode.value === 'edit', p_name: myName() }).then(function () { return true; }); }, 'Invited')) { em.value = ''; drawInv(); } } }, 'Invite')),
-        h('p', { class: 'sub' }, 'They sign in with that email (it is added to the sign-in list if it was not there) and open this page. They see only this document.'), list);
-      drawInv();
+    // ---- icons for the bar (clock = version history, people = share) ----
+    function svg(path, size) { var sp = document.createElement('span'); sp.className = 'lv-ic'; sp.innerHTML = '<svg viewBox="0 0 24 24" width="' + (size || 20) + '" height="' + (size || 20) + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>'; return sp; }
+    var PATH = { history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/>', lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', back: '<path d="M19 12H5M11 6l-6 6 6 6"/>', close: '<path d="M6 6l12 12M18 6 6 18"/>', people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3a6.5 6.5 0 0 1 3.5 5.7"/>', dots: '<circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/>' };
+    function avatar(name, size) { return h('span', { class: 'lv-av', style: 'background:' + colourFor(name || '?') + ';width:' + (size || 32) + 'px;height:' + (size || 32) + 'px;font-size:' + Math.round((size || 32) * 0.45) + 'px' }, (name || '?').trim().charAt(0).toUpperCase()); }
+
+    // ---- Share (laid out like the Google Docs dialog) ----
+    function openShare() {
+      var overlay = h('div', { class: 'gd-overlay', onclick: function (ev) { if (ev.target === overlay) close(); } }), people = [], chips = [];
+      function close() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+      function onKey(ev) { if (ev.key === 'Escape') close(); }
+      document.addEventListener('keydown', onKey);
+      var input = h('input', { type: 'text', class: 'gd-add', placeholder: 'Add people by email', 'aria-label': 'Add people by email', autocomplete: 'off' });
+      var chipRow = h('div', { class: 'gd-chips' }), addBox = h('div', { class: 'gd-addbox' }, chipRow, input), roleSel = h('select', { class: 'gd-role', 'aria-label': 'Role' }, h('option', { value: 'edit' }, 'Editor'), h('option', { value: 'read' }, 'Commenter'));
+      var sendRow = h('div', { class: 'gd-send', hidden: true }), listEl = h('div', { class: 'gd-people' });
+      function takeChip() { var v = input.value.trim().replace(/[,;]$/, ''); if (!v) return; if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { P.toast('That is not an email address', true); return; } if (chips.indexOf(v.toLowerCase()) < 0) chips.push(v.toLowerCase()); input.value = ''; drawChips(); }
+      function drawChips() {
+        chipRow.replaceChildren.apply(chipRow, chips.map(function (c) { var x = h('button', { type: 'button', class: 'gd-x', 'aria-label': 'Remove ' + c, onclick: function () { chips.splice(chips.indexOf(c), 1); drawChips(); } }); x.appendChild(svg(PATH.close, 12)); return h('span', { class: 'gd-chip' }, avatar(c, 20), c, x); }));
+        sendRow.hidden = !chips.length; addBox.classList.toggle('has', !!chips.length);
+      }
+      input.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ',' || ev.key === ';' || ev.key === ' ') { ev.preventDefault(); takeChip(); } else if (ev.key === 'Backspace' && !input.value && chips.length) { chips.pop(); drawChips(); } });
+      input.addEventListener('blur', takeChip);
+      var sendBtn = h('button', { type: 'button', class: 'gd-btn fill', onclick: async function () {
+        takeChip(); if (!chips.length) return; var role = roleSel.value, done = 0;
+        for (var i = 0; i < chips.length; i++) { try { await rpc('policy_editor_add', { p_slug: slug, p_email: chips[i], p_can_edit: role === 'edit', p_name: myName() }); done++; } catch (e) { P.toast(P.friendly(e), true); } }
+        chips = []; drawChips(); if (done) P.toast('Shared with ' + done + (done === 1 ? ' person' : ' people')); load(); } }, 'Send');
+      sendRow.append(h('div', { class: 'gd-sendrole' }, roleSel), h('div', { class: 'gd-sendbtns' }, h('button', { type: 'button', class: 'gd-btn', onclick: function () { chips = []; drawChips(); } }, 'Cancel'), sendBtn));
+      function personRow(name, sub, right) { return h('div', { class: 'gd-person' }, avatar(name, 36), h('div', { class: 'gd-pn' }, h('div', { class: 'gd-name' }, name), sub ? h('div', { class: 'gd-sub' }, sub) : null), right); }
+      async function setRole(email, val, row) {
+        if (val === 'none') { if (!confirm('Remove access for ' + email + '?')) { load(); return; } try { await rpc('policy_editor_remove', { p_slug: slug, p_email: email }); P.toast('Removed access'); } catch (e) { P.toast(P.friendly(e), true); } load(); return; }
+        try { await rpc('policy_editor_add', { p_slug: slug, p_email: email, p_can_edit: val === 'edit', p_name: myName() }); } catch (e) { P.toast(P.friendly(e), true); } load();
+      }
+      async function load() {
+        var l = []; try { l = await rpc('policy_editor_list', { p_slug: slug }); } catch (e) { /* none */ }
+        var mine = P.me && (P.me.name || P.me.email) || 'You';
+        listEl.replaceChildren.apply(listEl, [personRow(mine + ' (you)', P.me && P.me.email || '', h('span', { class: 'gd-fixed' }, 'Owner')), personRow('ExCo members', 'Everyone on ExCo can edit the working copy', h('span', { class: 'gd-fixed' }, 'Editor'))].concat(l.map(function (e) {
+          var sel = h('select', { class: 'gd-role', 'aria-label': 'Role for ' + e.email, onchange: function () { setRole(e.email, sel.value); } }, h('option', { value: 'edit' }, 'Editor'), h('option', { value: 'read' }, 'Commenter'), h('option', { value: 'none' }, 'Remove access'));
+          sel.value = e.can_edit ? 'edit' : 'read'; return personRow(e.email, e.added_by ? 'Added by ' + e.added_by : '', sel);
+        })));
+      }
+      var dlg = h('div', { class: 'gd-dialog', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Share' },
+        h('div', { class: 'gd-title' }, 'Share “' + data.doc.title + '”'),
+        addBox, sendRow,
+        h('div', { class: 'gd-h' }, 'People with access'), listEl,
+        h('div', { class: 'gd-h' }, 'General access'),
+        h('div', { class: 'gd-person' }, h('span', { class: 'gd-gicon' }, svg(PATH.lock, 20)), h('div', { class: 'gd-pn' }, h('div', { class: 'gd-name' }, 'Restricted'), h('div', { class: 'gd-sub' }, 'Only ExCo and the people added above can open the working copy. Members read the published version.'))),
+        h('div', { class: 'gd-foot' }, h('button', { type: 'button', class: 'gd-btn', onclick: function () { var u = location.origin + location.pathname + '#/live/' + slug; P.copy ? P.copy(u).then(function () { P.toast('Link copied'); }) : navigator.clipboard.writeText(u).then(function () { P.toast('Link copied'); }); } }, svg(PATH.link, 18), ' Copy link'),
+          h('button', { type: 'button', class: 'gd-btn fill', onclick: close }, 'Done')));
+      overlay.appendChild(dlg); document.body.appendChild(overlay); load(); input.focus();
     }
 
-    var saves = null;
-    if (P.exco) {
-      var sl = h('div', { class: 'muted' });
-      saves = h('details', { class: 'lv-invite noprint', ontoggle: async function (ev) {
-        if (!ev.target.open) return;
-        try { var l = await rpc('policy_backups', { p_slug: slug }); sl.replaceChildren.apply(sl, l.slice(0, 30).map(function (b) {
-          return h('div', { class: 'row' }, h('span', { class: 'grow' }, new Date(b.saved_at).toLocaleString() + ' · ' + (b.by || '') + ' · ' + b.preview),
-            h('button', { class: 'ghost small', onclick: async function () { if (!confirm('Put this earlier save back for everyone? What is there now is kept as another earlier save.')) return;
-              if (await P.run(function () { return rpc('policy_restore_backup', { p_slug: slug, p_id: b.id, p_name: myName() }).then(function () { return true; }); }, 'Restored')) location.reload(); } }, 'Restore')); })); if (!l.length) sl.textContent = 'No earlier saves yet.'; } catch (e) { sl.textContent = 'Could not load earlier saves.'; } } },
-        h('summary', null, 'Earlier saves'), sl);
+    // ---- Version history (laid out like the Google Docs panel) ----
+    var histOpen = false, histPanel = null, histPreview = null, histTop = null, curView = null;
+    function dayLabel(d) { var t = new Date(); t.setHours(0, 0, 0, 0); var x = new Date(d); x.setHours(0, 0, 0, 0); var diff = Math.round((t - x) / 864e5); return diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : x.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: x.getFullYear() === t.getFullYear() ? undefined : 'numeric' }); }
+    function stamp(d) { return new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }); }
+    async function openHistory() {
+      if (histOpen) return; histOpen = true; cmBtn.hidden = true;
+      var named = false, sel = null, items = [], body = h('div', { class: 'gd-hbody' }), onlyNamed = h('input', { type: 'checkbox', id: 'gd-named' });
+      var pv = h('div', { class: 'lv-editor lv-prev' }), pvEd = null, banner = h('div', { class: 'gd-hbar' });
+      function show(item) {
+        sel = item; draw();
+        (async function () {
+          var md = '';
+          try { md = item.kind === 'current' ? LE.markdownOf(ed) : item.kind === 'pub' ? ((await rpc('policy_text', { p_slug: slug, p_version: item.version })) || {}).body_md : await rpc('policy_backup_text', { p_slug: slug, p_id: item.id }); } catch (e) { P.toast('Could not load that version', true); }
+          if (pvEd) pvEd.destroy(); pv.replaceChildren(); pvEd = LE.preview(pv, md || '');
+        })();
+        banner.replaceChildren(h('span', { class: 'gd-hname' }, item.kind === 'current' ? 'Current version' : item.label || stamp(item.at)),
+          item.kind !== 'save' || !canEdit ? null : h('button', { type: 'button', class: 'gd-btn fill', onclick: async function () {
+            if (!confirm('Restore this version for everyone? What is there now is kept in the version history.')) return;
+            if (await P.run(function () { return rpc('policy_restore_backup', { p_slug: slug, p_id: item.id, p_name: myName() }).then(function () { return true; }); }, 'Restored')) location.reload(); } }, 'Restore this version'));
+      }
+      function draw() {
+        var list = items.filter(function (i) { return !onlyNamed.checked || i.kind === 'pub'; }), last = '';
+        var out = [];
+        list.forEach(function (i) {
+          var lab = dayLabel(i.at); if (lab !== last) { out.push(h('div', { class: 'gd-day' }, lab)); last = lab; }
+          var on = sel && sel.key === i.key;
+          out.push(h('button', { type: 'button', class: 'gd-ver' + (on ? ' on' : ''), onclick: function () { show(i); } },
+            h('span', { class: 'gd-vtxt' }, h('span', { class: i.kind === 'pub' ? 'gd-vt named' : 'gd-vt' }, i.kind === 'current' ? 'Current version' : i.label || stamp(i.at)),
+              i.kind === 'pub' ? h('span', { class: 'gd-vs' }, stamp(i.at)) : null,
+              h('span', { class: 'gd-vwho' }, h('i', { style: 'background:' + colourFor(i.by || '?') }), i.by || 'Someone'))));
+        });
+        if (!out.length) out.push(h('div', { class: 'muted', style: 'padding:16px' }, 'No named versions yet. A version is named when the President publishes.'));
+        body.replaceChildren.apply(body, out);
+      }
+      onlyNamed.addEventListener('change', draw);
+      var back = h('button', { type: 'button', class: 'gd-back', 'aria-label': 'Back to the document', onclick: closeHistory }); back.appendChild(svg(PATH.back, 22));
+      histPanel = h('aside', { class: 'gd-hist', 'aria-label': 'Version history' }, h('div', { class: 'gd-htitle' }, 'Version history'), body,
+        h('label', { class: 'gd-hfoot', for: 'gd-named' }, onlyNamed, ' Only show named versions'));
+      histTop = h('div', { class: 'gd-htop' }, back, h('span', { class: 'gd-hname' }, 'Version history'), banner);
+      lvEl.classList.add('hist'); lvBody.replaceChildren(pv, histPanel); lvRoot.insertBefore(histTop, lvHead); toolbarWrap.hidden = true; lvHead.hidden = true; lvIntro.hidden = true;
+      curView = pv;
+      var bk = []; try { bk = await rpc('policy_backups', { p_slug: slug }); } catch (e) { /* none */ }
+      var pubs = (data.versions || (await rpc('policy_text', { p_slug: slug, p_version: data.doc.version > 0 ? data.doc.version : null }).catch(function () { return null; }) || {}).versions || []);
+      items = [{ kind: 'current', key: 'cur', at: new Date().toISOString(), by: 'You and others, now' }]
+        .concat(pubs.map(function (v) { return { kind: 'pub', key: 'p' + v.version, version: v.version, at: (v.effective_on || new Date().toISOString().slice(0, 10)) + 'T12:00:00', by: v.by, label: 'Version ' + v.version + (v.note ? ': ' + v.note : '') }; }))
+        .concat(bk.map(function (b) { return { kind: 'save', key: 'b' + b.id, id: b.id, at: b.saved_at, by: b.by }; }));
+      items.sort(function (a, b) { return a.kind === 'current' ? -1 : b.kind === 'current' ? 1 : new Date(b.at) - new Date(a.at); });
+      show(items[0]);
     }
-    P.show(h('div', { class: 'lv' }, h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, data.doc.title), h('span', { class: 'pill warn' }, 'Working copy'), data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, people, status),
-      h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.'),
-      invites, saves, toolbar, h('div', { class: 'lv-body' }, editorEl, notesCol)));
+    function closeHistory() {
+      if (!histOpen) return; histOpen = false; if (histTop) histTop.remove(); lvEl.classList.remove('hist'); lvBody.replaceChildren(editorEl, notesCol); toolbarWrap.hidden = false; lvHead.hidden = false; lvIntro.hidden = false; paintNotes();
+    }
+
+    var histBtn = h('button', { type: 'button', class: 'gd-iconbtn', title: 'Version history', 'aria-label': 'Version history', onclick: openHistory }); histBtn.appendChild(svg(PATH.history, 22));
+    var shareBtn = h('button', { type: 'button', class: 'gd-share', onclick: openShare }); shareBtn.appendChild(svg(PATH.lock, 16)); shareBtn.appendChild(document.createTextNode(' Share'));
+    var lvHead = h('div', { class: 'lv-head' }, h('a', { href: '#/' }, '← Documents'), h('h1', null, data.doc.title), h('span', { class: 'pill warn' }, 'Working copy'),
+      data.doc.version > 0 ? h('a', { href: '#/d/' + slug + '?v=' + data.doc.version }, 'Published version ' + data.doc.version) : null, status, h('span', { class: 'lv-spacer' }), people,
+      P.exco ? histBtn : null, P.exco || canEdit ? shareBtn : null);
+    var lvIntro = h('p', { class: 'muted' }, canEdit ? 'Everyone here edits the same working copy at once. The President publishes it as the next version; the published text does not change until then.' : 'You can read and comment. You cannot edit.');
+    var toolbarWrap = h('div', null, toolbar);
+    var lvBody = h('div', { class: 'lv-body' }, editorEl, notesCol);
+    var lvEl = h('div', { class: 'lv' }, lvHead, lvIntro, toolbarWrap, lvBody), lvRoot = lvEl;
+    P.show(lvEl);
     document.body.appendChild(cmBtn);
     awareness.setLocalStateField('user', me);
     ed = LE.create({ element: editorEl, ydoc: ydoc, awareness: awareness, user: me, editable: canEdit,
