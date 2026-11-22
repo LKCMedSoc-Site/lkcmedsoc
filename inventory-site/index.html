@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#1c0529">
-  <title>LKCMedSoc Inventory (Supabase trial)</title>
+  <title>LKCMedSoc Inventory</title>
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
   <link rel="preload" href="https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN-Regular.woff2" as="font" type="font/woff2" crossorigin>
@@ -14,6 +14,12 @@
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <link rel="icon" sizes="32x32" href="favicon.ico">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="sso.js"></script>
+  <script src="signin.js"></script>
+  <script src="suite-nav.js" defer></script>
+  <!-- Google sign-in: only for the shared Gmail accounts of groups, committees, houses and years -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     @font-face { font-family: "DIN"; src: url("https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
@@ -22,15 +28,15 @@
 
     /* ---------- design tokens: purple and white ---------- */
     :root {
-      --hdr: #1c0529;
-      --btn: #430f5c;  --on-btn: #ffffff;
-      --link: #6a2490;
-      --accent: #b06ad0;
-      --tint: #f7eefb; --tint-2: #ebd9f4;
-      --paper: #fbf8fd; --card: #ffffff; --sheet: #ffffff;
-      --scrim: rgba(18,4,28,0.72);
-      --ink: #26102e;  --ink-2: #64506f;
-      --line: #eadff0; --line-2: #d9c8e4;
+      --hdr: #3a0a2e;
+      --btn: #5b1348;  --on-btn: #ffffff;
+      --link: #86306f;
+      --accent: #a8478f;
+      --tint: #faf5f9; --tint-2: #f1e4ee;
+      --paper: #fbf7fa; --card: #ffffff; --sheet: #ffffff;
+      --scrim: rgba(42,6,40,0.72);
+      --ink: #26121f;  --ink-2: #6a5a69;
+      --line: #eee2eb; --line-2: #e3d3df;
       --ok: #17724a;
       --warn-bg: #fff6dc; --warn-ink: #6b5200; --warn-line: #f0e2a8;
       --danger: #b3261e; --danger-bg: #fde9e7;
@@ -41,15 +47,15 @@
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --hdr: #0f0317;
-        --btn: #c58ae6;  --on-btn: #1b0728;
-        --link: #d3a6ee;
-        --accent: #c58ae6;
-        --tint: #25132f; --tint-2: #36203f;
-        --paper: #0d0514; --card: #170a20; --sheet: #26153a;
+        --hdr: #2a0628;
+        --btn: #d3a6cf;  --on-btn: #2a0628;
+        --link: #e3bfdd;
+        --accent: #d3a6cf;
+        --tint: #2b1228; --tint-2: #3b1d37;
+        --paper: #140612; --card: #1d0a1b; --sheet: #2b1228;
         --scrim: rgba(0,0,0,0.86);
-        --ink: #f4ecf9;  --ink-2: #b9a3c8;
-        --line: #2f1d42; --line-2: #4a3363;
+        --ink: #f5eff5;  --ink-2: #c3aebf;
+        --line: #36192f; --line-2: #4f2a48;
         --ok: #6fd3a0;
         --warn-bg: #3a3012; --warn-ink: #f1dc95; --warn-line: #5a4a1a;
         --danger: #ff8a80; --danger-bg: #3d1a1d;
@@ -66,18 +72,27 @@
     .ic.sm { width: 16px; height: 16px; }
 
     /* ---------- header ---------- */
-    .header { background: var(--hdr); color: #fff; padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); min-height: 60px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .header { background: var(--hdr); color: #fff; padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); min-height: 56px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .brand-mark { width: 40px; height: 40px; border-radius: 10px; overflow: hidden; flex: none; }
     .brand-mark img { display: block; width: 100%; height: 100%; }
     .brand-text { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
     .brand-text small { font-size: 13px; font-weight: 500; opacity: 0.8; letter-spacing: 0.02em; }
     .brand-text strong { font-family: var(--font-title); font-size: 21px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; }
+    .brand-suite { color: #fff; text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 18px; white-space: nowrap; }
+    .brand-suite span { color: #c79bbd; font-weight: 400; }
+    .hdr-signin { background: transparent; color: #fff; border: 1px solid #c79bbd; border-radius: 6px; padding: 6px 14px; font: inherit; font-size: 14px; font-weight: 700; line-height: 1.2; cursor: pointer; }
+    .hdr-signin:hover { background: rgba(255,255,255,0.12); }
+    .gbtn { flex-direction: column; align-items: center; gap: 10px; }
+    .gbtn .ntu-btn { min-width: 240px; }
+    .gbtn .g-alt { font-size: 13px; color: var(--ink-2); text-align: center; margin-top: 6px; }
+    .gbtn .g-slot { color-scheme: light; min-height: 32px; }
+    .gbtn .g-help { font-size: 12px; color: var(--link); text-decoration: underline; cursor: pointer; }
     #authSlot { display: flex; align-items: center; gap: 10px; min-height: 36px; flex-wrap: wrap; justify-content: flex-end; }
     .trouble-link { color: #fff; font-size: 12px; opacity: 0.85; text-decoration: underline; cursor: pointer; white-space: nowrap; }
     .hdr-icon { display: none; width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(255,255,255,0.16); color: #fff; place-items: center; cursor: pointer; padding: 0; }
     .hdr-icon:hover { background: rgba(255,255,255,0.26); }
-    #gsiHeaderBtn, #gsiModalBtn, #gsiPopBtn { color-scheme: light; border-radius: 999px; overflow: hidden; line-height: 0; display: inline-block; }
+    #gsiHeaderBtn { display: inline-block; }
     #gsiModalBtn, #gsiPopBtn { display: flex; justify-content: center; }
     .user-badge { font-size: 14px; font-weight: 600; background: rgba(255,255,255,0.16); padding: 7px 14px; border-radius: 999px; cursor: pointer; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .user-badge:hover { background: rgba(255,255,255,0.24); }
@@ -226,7 +241,7 @@
     .sort-ctl select { width: auto !important; padding: 6px 28px 6px 10px !important; font-size: 14px !important; min-height: 36px; }
     .sort-dir { min-width: 36px; min-height: 36px; border-radius: var(--r-ctl); border: 1.5px solid var(--line-2); background: var(--card); color: var(--ink); cursor: pointer; display: grid; place-items: center; }
     [data-row] { scroll-margin-top: 200px; scroll-margin-bottom: 110px; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: hsl(var(--h), 60%, calc(var(--dot-l) + var(--dj, 0) * 1%)); flex: none; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bc, hsl(var(--h), 60%, calc(var(--dot-l) + var(--dj, 0) * 1%))); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18); flex: none; }
 
     .cards { display: grid; gap: 8px; }
     .item-card { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px 12px 12px 14px; cursor: pointer; }
@@ -584,7 +599,7 @@
     .grp-card.drop-ok { outline: 3px solid var(--btn, #5b2a86); outline-offset: -3px; background: color-mix(in srgb, var(--btn, #5b2a86) 16%, transparent); }
     .grp-card.drop-no { outline: 3px dashed #b3261e; outline-offset: -3px; }
     #dragGhost { position: fixed; z-index: 700; pointer-events: none; background: var(--btn, #5b2a86); color: var(--on-btn, #fff); font-weight: 700; font-size: 14px; padding: 8px 14px; border-radius: 999px; box-shadow: 0 6px 18px rgba(20,6,30,.4); max-width: 70vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: translate(-50%, -140%); }
-    .it-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 210px 150px; gap: 12px; align-items: center; padding: 10px 16px 10px 12px; border-top: 1px solid var(--line-2); border-left: 6px solid hsl(var(--h) 66% calc(var(--dot-l) + var(--dj, 0) * 1%)); cursor: pointer; background: var(--card); }
+    .it-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 210px 150px; gap: 12px; align-items: center; padding: 10px 16px 10px 12px; border-top: 1px solid var(--line-2); border-left: 6px solid var(--bc, hsl(var(--h) 66% calc(var(--dot-l) + var(--dj, 0) * 1%))); cursor: pointer; background: var(--card); }
     .pcard > .grp-card + .pc-body > .it-row:first-child, .pc-sub > .grp-card + .it-row { border-top: none; }
     .pc-body > .it-row { padding-right: 30px; }
     .it-row:hover { background: var(--tint); }
@@ -629,7 +644,7 @@
     .te-tbl tr.del td.tc, .te-tbl tr.del td.rh { text-decoration: line-through; background: var(--danger-bg); color: var(--danger); opacity: 0.75; }
     .modal.wide { max-width: min(1180px, 97vw); }
     .it-desc, .it-rem { color: var(--ink-2); font-size: 13px; margin-top: 1px; }
-    .own-pill { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px 12px 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; background: hsl(var(--h) 70% calc(var(--dot-l) + var(--dj, 0) * 1%) / .2); border: 1.5px solid hsl(var(--h) 66% calc(var(--dot-l) + var(--dj, 0) * 1%) / .75); color: hsl(var(--h) 60% var(--pill-l)); }
+    .own-pill { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 4px 12px 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; background: hsl(var(--h) calc(70% * var(--bs, 1)) calc(var(--dot-l) + var(--dj, 0) * 1%) / .2); border: 1.5px solid var(--bc, hsl(var(--h) 66% calc(var(--dot-l) + var(--dj, 0) * 1%) / .75)); color: hsl(var(--h) calc(60% * var(--bs, 1)) var(--pill-l)); }
     .own-pill > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .own-pill .dot { width: 11px; height: 11px; }
     .it-qty { display: flex; justify-content: center; }
@@ -707,8 +722,7 @@
 
   <div class="header" id="appHeader">
     <div class="brand">
-      <span class="brand-mark"><img src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMTkuMjQgMjE5LjI0Ij4gPGRlZnM+IDxzdHlsZT4gLmNscy0xIHsgZmlsbDogIzU3MDA0ZjsgfSAuY2xzLTIgeyBmaWxsOiAjZmZmOyB9IDwvc3R5bGU+IDwvZGVmcz4gPGcgaWQ9IkxheWVyXzEtMiIgZGF0YS1uYW1lPSJMYXllciAxIj4gPHJlY3QgY2xhc3M9ImNscy0yIiB3aWR0aD0iMjE5LjI0IiBoZWlnaHQ9IjIxOS4yNCIgcng9IjQ0Ii8+IDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTIxOS4yNCw1NS45N1YwaC01OS44OGwtNC40NSwxNDQuMDQtMzIuMzMsNy45OUwxMTcuODksMEgwdjIxOS4yM2g2OC42NmMwLS4zNiwwLS43MSwwLTEuMDcuMjYtMzAuNTcsMzQuOTMtNTQuMTQsNzQuNjMtNTguMzksMzkuNjktNC4yMyw1My40MS0yNy4wNSw1Mi41My01MC44OS0uNzYtMjEuMDctMTIuOC0yOS40NC0zMi44Mi0zMy40MmwxLjMyLTQwLjc2YzE4LjA3LDEuMjYsMzkuNDEsNy4wMSw1NC45MywyMS4yN1pNMTA5LjgxLDg4LjZjLTIuMTUsMS4xMS01Ljg0LDExLjkxLTYuNTEsMTQuNDktLjY0LDIuNTgtMi42LDMuMzUtOS42LDEwLjY2LTYuOTksNy4zMS0xMi45NywxNS4xOS0yNi4yNCwxOS4wNC0xMy4yNywzLjg1LTIxLjYyLDMuNDMtMjEuNjIsMy40My02LjMuNTQtNi40NSwzLjE0LTcuOTMsNS4xNi0yLjgyLDMuODQtLjYxLDExLjgzLTMuNzQsMTEuNjctMy4xNC0uMTYuMTktNi45Ny0yLjA4LTEwLjM5LTIuMjYtMy40My0xMC42Ny40OS0xMS41Ni0xLjk5LTEuNTItNC4wOSw4LjgzLTIuNDIsMTAuOTQtMi44NCwyLjEyLS40MSwzLjIxLTEuNjcsNS4xOC00LjE4LDEuOTUtMi41MiwzLjY2LTEwLjI3LDUuNDUtMTkuNiwxLjc4LTkuMzEsNi43NS0xOS41MSw5LjY1LTI1LjExLDIuOTEtNS42MSwyMC40My0xNy42MSwyNC4yMS0yMC4wMiwzLjc4LTIuNDIsNS4xOC0yLjUyLDE5LjQzLTQuOTMsNy4yMi0xLjIyLDEzLjA3LTcuNzksMTguNDMtMTIuODlsMS40MSwzMy40M2MtMy40NywyLjMxLTUuNDIsNC4wNy01LjQyLDQuMDdaTTE0OC41OSwxOTIuOWMtMjIuMDksMi40OS0zNi41NiwxMy44My0zOS4yMSwyNi4zM2gxNS4yOGwtLjI1LTguMDEsMjguNzItOS4wNC0uNTMsMTcuMDVoNjYuNjR2LTYyLjY4Yy0xOS4xMywyMC43NS00Ny43MiwzMy43Ny03MC42NSwzNi4zNVoiLz4gPC9nPiA8L3N2Zz4=" alt="LKCMedSoc" width="40" height="40"></span>
-      <span class="brand-text"><small>LKCMedSoc</small><strong>Inventory</strong></span>
+      <a class="brand-suite" href="/">LKCMedSoc <span>Inventory</span></a>
     </div>
     <span id="authSlot">
       <span id="gsiHeaderBtn"></span>
@@ -1051,7 +1065,7 @@
           <div id="signinPopMsg">Your sign-in has expired. Sign in again to save your changes.</div>
           <div id="gsiPopBtn" class="gbtn"></div>
         </div>
-        <div class="hint" style="text-align:center;">Your changes are kept. Signing in finishes the save.</div>
+        <div class="hint" id="signinPopHint" style="text-align:center;">Your changes are kept. Signing in finishes the save.</div>
       </div>
     </div>
   </div>
@@ -1270,12 +1284,23 @@
   </div>
 
   <script>
-    // ==============================================================
-    // SETTINGS - the only two lines you ever need to edit.
-    // ==============================================================
-    const SCRIPT_B_URL = "https://brwdgbitxisadwbuwbdi.supabase.co/functions/v1/api";
-    const SB_PUBLISHABLE_KEY = "sb_publishable_iVGn5p_HufuRZYEiAP_IyA_qxizqqfM";
-    const GOOGLE_CLIENT_ID = "670485583889-faa0hdrce3f9no59kivehagq4tvs8she.apps.googleusercontent.com";
+    // Settings live in config.js (window.PORTAL_CONFIG), like every other LKCMedSoc app.
+    const CFG = window.PORTAL_CONFIG || {};
+    const SCRIPT_B_URL = CFG.API_URL || "https://brwdgbitxisadwbuwbdi.supabase.co/functions/v1/api";
+    const SB_PUBLISHABLE_KEY = CFG.SUPABASE_ANON_KEY || "sb_publishable_iVGn5p_HufuRZYEiAP_IyA_qxizqqfM";
+    const GOOGLE_CLIENT_ID = CFG.GOOGLE_CLIENT_ID || "";
+
+    // NTU sign-in: the same account, and on lkcmedsoc.com the same shared sign-in cookie, as every other LKCMedSoc app
+    // (sso.js, signin.js). The Supabase sign-in token is sent to the api function, which checks it with Supabase.
+    const sb = (window.supabase && window.LKCSession && CFG.SUPABASE_URL)
+      ? window.supabase.createClient(CFG.SUPABASE_URL, SB_PUBLISHABLE_KEY, { auth: { storage: window.LKCSession.storage } })
+      : null;
+    let sbSession = null;
+    const sbReady = sb ? sb.auth.getSession().then(function (r) { sbSession = (r && r.data && r.data.session) || null; }).catch(function () {}) : Promise.resolve();
+    if (sb) sb.auth.onAuthStateChange(function (ev, session) {
+      if (ev === 'SIGNED_OUT') { sbSession = null; return; }
+      if (session) sbSession = session;
+    });
 
     // Don't let other sites embed this page (clickjacking guard).
     if (window.top !== window.self) { document.documentElement.style.display = 'none'; }
@@ -1327,12 +1352,31 @@
       try { localStorage.setItem(TOKEN_KEY, JSON.stringify(authToken)); } catch (e) {}
       return true;
     }
-    function clearToken() {
+    function clearGoogleToken() {
       authToken = null;
       try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
     }
+    // The server turned the sign-in down. A Google sign-in is simply forgotten. An NTU sign-in is shared with the other
+    // LKCMedSoc sites, so it isn't signed out here: it is set aside and renewed once in the background, which fixes an
+    // expired token; if renewing works, the data is loaded again as that person.
+    let lastSbRefresh = 0;
+    function clearToken() {
+      const hadGoogle = !!authToken;
+      clearGoogleToken();
+      if (hadGoogle || !sbSession || !sb) return;
+      sbSession = null;
+      if (Date.now() - lastSbRefresh < 60000) return;
+      lastSbRefresh = Date.now();
+      sb.auth.refreshSession().then(function (r) {
+        const s = r && r.data && r.data.session;
+        if (s) { sbSession = s; renderAuthUi(); loadData(true); }
+      }).catch(function () {});
+    }
     function getValidToken() {
-      return (authToken && authToken.exp > Date.now() / 1000 + 30) ? authToken.token : null;
+      const now = Date.now() / 1000 + 30;
+      if (authToken && authToken.exp > now) return authToken.token;                        // a group's Gmail account
+      if (sbSession && sbSession.access_token && sbSession.expires_at > now) return sbSession.access_token;   // NTU sign-in
+      return null;
     }
 
     function initGsi() {
@@ -1488,8 +1532,8 @@
       bar.textContent = '';
       bar.className = 'inapp-bar' + (kind === 'phone' ? ' soft' : '');
       const msg = document.createElement('div');
-      if (kind === 'app') msg.textContent = "Google sign-in doesn't work in this app's browser. Open the link in Safari or Chrome (⋯ or share icon).";
-      else if (kind === 'stalled') msg.textContent = "Sign-in not finishing? If a blank white page appeared, sign-in can't work in this browser window. Open this page in Safari or Chrome (not inside Telegram, WhatsApp etc.), or try the full-page sign-in.";
+      if (kind === 'app') msg.textContent = "Google sign-in (for group Gmail accounts) doesn't work in this app's browser. Open the link in Safari or Chrome (⋯ or share icon).";
+      else if (kind === 'stalled') msg.textContent = "Google sign-in not finishing? If a blank white page appeared, sign-in can't work in this browser window. Open this page in Safari or Chrome (not inside Telegram, WhatsApp etc.), or try the full-page sign-in.";
       else msg.textContent = "To sign in on your phone, open this page in Safari or Chrome, not inside another app.";
       if (kind === 'phone') {
         const x = document.createElement('button');
@@ -1503,6 +1547,9 @@
       bar.style.display = 'block';
     }
     function showStartupNotice() {
+      // Most people now sign in with their NTU email, which works in any browser, so no warning is shown up front.
+      // Group Gmail accounts still get the "sign-in not finishing" help if Google's pop-up stalls (armSigninWatch).
+      return;
       if (getValidToken() || !clientIdSet()) return;
       if (isInAppBrowser()) { showSigninNotice('app'); return; }
       if (isMobileBrowser() && !noticeDismissedRecently()) showSigninNotice('phone');
@@ -1534,18 +1581,61 @@
       return /iPhone|iPad|iPod/.test(ua) && !/Safari\//.test(ua);   // iOS web views have no "Safari/" token
     }
 
+    // Draws the sign-in choices into a box. The header gets one "Sign in" button that opens the choices;
+    // the other boxes get "Sign in with NTU email" plus, for the shared Gmail accounts of groups, Google's button.
     function drawGsiButton(targetId) {
       const t = el(targetId);
-      if (!t || !gsiReady) return;
+      if (!t) return;
       t.innerHTML = '';
-      google.accounts.id.renderButton(t, { type: 'standard', theme: 'outline', size: 'medium', text: 'signin', shape: 'pill' });
+      const ntu = document.createElement('button');
+      ntu.type = 'button';
+      if (targetId === 'gsiHeaderBtn') {
+        ntu.className = 'hdr-signin';
+        ntu.textContent = 'Sign in';
+        ntu.onclick = openSigninChooser;
+        t.appendChild(ntu);
+        return;
+      }
+      ntu.className = 'btn-primary ntu-btn';
+      ntu.textContent = 'Sign in with NTU email';
+      ntu.onclick = ntuSignIn;
+      t.appendChild(ntu);
+      if (!clientIdSet()) return;
+      const lab = document.createElement('div');
+      lab.className = 'g-alt';
+      lab.textContent = 'Signing in with a group, committee, house or year Gmail account?';
+      const g = document.createElement('div');
+      g.className = 'g-slot';
+      t.appendChild(lab);
+      t.appendChild(g);
+      if (gsiReady) google.accounts.id.renderButton(g, { type: 'standard', theme: 'outline', size: 'medium', text: 'signin_with', shape: 'pill' });
+      else g.textContent = "Google sign-in is still loading. Try again in a moment.";
+      const help = document.createElement('a');
+      help.className = 'g-help'; help.role = 'button'; help.tabIndex = 0; help.textContent = 'Trouble with Google sign-in?';
+      help.onclick = openSigninHelp;
+      t.appendChild(help);
     }
-
-    function onCredential(resp) {
-      const pl = resp && resp.credential ? jwtPayload(resp.credential) : null;
-      dbg('onCredential fired. hasCredential=' + !!(resp && resp.credential) + (pl ? ' email=' + pl.email + ' aud=...' + String(pl.aud).slice(-30) + ' exp=' + pl.exp : ' (could not read token)'));
-      if (!resp || !resp.credential || !saveToken(resp.credential)) { dbg('token not saved'); return; }
-      dbg('token saved, reloading data as signed-in user');
+    function ntuSignIn() {
+      if (!sb || !window.LKCSignIn) { alert("Sign-in isn't available right now. Reload the page and try again."); return; }
+      el('signinModal').style.display = 'none';   // the sign-in lightbox goes on top; a waiting save is kept
+      window.LKCSignIn.open({
+        sb: sb,
+        redirect: location.origin + location.pathname,
+        onSignedIn: function () {
+          sb.auth.getSession().then(function (r) { sbSession = (r && r.data && r.data.session) || null; afterSignIn(); });
+        }
+      });
+    }
+    // The header's Sign in button: the same choices as "sign in again", with its own words.
+    function openSigninChooser() {
+      pendingAction = null;
+      el('sipTitle').textContent = 'Sign in';
+      el('signinPopMsg').textContent = 'Sign in with your NTU email, the same account as the other LKCMedSoc apps.';
+      el('signinPopHint').style.display = 'none';
+      drawGsiButton('gsiPopBtn');
+      el('signinModal').style.display = 'flex';
+    }
+    function afterSignIn() {
       el('modalSignin').style.display = 'none';
       el('signinModal').style.display = 'none';
       const retry = pendingAction;
@@ -1557,8 +1647,18 @@
       loadData(true, retry, true);
     }
 
+    function onCredential(resp) {
+      const pl = resp && resp.credential ? jwtPayload(resp.credential) : null;
+      dbg('onCredential fired. hasCredential=' + !!(resp && resp.credential) + (pl ? ' email=' + pl.email + ' aud=...' + String(pl.aud).slice(-30) + ' exp=' + pl.exp : ' (could not read token)'));
+      if (!resp || !resp.credential || !saveToken(resp.credential)) { dbg('token not saved'); return; }
+      dbg('token saved, reloading data as signed-in user');
+      afterSignIn();
+    }
+
     function signOut() {
-      clearToken();
+      clearGoogleToken();
+      // Signing out of the NTU account signs out of every LKCMedSoc site, the same as on the others.
+      if (sb && sbSession) { sbSession = null; sb.auth.signOut().catch(function () {}); }
       signingIn = false;
       pendingAction = null;
       try { if (gsiReady) google.accounts.id.disableAutoSelect(); } catch (e) {}
@@ -1585,9 +1685,9 @@
     function renderAuthUi() {
       // While the saved copy or first load is showing we don't know yet, so keep the badge.
       const signedIn = signingIn || (!!getValidToken() && (currentEmail !== "" || isStale || !dataLoaded));
-      const showBtn = gsiReady && !signedIn;
+      const showBtn = !signedIn;
       el('gsiHeaderBtn').style.display = showBtn ? '' : 'none';
-      el('troubleLink').style.display = (!signedIn && clientIdSet()) ? '' : 'none';
+      el('troubleLink').style.display = 'none';   // the Google help link now sits under the Google button
       el('userEmailBadge').style.display = showBtn ? 'none' : '';
       if (signingIn) el('userEmailBadge').textContent = "Signing in…";
       if (showBtn && !el('gsiHeaderBtn').firstChild) drawGsiButton('gsiHeaderBtn');
@@ -1641,15 +1741,15 @@
         el('modalSigninMsg').textContent = text;
         el('modalSignin').style.display = 'block';
         try { el('modalSignin').scrollIntoView({ block: 'nearest' }); } catch (e) {}
-        if (gsiReady) drawGsiButton('gsiModalBtn');
-        else el('gsiModalBtn').textContent = "Sign-in isn't available right now. Reload the page and try again.";
+        drawGsiButton('gsiModalBtn');
         return;
       }
       // any other form or screen: show the sign-in on top, so the save is never silently stuck
+      el('sipTitle').textContent = 'Sign in again';
       el('signinPopMsg').textContent = text;
+      el('signinPopHint').style.display = '';
       el('signinModal').style.display = 'flex';
-      if (gsiReady) drawGsiButton('gsiPopBtn');
-      else el('gsiPopBtn').textContent = "Sign-in isn't available right now. Reload the page and try again.";
+      drawGsiButton('gsiPopBtn');
       ['leSave', 'rsSave', 'moveSave'].forEach(function (id) { const b = el(id); if (b && b.disabled && /…$/.test(b.textContent)) { b.disabled = false; b.textContent = id === 'leSave' ? 'Save location' : id === 'rsSave' ? 'Save size' : 'Move here'; } });
     }
     function closeSigninPop() { el('signinModal').style.display = 'none'; pendingAction = null; }
@@ -1823,7 +1923,11 @@
       // Show the last saved copy instantly (if any), then refresh from the server.
       const saved = readCache();
       if (saved && saved.items) showSavedCopy(saved);
-      loadData(!!returned, null, !!returned);
+      loadBodyColours();
+      sbReady.then(function () {
+        renderAuthUi();
+        loadData(!!returned, null, !!returned);
+      });
       racePublished();
 
       // If nothing has arrived after 6 seconds, explain why.
@@ -1880,12 +1984,12 @@
         if (afterLoad) afterLoad();
       }).catch(function (err) {
         // The server really rejected the stored sign-in: drop it and carry on as a guest.
-        if (err && err.code === 'AUTH' && authToken) {
+        if (err && err.code === 'AUTH' && (authToken || sbSession)) {
           clearToken();
           signingIn = false;
           hideBusy();
           if (fromSignIn) {
-            alert("Google accepted your account, but the server did not accept the sign-in, so you are still a guest.\n\nPlease try signing in again. If it keeps happening, tell an admin.");
+            alert((err.message || "The server did not accept the sign-in.") + "\n\nYou are still a guest.");
           }
           loadData();
           return;
@@ -2136,7 +2240,7 @@
       if (isAnon) {
         h += accessSection("Signed in as", "Guest (not logged in)");
         h += '<div class="access-level">View only</div>';
-        h += '<p class="hint">View only. <b>Sign in with Google</b> at the top to edit, if an admin has given you access.</p>';
+        h += '<p class="hint">View only. <b>Sign in</b> at the top to edit, if an admin has given you access.</p>';
       } else {
         const own = p.ownBodies || [];
         const child = p.childBodies || [];
@@ -2346,8 +2450,54 @@
     let flashRow = null;       // row to highlight briefly after a save
     const LASTADD_KEY = 'lkc_last_add_v1';
 
-    // Each owning body gets its own shade of purple, always the same one.
+    // Each owning body is drawn in the colour it chose in Records (records.public_bodies.color, the same colour as on its
+    // website page). Bodies that haven't chosen one get a generated shade, always the same one.
+    // Returns the inside of a style="--h:…" attribute: --h hue, --bs saturation (0-1), --bc the exact colour for dots and stripes.
+    const BODY_COLOUR_KEY = 'lkc_body_colours_v1';
+    let bodyColours = {};
+    try { bodyColours = JSON.parse(localStorage.getItem(BODY_COLOUR_KEY) || '{}') || {}; } catch (e) { bodyColours = {}; }
+    const NAMED_COLOURS = { slate: '#64748b' };   // names used in Records that browsers don't know
+    function colourToHex(c) {
+      c = String(c || '').trim().toLowerCase();
+      if (!c) return '';
+      if (NAMED_COLOURS[c]) return NAMED_COLOURS[c];
+      if (/^#[0-9a-f]{6}$/.test(c)) return c;
+      if (/^#[0-9a-f]{3}$/.test(c)) return '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+      try {
+        const x = document.createElement('canvas').getContext('2d');
+        x.fillStyle = '#010203'; x.fillStyle = c;
+        return (x.fillStyle !== '#010203' && /^#[0-9a-f]{6}$/.test(x.fillStyle)) ? x.fillStyle : '';
+      } catch (e) { return ''; }
+    }
+    function hexHueSat(hex) {
+      const r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, l = (mx + mn) / 2;
+      if (d === 0) return { h: 0, s: 0 };
+      let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h = Math.round(h * 60); if (h < 0) h += 360;
+      return { h: h, s: d / (1 - Math.abs(2 * l - 1)) };
+    }
+    function loadBodyColours() {
+      if (!CFG.SUPABASE_URL) return;
+      fetch(CFG.SUPABASE_URL + '/rest/v1/public_bodies?select=name,color', { headers: { apikey: SB_PUBLISHABLE_KEY, 'Accept-Profile': 'records' }, credentials: 'omit' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (rows) {
+          if (!Array.isArray(rows)) return;
+          const next = {};
+          rows.forEach(function (b) { const hx = colourToHex(b.color); if (b.name && hx) next[b.name] = hx; });
+          const changed = JSON.stringify(next) !== JSON.stringify(bodyColours);
+          bodyColours = next;
+          try { localStorage.setItem(BODY_COLOUR_KEY, JSON.stringify(next)); } catch (e) {}
+          if (changed && dataLoaded) renderList();
+        })
+        .catch(function () {});
+    }
     function bodyHue(name) {
+      const hex = bodyColours[String(name || '')];
+      if (hex) {
+        const hs = hexHueSat(hex);
+        return hs.h + ';--dj:0;--bs:' + Math.max(0.15, Math.min(1, hs.s)).toFixed(2) + ';--bc:' + hex;
+      }
       let h = 0;
       const t = String(name || '');
       for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;

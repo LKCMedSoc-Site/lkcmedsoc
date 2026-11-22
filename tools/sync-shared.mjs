@@ -8,10 +8,10 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const targets = {
-  'shared/menu.json': ['site/public/menu.json', 'records/menu.json', 'activities-site/menu.json', 'feedback-site/menu.json', 'gazette-site/menu.json', 'policy-site/menu.json'],
-  'shared/suite-nav.js': ['records/suite-nav.js', 'activities-site/suite-nav.js', 'feedback-site/suite-nav.js', 'gazette-site/suite-nav.js', 'policy-site/suite-nav.js'],
-  'shared/sso.js': ['records/sso.js', 'activities-site/sso.js', 'feedback-site/sso.js', 'gazette-site/sso.js', 'policy-site/sso.js'],
-  'shared/signin.js': ['site/public/signin.js', 'records/signin.js', 'activities-site/signin.js', 'feedback-site/signin.js', 'gazette-site/signin.js', 'policy-site/signin.js'],
+  'shared/menu.json': ['site/public/menu.json', 'records/menu.json', 'activities-site/menu.json', 'feedback-site/menu.json', 'gazette-site/menu.json', 'policy-site/menu.json', 'inventory-site/menu.json'],
+  'shared/suite-nav.js': ['records/suite-nav.js', 'activities-site/suite-nav.js', 'feedback-site/suite-nav.js', 'gazette-site/suite-nav.js', 'policy-site/suite-nav.js', 'inventory-site/suite-nav.js'],
+  'shared/sso.js': ['records/sso.js', 'activities-site/sso.js', 'feedback-site/sso.js', 'gazette-site/sso.js', 'policy-site/sso.js', 'inventory-site/sso.js'],
+  'shared/signin.js': ['site/public/signin.js', 'records/signin.js', 'activities-site/signin.js', 'feedback-site/signin.js', 'gazette-site/signin.js', 'policy-site/signin.js', 'inventory-site/signin.js'],
 };
 const check = process.argv.includes('--check');
 let differing = 0;

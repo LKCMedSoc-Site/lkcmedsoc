@@ -10,7 +10,7 @@ Code for the LKCMedSoc website and internal tools. This repository is public: it
 | `policy-site/` | LKCMedSoc Policy: members read, ExCo edits the Constitution, Bylaws and Guides, proposes and votes on changes, and publishes versions (everyone signed in can read; ExCo edits. Sign-in only: `/policy` on the website redirects here. PDF via the browser's Print / Save as PDF) | policy.lkcmedsoc.com | Vercel |
 | `feedback-site/` | LKCMedSoc Feedback: suggestions, issues and SSLG meetings | feedback.lkcmedsoc.com | Vercel |
 | `records/` | Leadership and participation records | records.lkcmedsoc.com | Vercel |
-| `Inventory/` | Inventory app | inventory.lkcmedsoc.com | Vercel |
+| `inventory-site/` | LKCMedSoc Inventory: what each group owns and where it is kept (NTU sign-in; group Gmail accounts may also use Google sign-in) | inventory.lkcmedsoc.com | Vercel |
 | `sql/` | Database set-up files (Supabase project: lkcmedsoc-inventory) | not hosted | none |
 
 **Design:** UI rules (colour, type, shape, components, motion) are in `DESIGN.md`; product context is in `PRODUCT.md`.

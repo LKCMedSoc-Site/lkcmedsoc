@@ -1,0 +1,31 @@
+{
+  "site": "https://lkcmedsoc.com",
+  "items": [
+    { "label": "Events", "href": "/events" },
+    { "label": "Student Groups", "href": "/student-groups" },
+    {
+      "label": "About", "href": "/about", "note": "Who we are, how we are organised and how to join us.",
+      "children": [
+        { "label": "About", "href": "/about", "note": "Our mission, structure and history" },
+        { "label": "Leadership", "href": "/about/leadership", "note": "ExCo, committees, year and house reps" },
+        { "label": "House System", "href": "/about/house-system", "note": "The houses and their representatives" },
+        { "label": "Honour Roll", "href": "/about/honour-roll", "note": "Past leaders, year by year" },
+        { "label": "Work With Us", "href": "/about/work-with-us", "note": "Join a committee or CCA" },
+        { "label": "Alumni Association", "href": "/about/alumni", "note": "Staying connected after graduation" }
+      ]
+    },
+    { "label": "Gazette", "href": "/gazette", "note": "News, stories and updates from MedSoc." },
+    {
+      "label": "Resources", "href": "/resources", "note": "Tools and documents for students and CCAs. One sign-in works on all of them.",
+      "children": [
+        { "label": "Activities", "href": "https://activities.lkcmedsoc.com", "note": "Events, write-ups and approvals", "external": true },
+        { "label": "Gazette", "href": "https://gazette.lkcmedsoc.com", "note": "Write, review and publish posts", "external": true },
+        { "label": "Feedback", "href": "https://feedback.lkcmedsoc.com", "note": "Suggestions, issues and SSLG meetings", "external": true },
+        { "label": "Records", "href": "https://records.lkcmedsoc.com", "note": "Leadership and participation records", "external": true },
+        { "label": "Inventory", "href": "https://inventory.lkcmedsoc.com", "note": "Equipment and reservations", "external": true },
+        { "label": "Booking", "href": "https://booking.lkcmedsoc.com", "note": "Book a venue", "external": true },
+        { "label": "MedSoc policy", "href": "https://policy.lkcmedsoc.com", "note": "How MedSoc and its CCAs operate. Sign in to read.", "external": true }
+      ]
+    }
+  ]
+}
