@@ -11,6 +11,7 @@
 //     onClose     called when the person closes the lightbox without signing in
 //     note        optional green message shown at the top
 //   LKCSignIn.close()
+//   LKCSignIn.hasPassword()   false for an account made with Continue with Google (it has no password to change)
 //
 // Continue with Google: for the shared Gmail accounts of student groups, committees, houses and years (students use their NTU email).
 // It goes through Supabase's Google sign-in, so the session is the same shared one as an email sign-in. Google's page cannot open inside
@@ -22,7 +23,7 @@
   var CSS = [
     "@font-face{font-family:'DIN';src:url('" + FONT + "DIN-Regular.woff2') format('woff2');font-weight:400;font-display:swap}",
     "@font-face{font-family:'DIN';src:url('" + FONT + "DIN-Bold.woff2') format('woff2');font-weight:700;font-display:swap}",
-    ".lkcsi{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow-y:auto;padding:16px;background:rgba(42,6,40,.7);font-family:'DIN','DIN Alternate','Barlow','Segoe UI',system-ui,sans-serif;font-size:16px;line-height:1.5;color:#4d0a49;-webkit-font-smoothing:antialiased}",
+    ".lkcsi{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow-y:auto;padding:16px;background:rgba(29,15,27,.7);font-family:'DIN','DIN Alternate','Barlow','Segoe UI',system-ui,sans-serif;font-size:16px;line-height:1.5;color:#4d0a49;-webkit-font-smoothing:antialiased}",
     ".lkcsi *{box-sizing:border-box}",
     ".lkcsi-panel{position:relative;width:100%;max-width:448px;border-radius:16px;background:#fff;padding:20px;color:#4d0a49;box-shadow:0 25px 50px -12px rgba(0,0,0,.25)}",
     ".lkcsi-x{position:absolute;right:12px;top:12px;display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:999px;background:#f5eff5;color:#4d0a49;cursor:pointer}",
@@ -243,5 +244,18 @@
     }
   }
 
-  window.LKCSignIn = { open: open, close: function () { close(true); } };
+  // Does the signed-in account have a password? Accounts made with Continue with Google have none, so apps hide
+  // "Change password" for them. Reads the shared session (sso.js); when unsure it says yes, so the option never goes missing wrongly.
+  function hasPassword() {
+    try {
+      var st = window.LKCSession ? window.LKCSession.storage : window.localStorage;
+      var raw = st.getItem('sb-brwdgbitxisadwbuwbdi-auth-token');
+      if (!raw) return true;
+      var u = JSON.parse(raw).user || {}, m = u.app_metadata || {};
+      var p = m.providers || (m.provider ? [m.provider] : null);
+      return !p || p.indexOf('email') >= 0;
+    } catch (e) { return true; }
+  }
+
+  window.LKCSignIn = { open: open, close: function () { close(true); }, hasPassword: hasPassword };
 })();

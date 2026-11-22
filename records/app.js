@@ -144,7 +144,7 @@
     var s = await sb.auth.getSession();
     if (!s.data.session) { loginView(); return; }
     try { me = must(await sb.rpc('whoami')); } catch (e) { toast(friendly(e), true); loginView(); return; }
-    $who.replaceChildren(h('span', null, me.name || me.email), h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password'), h('button', { class: 'who-btn', onclick: async function () { await sb.auth.signOut(); me = null; loginView(); } }, 'Sign out'));
+    $who.replaceChildren(h('span', null, me.name || me.email), (!window.LKCSignIn || LKCSignIn.hasPassword() ? h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password') : null), h('button', { class: 'who-btn', onclick: async function () { await sb.auth.signOut(); me = null; loginView(); } }, 'Sign out'));
     var tabs = [['record', 'My record']];
     if (me.can_manage || me.is_admin) tabs.push(['manage', 'Manage body']);
     if (me.is_admin) tabs.push(['admin', 'Admin']);

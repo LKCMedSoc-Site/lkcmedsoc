@@ -42,7 +42,7 @@
   function drawChrome() {
     var me = P.me;
     if (me) {
-      $who.replaceChildren(h('span', null, me.name || me.email), h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password'),
+      $who.replaceChildren(h('span', null, me.name || me.email), (!window.LKCSignIn || LKCSignIn.hasPassword() ? h('button', { class: 'who-btn', onclick: newPasswordView }, 'Password') : null),
         h('button', { class: 'who-btn', id: 'signout', onclick: async function () { await sb.auth.signOut(); P.prefs.del('return'); location.hash = '#/'; boot(); } }, 'Sign out'));
     } else {
       $who.replaceChildren(h('button', { class: 'who-btn', id: 'signin', onclick: P.askSignIn }, 'Sign in'));

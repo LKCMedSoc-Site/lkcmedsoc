@@ -27,7 +27,7 @@ export default function HeroSlideshow({ slides = [], seconds = 6, wash = 62, cla
           <SafeImage src={s.image} alt="" priority={k === 0} sizes="100vw" className="h-full w-full" />
         </div>
       ))}
-      <div className="absolute inset-0" style={{ backgroundColor: `rgba(42, 6, 40, ${alpha})` }} />
+      <div className="absolute inset-0" style={{ backgroundColor: `rgba(29, 15, 27, ${alpha})` }} />
     </div>
   );
 }

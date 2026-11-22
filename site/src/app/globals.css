@@ -8,7 +8,7 @@
 
 /* Brand tokens: change colours and fonts here and the whole site follows. */
 @theme {
-  --color-p950: #2a0628;   /* the dark purple (footer): main dark */
+  --color-p950: #1d0f1b;   /* the dark purple (footer): main dark */
   --color-p900: #4d0a49;   /* deep plum */
   --color-p500: #8e2a88;   /* magenta */
   --color-p300: #d3a6cf;   /* soft orchid */
@@ -206,11 +206,11 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
      Not lifted: text-only links, links in a header/footer/nav, anything with .no-lift. Other cards opt in with .lift or the Hover lift block. */
   :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div, > img, > picture, > figure, > article, > section, > ul, > h1, > h2, > h3, > h4):not(.no-lift, header a, footer a, nav a):hover { translate: 0 -2px !important; }
   /* Cards also gain a soft shadow while lifted. */
-  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div, > img, > picture, > figure, > article, > section):not(.no-lift, header a, footer a, nav a):hover { box-shadow: 0 22px 48px -14px rgba(42, 6, 40, .22), 0 4px 10px -2px rgba(42, 6, 40, .08) !important; }
+  :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> div, > img, > picture, > figure, > article, > section):not(.no-lift, header a, footer a, nav a):hover { box-shadow: 0 22px 48px -14px rgba(29, 15, 27, .22), 0 4px 10px -2px rgba(29, 15, 27, .08) !important; }
 
   /* Button-like links (pill with text/arrow inside) and real buttons: rise 2px, soft shadow, press back down. */
   :is(.plasmic-page a, a[class*="plasmic_default"], a[class*="__wab"]):has(> span:first-child, > .__wab_text:first-child):not(:has(> div, > img, > picture), .no-lift, header a, footer a, nav a):hover,
-  :is(.plasmic-page button, button[class*="plasmic_default"], button[class*="__wab"]):hover { translate: 0 -2px !important; box-shadow: 0 10px 20px -12px rgba(42, 6, 40, .6) !important; filter: brightness(1.06); }
+  :is(.plasmic-page button, button[class*="plasmic_default"], button[class*="__wab"]):hover { translate: 0 -2px !important; box-shadow: 0 10px 20px -12px rgba(29, 15, 27, .6) !important; filter: brightness(1.06); }
 
   /* Heroes (pasted HTML with a "Hero Background" photo): photo eases out of a slow zoom, the text row rises in, the vector drifts. */
   .plasmic-page img[alt="Hero Background"] { animation: kenburns 24s ease-out both; }
@@ -231,7 +231,7 @@ body:has(.band-last) footer { margin-top: calc(var(--s) * -1); padding-top: var(
   @keyframes card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
   .lift { transition: translate .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s cubic-bezier(.22, 1, .36, 1); }
-  .lift:hover { translate: 0 -2px; box-shadow: 0 22px 48px -14px rgba(42, 6, 40, .22), 0 4px 10px -2px rgba(42, 6, 40, .08); }
+  .lift:hover { translate: 0 -2px; box-shadow: 0 22px 48px -14px rgba(29, 15, 27, .22), 0 4px 10px -2px rgba(29, 15, 27, .08); }
 }
 
 /* ---------- Header pieces for Plasmic: drop-down menu item and sticky bar ---------- */

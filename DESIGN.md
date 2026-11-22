@@ -13,7 +13,7 @@ Tokens live in the `@theme` block of `site/src/app/globals.css`. Use the tokens 
 | Role | Token | Hex |
 |---|---|---|
 | Page canvas | `p50` | `#f5eff5` |
-| Darkest plum: masthead, header, footer, dark panels | `p950` | `#2a0628` |
+| Darkest plum: masthead, header, footer, dark panels | `p950` | `#1d0f1b` |
 | Plum: headings, filled buttons | `p900` | `#4d0a49` |
 | Magenta: eyebrows, accents | `p500` | `#8e2a88` |
 | Orchid: soft text on dark | `p300` | `#d3a6cf` |
@@ -58,7 +58,7 @@ Defined in `globals.css` and switched off for people who ask for reduced motion.
 Visible focus states (magenta outline). Respect `prefers-reduced-motion`. Real links and buttons, labelled form fields, alt text on informative pictures. Sections have headings in order.
 
 ## Internal apps
-`activities-site/`, `feedback-site/`, `gazette-site/` and `records/` are plain HTML, CSS and JavaScript with their own `style.css`, built to the same palette and fonts. Their tokens are close to the site's, but the darkest plum there is `#3a0a2e` (`--p900`) where the site uses `#2a0628` (`p950`). Keep new internal screens on the app's own `style.css` tokens. The shared menu bar (`suite-nav.js`) is the same everywhere and sets the dark `#2a0628` strip on top.
+`activities-site/`, `feedback-site/`, `gazette-site/` and `records/` are plain HTML, CSS and JavaScript with their own `style.css`, built to the same palette and fonts. Their tokens are close to the site's, but the darkest plum there is `#3a0a2e` (`--p900`) where the site uses `#1d0f1b` (`p950`). Keep new internal screens on the app's own `style.css` tokens. The shared menu bar (`suite-nav.js`) is the same everywhere and sets the dark `#1d0f1b` strip on top.
 
 ## Plasmic
 Pages can be designed in Plasmic Studio and replace the coded page at the same path (`plasmicData('/path')`). Coded pages stay as the fallback. Registered blocks, tokens and the HTML constraints for pasted pieces are in `site/README.md` and `site/plasmic-kit/`.

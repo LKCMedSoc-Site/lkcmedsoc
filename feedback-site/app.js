@@ -66,7 +66,7 @@
       h('summary', { 'aria-label': 'Account' }, h('span', { class: 'avatar' }, initials(me.name || me.email))),
       h('div', { class: 'menu' },
         h('div', { class: 'who' }, h('b', null, me.name || me.email), me.name && me.email ? me.email : ''),
-        h('button', { onclick: newPasswordView }, 'Change password'),
+        !window.LKCSignIn || LKCSignIn.hasPassword() ? h('button', { onclick: newPasswordView }, 'Change password') : null,   // Google accounts have no password
         h('button', { id: 'signout', onclick: async function () { await sb.auth.signOut(); P.prefs.del('return'); location.hash = '#/'; boot(); } }, 'Sign out'))));
     $bar.replaceChildren(h('div', { class: 'in' },
       h('a', { class: 'appname', href: space === 'work' ? '#/tickets' : '#/said' }, 'Feedback', space === 'work' ? h('span', { class: 'space' }, 'Workspace') : null),

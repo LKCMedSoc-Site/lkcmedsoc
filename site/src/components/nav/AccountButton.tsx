@@ -31,13 +31,17 @@ export default function AccountButton({ label = 'Sign in', className = '' }: { l
     );
   }
   const email = user.email ?? '';
+  // Accounts made with Continue with Google have no password, so there is nothing to change.
+  const m = user.app_metadata ?? {};
+  const providers: string[] = Array.isArray(m.providers) ? m.providers : m.provider ? [m.provider] : ['email'];
+  const hasPassword = providers.includes('email');
   return (
     <div ref={box} className={`relative ${className}`}>
       <button type="button" onClick={() => setMenu((v) => !v)} aria-haspopup="menu" aria-expanded={menu} aria-label={`Account: ${email}`} className="press grid h-10 w-10 place-items-center rounded-full bg-p900 text-sm font-bold uppercase text-white">{email.slice(0, 1) || '?'}</button>
       {menu ? (
         <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-p900 bg-p950 p-2 text-white shadow-2xl">
           <p className="truncate px-3 py-2 text-sm text-mist">{email}</p>
-          <button type="button" role="menuitem" onClick={() => { setMenu(false); setPwOpen(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-bold hover:bg-p900"><KeyRound aria-hidden className="h-4 w-4" />Change password</button>
+          {hasPassword ? <button type="button" role="menuitem" onClick={() => { setMenu(false); setPwOpen(true); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-bold hover:bg-p900"><KeyRound aria-hidden className="h-4 w-4" />Change password</button> : <p className="px-3 pb-2 text-xs text-p300">Signed in with Google</p>}
           <button type="button" role="menuitem" onClick={async () => { await browserClient().auth.signOut(); setMenu(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left font-bold hover:bg-p900"><LogOut aria-hidden className="h-4 w-4" />Sign out</button>
         </div>
       ) : null}

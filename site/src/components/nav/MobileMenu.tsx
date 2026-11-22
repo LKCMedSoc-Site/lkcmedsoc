@@ -46,27 +46,31 @@ export default function MobileMenu({ groups = [], index = [], menuItems, ctaText
           <nav aria-label="Mobile" className="flex-1 overflow-y-auto px-4 pb-4">
             <button type="button" onClick={() => { setOpen(false); setFind(true); }} className="flex w-full items-center gap-3 rounded-xl bg-p900 px-4 py-3 text-left text-mist"><Search aria-hidden className="h-5 w-5" />Search pages and CCAs</button>
             {showSignIn && user !== undefined ? (user
-              ? <button type="button" onClick={() => { void browserClient().auth.signOut(); }} className="mt-2 flex w-full items-center justify-between rounded-xl bg-p900 px-4 py-3 text-left text-mist"><span className="truncate">Signed in as {user.email}</span><span className="ml-3 shrink-0 font-bold text-white">Sign out</span></button>
+              ? <button type="button" onClick={() => { void browserClient().auth.signOut(); }} className="mt-2 flex w-full items-center justify-between gap-3 rounded-xl bg-p900 px-4 py-3 text-left text-sm text-mist"><span className="min-w-0 truncate">Signed in as {user.email}</span><span className="shrink-0 font-bold text-white">Sign out</span></button>
               : <button type="button" onClick={() => { setOpen(false); setSignIn(true); }} className="mt-2 flex w-full items-center justify-between rounded-xl bg-p900 px-4 py-3 text-left font-bold text-white">{signInText || 'Sign in'}</button>) : null}
-            <ul className="mt-2">
+            {/* Sections: one even row each (a line between rows), headings sized for a phone; an open section shows its line about itself and its links in a soft panel. */}
+            <ul className="mt-5 border-t border-p900">
               {nav.map((item) => (
                 <li key={item.label} className="border-b border-p900">
                   {item.children?.length ? (
                     <>
-                      <button type="button" aria-expanded={expanded === item.label} onClick={() => setExpanded(expanded === item.label ? null : item.label)} className="flex w-full items-center justify-between py-3">
-                        <span className="display text-5xl">{item.label}</span><ChevronDown aria-hidden className={`h-6 w-6 text-pink transition-transform ${expanded === item.label ? 'rotate-180' : ''}`} />
+                      <button type="button" aria-expanded={expanded === item.label} onClick={() => setExpanded(expanded === item.label ? null : item.label)} className="flex h-16 w-full items-center justify-between text-left">
+                        <span className="display text-3xl leading-none">{item.label}</span><ChevronDown aria-hidden className={`h-5 w-5 shrink-0 text-pink transition-transform ${expanded === item.label ? 'rotate-180' : ''}`} />
                       </button>
                       {expanded === item.label ? (
-                        <ul className="pb-4">
-                          {item.children.map((c) => <li key={c.href + c.label}><ChildLink c={c} here={here(c.href)} className={`block py-2 text-lg no-underline ${here(c.href) ? 'text-white' : 'text-mist'}`}>{c.label}{here(c.href) ? <span className="ml-2 text-sm text-pink">You are here</span> : null}{c.note ? <span className="block text-sm text-p300">{c.note}</span> : null}</ChildLink></li>)}
-                        </ul>
+                        <div className="pb-4">
+                          {item.note ? <p className="mb-3 text-sm text-mist">{item.note}</p> : null}
+                          <ul className="rounded-xl bg-p900/60 p-1.5">
+                            {item.children.map((c) => <li key={c.href + c.label}><ChildLink c={c} here={here(c.href)} className={`block rounded-lg px-3 py-2.5 no-underline ${here(c.href) ? 'bg-p900 text-white shadow-[inset_3px_0_0_var(--color-pink)]' : 'text-white hover:bg-p900'}`}><span className="font-bold">{c.label}</span>{here(c.href) ? <span className="ml-2 text-xs text-pink">You are here</span> : null}{c.note ? <span className="block text-sm text-mist">{c.note}</span> : null}</ChildLink></li>)}
+                          </ul>
+                        </div>
                       ) : null}
                     </>
-                  ) : <Link href={item.href} className="display block py-3 text-5xl text-white no-underline">{item.label}</Link>}
+                  ) : <Link href={item.href} className="display flex h-16 items-center text-3xl leading-none text-white no-underline">{item.label}</Link>}
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-sm font-bold text-p300">Quick links for students</p>
+            <p className="mt-8 text-sm font-bold text-p300">Quick links for students</p>
             <ul className="mt-2 grid grid-cols-2 gap-2">
               {QUICK.map((q) => <li key={q.label}><a href={q.href} target="_blank" rel="noopener" className="press flex min-h-14 items-center justify-between gap-2 rounded-xl bg-p900 px-3 py-2 text-sm font-bold text-white no-underline">{q.label}<ArrowUpRight aria-hidden className="h-4 w-4 shrink-0 text-pink" /></a></li>)}
             </ul>
