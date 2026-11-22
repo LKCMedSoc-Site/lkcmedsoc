@@ -51,7 +51,16 @@
   }
   P.h = h;
   P.show = function (el) { clearTimers(); $view.replaceChildren(el); window.scrollTo(0, 0); };
-  P.loading = function () { P.show(h('p', { class: 'muted' }, 'Loading…')); };
+  // If "Loading…" is still showing after 12 seconds, something is stuck (usually the shared sign-in being refreshed from two tabs at once): say so and offer the way out.
+  P.loading = function () {
+    var p = h('p', { class: 'muted' }, 'Loading…'); P.show(p);
+    P.timers.push(setTimeout(function () {
+      if (!p.isConnected) return;
+      p.replaceChildren('This is taking longer than it should. ', h('a', { href: '#', onclick: function (e) { e.preventDefault(); location.reload(); } }, 'Reload'),
+        ' \u00b7 ', h('a', { href: '#', onclick: async function (e) { e.preventDefault(); try { await P.sb.auth.signOut(); } catch (x) { /* none */ } location.reload(); } }, 'Sign out and in again'),
+        h('br'), 'Closing other open Policy tabs also helps.');
+    }, 12000));
+  };
   function clearTimers() {
     P.timers.forEach(function (t) { clearInterval(t); clearTimeout(t); }); P.timers = [];
     P.cleanups.forEach(function (f) { try { f(); } catch (e) { /* ignore */ } }); P.cleanups = [];
