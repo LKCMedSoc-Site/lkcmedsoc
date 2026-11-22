@@ -138,3 +138,6 @@ a.btn-link.solid { background: var(--p700); color: #fff; }
 /* An empty new line must keep its height so the caret can move down onto it */
 .ProseMirror p > br:only-child, .ProseMirror br.ProseMirror-trailingBreak { display: inline !important; }
 .ProseMirror p { min-height: 1.5em; }
+
+/* The website's own header is shown above the page (in a frame, by suite-nav.js) and has the menu, sign-in, password and sign-out: this app's own strip is then redundant (as in policy-site). It stays when the website header cannot load or cannot see the shared sign-in. */
+html.lkc-embedded:not(.lkc-embed-nosession) > body > header.top { display: none; }

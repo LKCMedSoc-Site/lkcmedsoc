@@ -9,6 +9,7 @@ import { SITE } from '@/lib/site';
 import { useSiteMenu } from '@/lib/useSiteMenu';
 import SearchOverlay, { type SearchItem } from '@/components/SearchOverlay';
 import ChildLink from './ChildLink';
+import { useHere } from './useHere';
 import SignInDialog from './SignInDialog';
 import { browserClient } from '@/lib/supabase';
 import { useSession } from '@/lib/useSession';
@@ -22,7 +23,12 @@ export default function MobileMenu({ groups = [], index = [], menuItems, ctaText
   const [signIn, setSignIn] = useState(false);
   const user = useSession();
   const path = usePathname();
-  const setOpen = (v: boolean) => { setOpenState(v); onOpenChange?.(v); };
+  const here = useHere();
+  const setOpen = (v: boolean) => {
+    // Opening the sheet inside an app's header frame: unfold the section that holds the app, so "You are here" shows straight away.
+    if (v) { const cur = nav.find((i) => i.children?.some((c) => here(c.href))); if (cur) setExpanded(cur.label); }
+    setOpenState(v); onOpenChange?.(v);
+  };
   useEffect(() => { setOpen(false); setFind(false); }, [path]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -52,7 +58,7 @@ export default function MobileMenu({ groups = [], index = [], menuItems, ctaText
                       </button>
                       {expanded === item.label ? (
                         <ul className="pb-4">
-                          {item.children.map((c) => <li key={c.href + c.label}><ChildLink c={c} className="block py-2 text-lg text-mist no-underline">{c.label}{c.note ? <span className="block text-sm text-p300">{c.note}</span> : null}</ChildLink></li>)}
+                          {item.children.map((c) => <li key={c.href + c.label}><ChildLink c={c} here={here(c.href)} className={`block py-2 text-lg no-underline ${here(c.href) ? 'text-white' : 'text-mist'}`}>{c.label}{here(c.href) ? <span className="ml-2 text-sm text-pink">You are here</span> : null}{c.note ? <span className="block text-sm text-p300">{c.note}</span> : null}</ChildLink></li>)}
                         </ul>
                       ) : null}
                     </>

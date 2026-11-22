@@ -11,6 +11,11 @@
 //     onClose     called when the person closes the lightbox without signing in
 //     note        optional green message shown at the top
 //   LKCSignIn.close()
+//
+// Continue with Google: for the shared Gmail accounts of student groups, committees, houses and years (students use their NTU email).
+// It goes through Supabase's Google sign-in, so the session is the same shared one as an email sign-in. Google's page cannot open inside
+// a frame, so the whole window goes to Google; Google sends it back to the app it came from (inside the website header's frame, that
+// is the app around the frame). Who may sign in is decided by the sign-up list in the database (records.email_allowed).
 (function () {
   'use strict';
   var FONT = 'https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/';
@@ -39,8 +44,51 @@
     ".lkcsi-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #4d0a49;border-radius:8px;background:#4d0a49;padding:10px 16px;font:inherit;font-weight:700;color:#fff;cursor:pointer}",
     ".lkcsi-btn.out{background:#fff;color:#4d0a49}",
     ".lkcsi-btn.out:hover{background:#ebe1fa}",
-    ".lkcsi-btn:disabled{opacity:.5;pointer-events:none}"
+    ".lkcsi-btn:disabled{opacity:.5;pointer-events:none}",
+    ".lkcsi-alt{margin-top:12px;display:grid;gap:6px;justify-items:center;text-align:center}",
+    ".lkcsi-or{display:flex;align-items:center;gap:10px;width:100%;font-size:13px;color:#6a5a69}",
+    ".lkcsi-or::before,.lkcsi-or::after{content:'';flex:1;height:1px;background:#ddd2dc}",
+    ".lkcsi-g{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;border:1px solid #d3a6cf;border-radius:8px;background:#fff;padding:10px 16px;font:inherit;font-weight:700;color:#2a0f28;cursor:pointer}",
+    ".lkcsi-g:hover{background:#f5eff5}",
+    ".lkcsi-g svg{width:18px;height:18px;flex:none}",
+    ".lkcsi-alt small{font-size:12px;color:#6a5a69}"
   ].join('\n');
+  var G = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+
+  // Where Google sends the person back to: the page they are on, or, inside the website header's frame, the app around the frame
+  // (document.referrer: only its address is known, so the app's front page). Only LKCMedSoc addresses (and localhost) are used.
+  function returnUrl(o) {
+    if (window.self !== window.top) {
+      try {
+        var r = new URL(document.referrer);
+        if (/(^|\.)lkcmedsoc\.com$/.test(r.hostname) || r.hostname === 'localhost') return r.origin + '/';
+      } catch (e) { /* no referrer */ }
+    }
+    return o.redirect && !/\/sign-in$/.test(o.redirect) ? o.redirect : location.href.split('#')[0];
+  }
+  function google(o, btn) {
+    btn.disabled = true;
+    o.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: returnUrl(o), skipBrowserRedirect: true, queryParams: { prompt: 'select_account' } } })
+      .then(function (r) {
+        if (r.error || !r.data || !r.data.url) throw r.error || new Error('Google sign-in is not available right now.');
+        try { window.top.location.href = r.data.url; } catch (e) { location.href = r.data.url; }
+      })
+      .catch(function (e) { btn.disabled = false; alert((e && e.message) || 'Google sign-in is not available right now.'); });
+  }
+
+  // Coming back from Google with a refusal (e.g. a Gmail that is not on the sign-up list): say so in plain words and tidy the address,
+  // before the app reads it. Supabase puts the reason after # (or ? for some errors).
+  (function () {
+    if (window.self !== window.top) return;
+    var raw = (location.hash || '').slice(1) + '&' + (location.search || '').slice(1);
+    if (raw.indexOf('error_description=') < 0) return;
+    var q = new URLSearchParams(raw), d = q.get('error_description') || '';
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* old browser */ }
+    var msg = /Database error saving new user|sign-in list/i.test(d)
+      ? "That Google account can't sign in here. Google sign-in is for bodies with registered Google accounts. Students: sign in with your NTU email."
+      : 'Google sign-in did not finish: ' + d;
+    setTimeout(function () { alert(msg); }, 0);
+  })();
   var X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
   var root = null, prevOverflow = '', onKey = null;
@@ -134,7 +182,14 @@
         row);
       var close_ = el('button', { type: 'button', 'class': 'lkcsi-x', 'aria-label': 'Close' }); close_.innerHTML = X;
       close_.addEventListener('click', function () { close(false, o); });
-      panel.replaceChildren(close_, el('p', { 'class': 'lkcsi-intro', text: 'One sign-in works on every LKCMedSoc site.' }), form);
+      var alt = null;
+      if (mode === 'signin') {
+        var gb = el('button', { type: 'button', 'class': 'lkcsi-g' }); gb.innerHTML = G + '<span>Continue with Google</span>';
+        gb.addEventListener('click', function () { google(o, gb); });
+        alt = el('div', { 'class': 'lkcsi-alt' }, el('div', { 'class': 'lkcsi-or', text: 'or' }), gb,
+          el('small', { text: 'For bodies with registered Google accounts.' }));
+      }
+      panel.replaceChildren.apply(panel, [close_, el('p', { 'class': 'lkcsi-intro', text: 'One sign-in works on every LKCMedSoc site.' }), form, alt].filter(Boolean));
       email.value = keep.email || ''; pw.value = keep.pw || ''; pw2.value = keep.pw2 || '';
       (mode === 'code' ? code : mode === 'newpw' ? pw : keep.email && mode !== 'forgot' ? pw : email).focus();
 

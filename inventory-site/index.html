@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#1c0529">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#3a0a2e">
   <title>LKCMedSoc Inventory</title>
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
@@ -19,8 +19,6 @@
   <script src="sso.js"></script>
   <script src="signin.js"></script>
   <script src="suite-nav.js" defer></script>
-  <!-- Google sign-in: only for the shared Gmail accounts of groups, committees, houses and years -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     @font-face { font-family: "DIN"; src: url("https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
     @font-face { font-family: "DIN"; src: url("https://brwdgbitxisadwbuwbdi.supabase.co/storage/v1/object/public/fonts/DIN-Medium.woff2") format("woff2"); font-weight: 500 600; font-style: normal; font-display: swap; }
@@ -44,23 +42,6 @@
       --font: "DIN", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --font-title: var(--font);
       --r-card: 14px; --r-ctl: 10px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --hdr: #2a0628;
-        --btn: #d3a6cf;  --on-btn: #2a0628;
-        --link: #e3bfdd;
-        --accent: #d3a6cf;
-        --tint: #2b1228; --tint-2: #3b1d37;
-        --paper: #140612; --card: #1d0a1b; --sheet: #2b1228;
-        --scrim: rgba(0,0,0,0.86);
-        --ink: #f5eff5;  --ink-2: #c3aebf;
-        --line: #36192f; --line-2: #4f2a48;
-        --ok: #6fd3a0;
-        --warn-bg: #3a3012; --warn-ink: #f1dc95; --warn-line: #5a4a1a;
-        --danger: #ff8a80; --danger-bg: #3d1a1d;
-        --dot-l: 66%; --pill-l: 84%;
-      }
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
@@ -93,6 +74,28 @@
     .hdr-icon { display: none; width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(255,255,255,0.16); color: #fff; place-items: center; cursor: pointer; padding: 0; }
     .hdr-icon:hover { background: rgba(255,255,255,0.26); }
     #gsiHeaderBtn { display: inline-block; }
+    /* Inventory is light-only, like the other apps (and the website header frame above it, which must match or the browser
+       paints the frame's see-through backdrop white while a menu is open). */
+
+    /* The website's own header (suite-nav.js) sits above the page and has the menu, sign-in and sign-out, so Inventory's own
+       "LKCMedSoc Inventory" bar is hidden while it shows, as in the other apps. Inventory's own controls (Sign in with the
+       group-Gmail option, recent activity, your access) live at the end of the search row instead, so they stay either way. */
+    html.lkc-embedded:not(.lkc-embed-nosession) #appHeader { display: none; }
+    /* ...and while the website header shows, its Sign in is the only one: Inventory's own button is hidden (it is still offered in the
+       "sign in again" boxes when a save needs it, and it opens the same shared sign-in). */
+    html.lkc-embedded:not(.lkc-embed-nosession) .search-row #gsiHeaderBtn { display: none; }
+    html.lkc-embedded:not(.lkc-embed-nosession) #searchContainer { top: var(--lkc-top, 0px) !important; transition: top .25s ease; }
+    .search-row #authSlot { flex-wrap: nowrap; min-height: 0; align-items: stretch; }
+    .search-row #authSlot > * { align-self: center; }
+    .search-row #authSlot > #gsiHeaderBtn { align-self: stretch; }
+    .search-row #gsiHeaderBtn .hdr-signin { padding: 0 14px; }
+    @media (max-width: 480px) { .search-row #filterBtn > span:not(.count) { display: none; } }
+    .search-row .hdr-signin { color: var(--btn); border-color: var(--line-2); background: var(--card); height: 100%; border-radius: var(--r-ctl); }
+    .search-row .hdr-signin:hover { background: var(--tint); }
+    .search-row .hdr-icon { background: var(--tint); color: var(--btn); }
+    .search-row .hdr-icon:hover { background: var(--tint-2); }
+    .search-row .user-badge { background: var(--tint); color: var(--btn); max-width: 30vw; }
+    .search-row .user-badge:hover { background: var(--tint-2); }
     #gsiModalBtn, #gsiPopBtn { display: flex; justify-content: center; }
     .user-badge { font-size: 14px; font-weight: 600; background: rgba(255,255,255,0.16); padding: 7px 14px; border-radius: 999px; cursor: pointer; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .user-badge:hover { background: rgba(255,255,255,0.24); }
@@ -685,7 +688,6 @@
     .pp-new .btn-primary { flex: none; width: auto; min-height: 42px; padding: 0 14px; }
         /* ---------- pop-up panels: lifted off the page so they read as separate layers ---------- */
     :root { --pop-bg: #ffffff; --pop-edge: #6a2490; --pop-shadow: 0 10px 30px rgba(43,10,62,0.32), 0 2px 6px rgba(43,10,62,0.18); }
-    @media (prefers-color-scheme: dark) { :root { --pop-bg: #2b1a42; --pop-edge: #c58ae6; --pop-shadow: 0 10px 32px rgba(0,0,0,0.75), 0 0 0 1px rgba(197,138,230,0.18); } }
     .hm-detail, .rm-bar, .rm-ask { background: var(--pop-bg); border: 2px solid var(--pop-edge); box-shadow: var(--pop-shadow); border-radius: 14px; }
     .hm-detail { padding: 12px 14px; }
     .rm-bar { padding: 12px 14px; }
@@ -724,12 +726,6 @@
     <div class="brand">
       <a class="brand-suite" href="/">LKCMedSoc <span>Inventory</span></a>
     </div>
-    <span id="authSlot">
-      <span id="gsiHeaderBtn"></span>
-      <button type="button" id="activityBtn" class="hdr-icon" aria-label="Recent activity" title="Recent activity" onclick="openActivity()"><svg class="ic"><use href="#i-history"/></svg></button>
-      <a id="troubleLink" class="trouble-link" role="button" tabindex="0" style="display:none;" onclick="openSigninHelp()">Trouble?</a>
-      <span id="userEmailBadge" class="user-badge" role="button" tabindex="0" title="See my access" onclick="openAccess()">Loading...</span>
-    </span>
   </div>
 
   <div id="inappBar" class="inapp-bar" style="display:none;"></div>
@@ -744,6 +740,12 @@
       <button type="button" id="filterBtn" class="icon-btn" aria-expanded="false" aria-controls="filterPanel" onclick="toggleFilters()">
         <svg class="ic"><use href="#i-filter"/></svg><span>Filters</span><span id="filterCount" class="count" hidden></span>
       </button>
+      <span id="authSlot">
+        <span id="gsiHeaderBtn"></span>
+        <button type="button" id="activityBtn" class="hdr-icon" aria-label="Recent activity" title="Recent activity" onclick="openActivity()"><svg class="ic"><use href="#i-history"/></svg></button>
+        <a id="troubleLink" class="trouble-link" role="button" tabindex="0" style="display:none;" onclick="openSigninHelp()">Trouble?</a>
+        <span id="userEmailBadge" class="user-badge" role="button" tabindex="0" title="See my access" onclick="openAccess()">Loading...</span>
+      </span>
     </div>
     <div id="filterPanel" class="filter-panel">
       <div class="fp-grid">
@@ -1288,7 +1290,10 @@
     const CFG = window.PORTAL_CONFIG || {};
     const SCRIPT_B_URL = CFG.API_URL || "https://brwdgbitxisadwbuwbdi.supabase.co/functions/v1/api";
     const SB_PUBLISHABLE_KEY = CFG.SUPABASE_ANON_KEY || "sb_publishable_iVGn5p_HufuRZYEiAP_IyA_qxizqqfM";
-    const GOOGLE_CLIENT_ID = CFG.GOOGLE_CLIENT_ID || "";
+    // Inventory no longer has a Google sign-in of its own: group Gmail accounts use "Continue with Google" in the shared sign-in box
+    // (signin.js), the same one the website header opens, so everyone has exactly one sign-in on every LKCMedSoc site.
+    const GOOGLE_CLIENT_ID = "";
+    try { localStorage.removeItem('lkc_google_token_v1'); } catch (e) {}   // drop a sign-in kept by the old Inventory Google button
 
     // NTU sign-in: the same account, and on lkcmedsoc.com the same shared sign-in cookie, as every other LKCMedSoc app
     // (sso.js, signin.js). The Supabase sign-in token is sent to the api function, which checks it with Supabase.
@@ -1297,6 +1302,11 @@
       : null;
     let sbSession = null;
     const sbReady = sb ? sb.auth.getSession().then(function (r) { sbSession = (r && r.data && r.data.session) || null; }).catch(function () {}) : Promise.resolve();
+    // Signing in or out in the website header (suite-nav.js tells the page, then reloads it): that is the person's choice for every
+    // LKCMedSoc site, so a group Gmail sign-in kept by Inventory is dropped too. Inventory then follows the header's NTU sign-in.
+    window.addEventListener('lkc-auth-change', function () {
+      try { localStorage.removeItem('lkc_google_token_v1'); } catch (e) {}
+    });
     if (sb) sb.auth.onAuthStateChange(function (ev, session) {
       if (ev === 'SIGNED_OUT') { sbSession = null; return; }
       if (session) sbSession = session;
@@ -1592,12 +1602,12 @@
       if (targetId === 'gsiHeaderBtn') {
         ntu.className = 'hdr-signin';
         ntu.textContent = 'Sign in';
-        ntu.onclick = openSigninChooser;
+        ntu.onclick = ntuSignIn;   // the shared sign-in box: NTU email, or Continue with Google for group accounts
         t.appendChild(ntu);
         return;
       }
       ntu.className = 'btn-primary ntu-btn';
-      ntu.textContent = 'Sign in with NTU email';
+      ntu.textContent = 'Sign in';
       ntu.onclick = ntuSignIn;
       t.appendChild(ntu);
       if (!clientIdSet()) return;
@@ -1630,7 +1640,7 @@
     function openSigninChooser() {
       pendingAction = null;
       el('sipTitle').textContent = 'Sign in';
-      el('signinPopMsg').textContent = 'Sign in with your NTU email, the same account as the other LKCMedSoc apps.';
+      el('signinPopMsg').textContent = 'One sign-in for every LKCMedSoc site: your NTU email, or Google for group accounts.';
       el('signinPopHint').style.display = 'none';
       drawGsiButton('gsiPopBtn');
       el('signinModal').style.display = 'flex';
@@ -1800,7 +1810,9 @@
       if (returned) { signingIn = true; showBusy("Signing you in…"); }
       showStartupNotice();
       initGsi();   // in case the Google script finished loading before this page did
-      el('searchContainer').style.top = el('appHeader').offsetHeight + 'px';
+      const placeSearch = function () { el('searchContainer').style.top = 'calc(var(--lkc-top, 0px) + ' + el('appHeader').offsetHeight + 'px)'; };
+      placeSearch();
+      if (window.ResizeObserver) new ResizeObserver(placeSearch).observe(el('appHeader'));
 
       el('inventoryList').addEventListener('change', function (e) {
         const q = e.target.closest && e.target.closest('[data-qin]');
@@ -1893,7 +1905,7 @@
       if (mqDesktop.addEventListener) mqDesktop.addEventListener('change', renderList);
       else if (mqDesktop.addListener) mqDesktop.addListener(renderList);
       window.addEventListener('resize', function () { if (rmRoom && el('rmStage')) fitStage(); });
-      window.addEventListener('resize', function () { el('searchContainer').style.top = el('appHeader').offsetHeight + 'px'; });
+      window.addEventListener('resize', function () { el('searchContainer').style.top = 'calc(var(--lkc-top, 0px) + ' + el('appHeader').offsetHeight + 'px)'; });
       document.addEventListener('keydown', function (e) {
         if (e.key !== 'Escape') return;
         const open = function (id) { return el(id).style.display === 'flex'; };
@@ -2366,7 +2378,7 @@
 
     function setupHeaderAndFab() {
       const isAnon = (currentEmail === "" || currentEmail === "anonymous");
-      el('userEmailBadge').textContent = isAnon ? "Guest Viewer" : currentEmail.split('@')[0];
+      el('userEmailBadge').textContent = isAnon ? "Guest Viewer" : "My access";   // who you are is in the website header; this opens what you may edit
 
       const fab = el('fabBtn');
       const canAdd = permittedBodies.length > 0 || governedRooms.length > 0;
